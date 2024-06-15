@@ -4,6 +4,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.example.cameraprovider.viewmodel.AuthViewModel" />
+    </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -16,14 +22,13 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginStart="6dp"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="30dp"
             android:padding="3dp"
             android:scaleType="centerCrop"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/circle"
-            app:srcCompat="@drawable/bg_post"
             app:strokeColor="@color/subkey"
             app:strokeWidth="3dp" />
 
@@ -33,9 +38,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="kocah0o"
+            android:text="@{viewModel.getUserResult.nameUser}"
             android:textColor="@color/white"
-            android:textSize="22sp"
+            android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgAvtUser" />
@@ -43,9 +48,9 @@
         <View
             android:id="@+id/line0"
             android:layout_width="match_parent"
-            android:layout_height="1px"
+            android:layout_height="3px"
             android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/shapeline"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -53,139 +58,144 @@
 
 
         <LinearLayout
-            android:id="@+id/viewEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:drawableTop="@drawable/shapeline"
-            android:orientation="horizontal"
-            android:paddingVertical="20dp"
-            android:paddingStart="30dp"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@+id/line0"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/line0">
+            app:layout_constraintStart_toStartOf="parent">
 
-            <TextView
-                android:id="@+id/labelemail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Email: "
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvEmailUser"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="kocah0o@gmail.com"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
-
-            <EditText
+            <LinearLayout
+                android:id="@+id/viewEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:imeOptions="actionDone"
-                android:maxLines="1"
-                android:paddingVertical="10dp"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:visibility="gone" />
+                android:drawableTop="@drawable/shapeline"
+                android:orientation="horizontal"
+                android:paddingVertical="20dp"
+                android:paddingStart="30dp">
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/labelemail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="Email: "
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
-        <LinearLayout
-            android:id="@+id/viewPhonenb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingVertical="20dp"
-            android:paddingStart="30dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/viewEmail">
+                <TextView
+                    android:id="@+id/tvEmailUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{viewModel.getUserResult.emailUser}"
+                    android:textColor="@color/white"
+                    android:textSize="20sp" />
 
-            <TextView
-                android:id="@+id/labelnbphone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Số điện thoại: "
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:maxLines="1"
+                    android:paddingVertical="10dp"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvPhoneNumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Không có"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
+            </LinearLayout>
 
-            <EditText
+            <LinearLayout
+                android:id="@+id/viewPhonenb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:imeOptions="actionDone"
-                android:inputType="number"
-                android:maxLines="1"
-                android:paddingVertical="10dp"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:visibility="gone" />
-        </LinearLayout>
+                android:orientation="horizontal"
+                android:paddingVertical="20dp"
+                android:paddingStart="30dp">
 
-        <LinearLayout
-            android:id="@+id/viewPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingVertical="20dp"
-            android:paddingStart="30dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/viewPhonenb">
+                <TextView
+                    android:id="@+id/labelnbphone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="Số điện thoại: "
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/labelpassword"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Mật khẩu: "
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvPhoneNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Không có"
+                    android:textColor="@color/white"
+                    android:textSize="20sp" />
 
-            <TextView
-                android:id="@+id/tvPasswordUser"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="********"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:maxLines="1"
+                    android:paddingVertical="10dp"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
-            <EditText
+
+            <View
+                android:id="@+id/line5"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:imeOptions="actionDone"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:paddingVertical="10dp"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:visibility="gone" />
+                android:layout_height="1px"
+                android:layout_marginHorizontal="30dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/shapeline" />
         </LinearLayout>
 
         <View
-            android:id="@+id/line"
+            android:id="@+id/line2"
             android:layout_width="match_parent"
             android:layout_height="1px"
             android:layout_marginHorizontal="30dp"
-            android:background="@drawable/shapeline"
             android:layout_marginTop="1px"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/shapeline"
+            app:layout_constraintBottom_toTopOf="@+id/btn_logout"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/viewPassword" />
+            app:layout_constraintStart_toStartOf="parent" />
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_logout"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginBottom="30dp"
+            android:backgroundTint="@color/key"
+            android:gravity="center"
+            android:onClick="@{()->viewModel.logout()}"
+            android:shadowColor="@color/subkey"
+            android:text="Đăng xuất"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            app:iconGravity="textEnd"
+            app:iconSize="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:indeterminateTint="#404040"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/btn_logout"
+            app:layout_constraintEnd_toEndOf="@+id/btn_logout"
+            app:layout_constraintStart_toStartOf="@+id/btn_logout"
+            app:layout_constraintTop_toTopOf="@+id/btn_logout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

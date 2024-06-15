@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.cameraprovider"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -41,9 +41,9 @@ android {
         dataBinding =true
     }
 
+
+
 }
-
-
 
 
 dependencies {
@@ -52,6 +52,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.activity:activity:1.9.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -68,17 +69,24 @@ dependencies {
 
     implementation ("com.github.alxrm:audiowave-progressbar:0.9.2")
 
-
 //firebase
     implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-dynamic-links")
+
 
     // GLide
     implementation ("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
+    implementation ("com.github.bumptech.glide:recyclerview-integration:4.16.0")
+    //paging3
+    implementation ("androidx.paging:paging-runtime-ktx:3.3.0")
+
+    //animartion loadanhfb
+    implementation ("com.facebook.shimmer:shimmer:0.5.0")
 
     //
     val lifecycle_version = "2.8.0"

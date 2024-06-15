@@ -1,8 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.CameraProvider" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.CameraProvider" parent="Theme.Material3.Light.NoActionBar">
         <!-- Customize your light theme here. -->
-         <item name="colorPrimary">@color/dark</item>
+        <item name="android:statusBarColor">@color/dark</item>
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorOutline">@color/white</item>
+        <item name="iconTint">@color/white</item>
+        <item name="android:windowBackground">@color/dark</item>
+        <item name="android:fontFamily">sans-serif-condensed-medium</item>
     </style>
 
     <style name="Theme.CameraProvider" parent="Base.Theme.CameraProvider" />

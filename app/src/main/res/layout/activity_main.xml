@@ -4,29 +4,77 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+        <variable
+            name="authVModel"
+            type="com.example.cameraprovider.viewmodel.AuthViewModel" />
+    </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/dark">
 
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btntest"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/btn_group_layout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:icon="@drawable/ic_setting"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:layout_marginHorizontal="18dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/btn_bottom_sheet_profile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:background="@drawable/edittextbd10dp"
+                android:backgroundTint="@color/colorbtnctive"
+                android:src="@drawable/ic_account" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_bottom_sheet_friends"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text ="20 Bạn bè"
+                android:textSize="16sp"
+                android:backgroundTint="@color/colorbtnctive"
+                app:icon="@drawable/ic_lstfr" />
+
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:background="@drawable/edittextbd10dp"
+                android:backgroundTint="@color/colorbtnctive"
+                android:src="@drawable/ic_person" />
+
+        </LinearLayout>
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewpp"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="30dp"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="10dp"
+            android:layout_marginBottom="10dp"
             app:layout_constraintBottom_toTopOf="@+id/tabLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btntest" />
+            app:layout_constraintTop_toBottomOf="@+id/btn_group_layout" />
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
@@ -34,15 +82,15 @@
             android:layout_height="40dp"
             android:layout_marginVertical="20dp"
             android:background="@drawable/bg_shape"
-            app:backgroundTint="@null"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/btn_fnc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:tabBackground="@drawable/tabs_selector"
             app:tabGravity="center"
+            app:tabIconTintMode="@color/white"
             app:tabIndicatorColor="@android:color/transparent"
             app:tabIndicatorHeight="0dp"
-            app:tabMode="auto"
+            app:tabMode="scrollable"
             app:tabRippleColor="@android:color/transparent">
 
             <com.google.android.material.tabs.TabItem
@@ -57,5 +105,55 @@
 
 
         </com.google.android.material.tabs.TabLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_fnc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="14dp"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                app:cornerRadius="12dp"
+                android:text="0"
+                android:enabled="false"
+                android:visibility="visible"
+                android:padding="0dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/key"/>
+
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xem bài"
+                android:padding="0dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/dark"
+                app:icon="@drawable/ic_godown"
+                app:iconGravity="textEnd" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

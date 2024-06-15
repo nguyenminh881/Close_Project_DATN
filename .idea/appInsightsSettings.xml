@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.cameraprovider" />
-                  <option name="mobileSdkAppId" value="1:24457633222:android:0bc101916dfbb58b41e6c7" />
-                  <option name="projectId" value="closeproject-e5a99" />
-                  <option name="projectNumber" value="24457633222" />
+                  <option name="mobileSdkAppId" value="1:47564541795:android:73b31a29dbf6d63cd44d56" />
+                  <option name="projectId" value="close-project-15ed2" />
+                  <option name="projectNumber" value="47564541795" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

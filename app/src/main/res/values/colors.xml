@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="key">#ff89bf</color>
-    <color name="dark">#080808</color>
-    <color name="subkey">#fec3df</color>
+    <color name="black">#000000</color>
+    <color name="bg_input">#656565</color>
+    <color name="white">#E6FFFFFF</color>
+    <color name="key">#fb6f92</color>
+    <color name="dark">#101010</color>
+    <color name="subkey">#ff8fab</color>
+    <color name="keylight">#ffe5ec</color>
+    <color name="shimmer">#CDCDCD</color>
+    <color name="btndf">#222124</color>
 </resources>

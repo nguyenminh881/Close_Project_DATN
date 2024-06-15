@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="authVModel"
             type="com.example.cameraprovider.viewmodel.AuthViewModel" />
@@ -19,27 +20,27 @@
             android:id="@+id/titleSignUp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="180dp"
-            android:gravity="center"
-            android:text="Đăng ký tài khoản"
-            android:textSize="22sp"
+            android:layout_marginTop="50dp"
+            android:paddingStart="24dp"
+            android:text="Email của bạn là gì?"
             android:textColor="@color/white"
+            android:textSize="34sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/Ed_email_signup"
+            style="@style/textfield"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="40dp"
             android:layout_marginEnd="24sp"
-            android:hint="Email"
-            android:textColorHint="@color/white"
-            app:errorEnabled="true"
+            android:hint="Nhập email của bạn"
             app:error="@{authVModel.emailError}"
-            app:errorTextColor="@color/key"
+            app:helperText="@{authVModel.emailHelperText}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/titleSignUp">
@@ -47,63 +48,78 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailCreate"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="80dp"
                 android:inputType="textEmailAddress"
-                android:textColor="@color/white"
                 android:maxLines="1"
-                android:text="@={authVModel.email}" />
+                android:text="@={authVModel.email}"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/subkey"
+                android:textColorLink="@color/white"
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/Ed_password_signup"
+            style="@style/textfield"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="24sp"
-            android:hint="Password"
-            android:textColorHint="@color/white"
-            app:errorEnabled="true"
+            android:hint="Chọn mật khẩu"
             app:error="@{authVModel.passwordError}"
-            app:errorTextColor="@color/key"
-            app:passwordToggleEnabled="true"
+            app:helperText="@{authVModel.passwordHelperText}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/Ed_email_signup">
+            app:layout_constraintTop_toBottomOf="@+id/Ed_email_signup"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/keylight">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/pwCreate"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="80dp"
                 android:inputType="textPassword"
-                android:textColor="@color/white"
                 android:maxLines="1"
-                android:text="@={authVModel.password}" />
+                android:text="@={authVModel.password}"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/subkey"
+                android:textColorLink="@color/white"
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
-            android:onClick="@{() -> authVModel.signUp()}"
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_signup"
-            style="@style/Widget.Material3.TextInputEditText.OutlinedBox.Dense"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16sp"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginBottom="30dp"
+            android:backgroundTint="#222124"
+            android:enabled="false"
+            android:gravity="center"
+            android:onClick="@{() -> authVModel.signUp()}"
+            android:text="Tiếp tục"
             android:textColor="@color/black"
-            android:background="@drawable/bg_shape"
-            app:backgroundTint="@null"
-            android:text="Đăng ký"
-            android:textSize="20sp"
+            android:shadowColor="@color/subkey"
+            android:textSize="16sp"
+            app:icon="@drawable/ic_next"
+            app:iconTint="@color/black"
+            app:iconGravity="textEnd"
+            app:iconSize="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/Ed_password_signup"
-            app:layout_constraintStart_toStartOf="@+id/Ed_password_signup"
-            app:layout_constraintTop_toBottomOf="@+id/Ed_password_signup" />
+            app:layout_constraintStart_toStartOf="@+id/Ed_password_signup" />
 
         <ProgressBar
             android:id="@+id/progress_bar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:indeterminateTint="#404040"
             android:visibility="@{authVModel.loading ?  android.view.View.VISIBLE :  android.view.View.GONE}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_signup" />
+            app:layout_constraintBottom_toBottomOf="@+id/btn_signup"
+            app:layout_constraintEnd_toEndOf="@+id/btn_signup"
+            app:layout_constraintStart_toStartOf="@+id/btn_signup"
+            app:layout_constraintTop_toTopOf="@+id/btn_signup" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

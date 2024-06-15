@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "24457633222",
-    "project_id": "closeproject-e5a99",
-    "storage_bucket": "closeproject-e5a99.appspot.com"
+    "project_number": "47564541795",
+    "project_id": "close-project-15ed2",
+    "storage_bucket": "close-project-15ed2.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:24457633222:android:0bc101916dfbb58b41e6c7",
+        "mobilesdk_app_id": "1:47564541795:android:73b31a29dbf6d63cd44d56",
         "android_client_info": {
           "package_name": "com.example.cameraprovider"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDczhA951PdIoB7DkDjG4iyQxzlUirozpk"
+          "current_key": "AIzaSyDIZ9GKcJC8yN8fj6N3daQHZ1TO_LkEO9A"
         }
       ],
       "services": {

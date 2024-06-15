@@ -27,9 +27,15 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.example.cameraprovider.databinding.FragmentCameraBinding
+import com.example.cameraprovider.repository.PostRepository
+import com.example.cameraprovider.viewmodel.PostViewModel
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -48,6 +54,7 @@ class CameraFragment : Fragment() {
     lateinit var cameraInfo: CameraInfo
 
     private var currentFlashMode = ImageCapture.FLASH_MODE_OFF
+    private lateinit var postViewModel: PostViewModel
 
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
@@ -76,6 +83,7 @@ class CameraFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         viewBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_camera, container, false)
+        postViewModel = ViewModelProvider(requireActivity()).get(PostViewModel::class.java)
         return viewBinding.root
     }
 
@@ -111,12 +119,6 @@ class CameraFragment : Fragment() {
     }
 
 
-    override fun onResume() {
-        super.onResume()
-        if (allPermissionsGranted()) {
-            startCamera()
-        }
-    }
 
 
     private fun flash() {
@@ -161,26 +163,13 @@ class CameraFragment : Fragment() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        // Create time stamped name and MediaStore entry.
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Close")
-            }
-        }
 
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(
-                requireActivity().contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            )
-            .build()
+        val name = UUID.randomUUID().toString() + ".jpg"
+        val file = File(requireActivity().externalCacheDir, name)
 
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+
+        Log.d("TAGY", "$outputOptions")
         // Set up image capture listener, which is triggered after photo has
         // been taken
         imageCapture.takePicture(
@@ -188,9 +177,8 @@ class CameraFragment : Fragment() {
             ContextCompat.getMainExecutor(requireContext().applicationContext),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                    Log.e("TAGY", "Photo capture failed: ${exc.message}", exc)
                 }
-
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val savedUri = output.savedUri ?: return
                     viewBinding.imageViewCaptured.apply {
@@ -210,12 +198,9 @@ class CameraFragment : Fragment() {
                     }
 
 
-
                     viewBinding.btnPost.setOnClickListener {
-                        val i = Intent(Intent.ACTION_SEND)
-                        i.type = "image/*"
-                        i.putExtra(Intent.EXTRA_STREAM, savedUri)
-                        startActivity(i)
+                        val content = viewBinding.edt1.text.toString()
+                        postViewModel.addPost(savedUri,content, true)
                     }
                 }
             }
@@ -301,6 +286,19 @@ class CameraFragment : Fragment() {
         cameraProvider.unbindAll()
 
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (allPermissionsGranted()) {
+            startCamera()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        cameraExecutor.shutdown()
+        cameraProvider.unbindAll()
     }
 
     fun getCameraProvider(): ProcessCameraProvider? {
