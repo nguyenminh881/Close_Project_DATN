@@ -1,19 +1,22 @@
 package com.example.cameraprovider
 
 import android.Manifest
+import android.app.ActivityOptions
 import android.app.AlertDialog
-import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.util.Size
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -21,20 +24,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.cameraprovider.databinding.FragmentCameraBinding
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.viewmodel.PostViewModel
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -49,9 +50,10 @@ class CameraFragment : Fragment() {
 
     lateinit var cameraSelector: CameraSelector
 
-    lateinit var cameraControl: CameraControl
+    private lateinit var cameraControl: CameraControl
+    private lateinit var cameraInfo: CameraInfo
 
-    lateinit var cameraInfo: CameraInfo
+    private var iszoom = false
 
     private var currentFlashMode = ImageCapture.FLASH_MODE_OFF
     private lateinit var postViewModel: PostViewModel
@@ -71,11 +73,18 @@ class CameraFragment : Fragment() {
                     "Quyền truy cập máy ảnh đã bị từ chối",
                     Toast.LENGTH_SHORT
                 ).show()
+                disiablebtn()
             } else {
                 startCamera()
             }
         }
 
+    private fun disiablebtn() {
+        viewBinding.buttonSwitchCamera.isEnabled = false
+        viewBinding.buttonFlash.isEnabled = false
+        viewBinding.Btnnratio1x.isEnabled = false
+//        viewBinding.btnGrid.isEnabled = false
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -101,7 +110,7 @@ class CameraFragment : Fragment() {
             takePhoto()
         }
 
-        // Set up the listeners for take photo and video capture buttons
+
 
         viewBinding.buttonSwitchCamera.setOnClickListener {
             swipcam()
@@ -112,14 +121,83 @@ class CameraFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+
+        viewBinding.Btnnratio1x.setOnClickListener {
+
+            zoom()
+        }
+        tabtofocus()
+
+
+
+        /////////////
+        postViewModel.postResultLiveData.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is PostRepository.PostResult.Success -> {
+                 deleImg()
+                }
+                else-> {
+                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        viewBinding.btnLeft.setOnClickListener {
+            startCamera()
+            deleImg()
+        }
     }
 
-    private fun updateViewFinderAspectRatio(aspectRatio: String) {
 
+    private fun deleImg(){
+        viewBinding.btnPost.isEnabled = true
+        viewBinding.imageViewCaptured.setImageDrawable(null)
+        viewBinding.edt1.text.clear()
+        viewBinding.imageViewCaptured.visibility = View.GONE
+        viewBinding.viewFinder.visibility = View.VISIBLE
+        viewBinding.btnPost.visibility = View.GONE
+        viewBinding.edt1.visibility=View.GONE
+        viewBinding.fncLauout.visibility = View.VISIBLE
+        viewBinding.buttonCapture.visibility = View.VISIBLE
+        viewBinding.btnLeft.visibility =View.INVISIBLE
+        viewBinding.btnGenativeAI.visibility = View.INVISIBLE
+        viewBinding.progressBar.visibility = View.GONE
+        postViewModel.clearContentgena()
     }
 
+    private fun zoom() {
+        if (iszoom == true) {
+            cameraControl.setZoomRatio(1.0f)
+            viewBinding.Btnnratio1x.setImageResource(R.drawable.ic_zoom)
+            iszoom = false
+        } else {
+            cameraControl.setZoomRatio(2.0f)
+            viewBinding.Btnnratio1x.setImageResource(R.drawable.ic_nonzoom)
+            iszoom = true
+        }
+    }
+
+    private fun tabtofocus() {
+        viewBinding.viewFinder.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                val factory = viewBinding.viewFinder.meteringPointFactory
+                val point = factory.createPoint(event.x, event.y)
+                val action = FocusMeteringAction.Builder(point).build()
+                cameraControl.startFocusAndMetering(action)
 
 
+                val focusCircle = viewBinding.focusCircle
+                focusCircle.x = event.x - focusCircle.width / 2
+                focusCircle.y = event.y
+                focusCircle.visibility = View.VISIBLE
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    focusCircle.visibility = View.GONE
+                }, 2000)
+            }
+            true
+        }
+    }
 
     private fun flash() {
         if (cameraProvider == null) {
@@ -127,8 +205,16 @@ class CameraFragment : Fragment() {
             return
         }
         currentFlashMode = when (currentFlashMode) {
-            ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_OFF
-            ImageCapture.FLASH_MODE_OFF -> ImageCapture.FLASH_MODE_ON
+            ImageCapture.FLASH_MODE_ON -> {
+                viewBinding.buttonFlash.setImageResource(R.drawable.ic_flashoff)
+                ImageCapture.FLASH_MODE_OFF
+            }
+
+            ImageCapture.FLASH_MODE_OFF -> {
+                viewBinding.buttonFlash.setImageResource(R.drawable.ic_flashon)
+                ImageCapture.FLASH_MODE_ON
+            }
+
             else -> throw IllegalStateException("Unexpected")
         }
         imageCapture?.setFlashMode(currentFlashMode)
@@ -137,7 +223,7 @@ class CameraFragment : Fragment() {
     private fun capquyencam() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Bật quyền truy cập Máy ảnh")
-            .setMessage("Đến cài đặt ứng dụng và đảm bảo Close có quyền truy cập máy ảnh của bạn")
+            .setMessage("Đến cài đặt ứng dụng cấp quyền để ứng dụng được hoạt động đúng đắn!")
             .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
                 dialog.dismiss()
                 val intent = Intent().apply {
@@ -156,11 +242,12 @@ class CameraFragment : Fragment() {
 
     private fun takePhoto() {
 
+
         if (!allPermissionsGranted()) {
             capquyencam()
         }
 
-        // Get a stable reference of the modifiable image capture use case
+        //imgcaptur : xem th nay dc khoi tao chua
         val imageCapture = imageCapture ?: return
 
 
@@ -177,8 +264,9 @@ class CameraFragment : Fragment() {
             ContextCompat.getMainExecutor(requireContext().applicationContext),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
-                    Log.e("TAGY", "Photo capture failed: ${exc.message}", exc)
+                    Log.e("TAGY", "chup fail: ${exc.message}", exc)
                 }
+
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val savedUri = output.savedUri ?: return
                     viewBinding.imageViewCaptured.apply {
@@ -195,12 +283,28 @@ class CameraFragment : Fragment() {
                         fncLauout.visibility = View.INVISIBLE
                         btnPost.visibility = View.VISIBLE
                         buttonCapture.visibility = View.GONE
+                        btnGenativeAI.visibility = View.VISIBLE
                     }
 
 
                     viewBinding.btnPost.setOnClickListener {
+                        viewBinding.btnPost.isEnabled = false
+                        viewBinding.btnLeft.visibility =View.INVISIBLE
+                        viewBinding.btnGenativeAI.visibility = View.INVISIBLE
+                        viewBinding.btnPost.visibility =View.GONE
+                        viewBinding.progressBar.visibility = View.VISIBLE
                         val content = viewBinding.edt1.text.toString()
-                        postViewModel.addPost(savedUri,content, true)
+                        postViewModel.addPost(savedUri, content, true)
+                    }
+
+                    val imageBitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, savedUri)
+                    viewBinding.btnGenativeAI.setOnClickListener {
+                            val dialog = PromptDialog(imageBitmap)
+                            dialog.show(childFragmentManager, "prompt_dialog")
+
+                            postViewModel.contentgena.observe(viewLifecycleOwner) { content ->
+                                viewBinding.edt1.setText(content ?: "")
+                            }
                     }
                 }
             }
@@ -214,13 +318,22 @@ class CameraFragment : Fragment() {
         }
 
         cameraSelector = when (cameraSelector) {
-            CameraSelector.DEFAULT_BACK_CAMERA -> CameraSelector.DEFAULT_FRONT_CAMERA
-            CameraSelector.DEFAULT_FRONT_CAMERA -> CameraSelector.DEFAULT_BACK_CAMERA
+            CameraSelector.DEFAULT_BACK_CAMERA -> {
+                viewBinding.buttonSwitchCamera.setImageResource(R.drawable.ic_backcam)
+                CameraSelector.DEFAULT_FRONT_CAMERA
+
+            }
+
+            CameraSelector.DEFAULT_FRONT_CAMERA -> {
+                viewBinding.buttonSwitchCamera.setImageResource(R.drawable.ic_frontcam)
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
+
             else -> throw IllegalStateException("Unexpected")
         }
 
         try {
-            // Unbind all existing use cases before rebinding with the new camera
+            // unbind
             cameraProvider.unbindAll()
 
             bindCameraUseCases()
@@ -268,6 +381,9 @@ class CameraFragment : Fragment() {
             .build()
         // Bind the preview and image capture use cases to the camera
         cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+        val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+        cameraControl = camera.cameraControl
+        cameraInfo = camera.cameraInfo
     }
 
     private fun requestPermissions() {
@@ -321,7 +437,7 @@ class CameraFragment : Fragment() {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUIRED_PERMISSIONS =
             mutableListOf(
-                Manifest.permission.CAMERA,
+                Manifest.permission.CAMERA
             ).apply {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)

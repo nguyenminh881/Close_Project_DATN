@@ -21,6 +21,7 @@
             android:id="@+id/imgAvtUser"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:onClick="@{() -> viewModel.chooseAvatar()}"
             android:layout_marginStart="6dp"
             android:layout_marginTop="30dp"
             android:padding="3dp"
@@ -34,7 +35,7 @@
 
         <TextView
             android:id="@+id/tvNameUser"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
@@ -45,10 +46,26 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imgAvtUser" />
 
+        <ImageButton
+            android:id="@+id/btn_edit_name"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:paddingHorizontal="6dp"
+            android:backgroundTint="@color/btndf"
+            android:background="@drawable/edittextbd10dp"
+            android:layout_marginStart="14dp"
+            android:gravity="center"
+            android:src="@drawable/ic_edit"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@+id/tvNameUser"
+            app:layout_constraintTop_toTopOf="@+id/tvNameUser"
+            app:layout_constraintBottom_toBottomOf="@+id/tvNameUser"/>
+
+
         <View
             android:id="@+id/line0"
             android:layout_width="match_parent"
-            android:layout_height="3px"
+            android:layout_height="1px"
             android:layout_marginHorizontal="30dp"
             android:layout_marginTop="20dp"
             android:background="@drawable/shapeline"
@@ -62,15 +79,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/line0"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/line0">
 
             <LinearLayout
                 android:id="@+id/viewEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawableTop="@drawable/shapeline"
                 android:orientation="horizontal"
                 android:paddingVertical="20dp"
                 android:paddingStart="30dp">
@@ -82,7 +98,7 @@
                     android:layout_marginEnd="8dp"
                     android:text="Email: "
                     android:textColor="@color/white"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -91,7 +107,7 @@
                     android:layout_height="wrap_content"
                     android:text="@{viewModel.getUserResult.emailUser}"
                     android:textColor="@color/white"
-                    android:textSize="20sp" />
+                    android:textSize="16sp" />
 
                 <EditText
                     android:layout_width="match_parent"
@@ -100,7 +116,7 @@
                     android:maxLines="1"
                     android:paddingVertical="10dp"
                     android:textColor="@color/white"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:visibility="gone" />
 
             </LinearLayout>
@@ -118,31 +134,31 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
-                    android:text="Số điện thoại: "
+                    android:text="Mật khẩu: "
                     android:textColor="@color/white"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvPhoneNumber"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Không có"
+                    android:text="********"
                     android:textColor="@color/white"
-                    android:textSize="20sp" />
+                    android:textSize="16sp" />
 
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionDone"
-                    android:inputType="number"
-                    android:maxLines="1"
-                    android:paddingVertical="10dp"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
+
+
             </LinearLayout>
-
+            <Button
+                android:id="@+id/btn_edit_pw"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:backgroundTint="@color/colorbtnctive"
+                android:text="Đổi mật khẩu"
+                android:textSize="14sp"
+                android:textColor="@color/white" />
 
             <View
                 android:id="@+id/line5"

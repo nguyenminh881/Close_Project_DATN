@@ -5,7 +5,6 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools">
 
 <data>
-
     <variable
         name="postvoicexml"
         type="com.example.cameraprovider.model.Post" />
@@ -110,8 +109,8 @@ xmlns:tools="http://schemas.android.com/tools">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgAvtUserPost"
-                android:layout_width="65dp"
-                android:layout_height="65dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
                 android:layout_marginStart="6dp"
                 android:layout_marginTop="6dp"
                 android:padding="3dp"
@@ -122,20 +121,6 @@ xmlns:tools="http://schemas.android.com/tools">
                 app:strokeColor="@color/key"
                 app:strokeWidth="3dp" />
 
-<!--            <ImageButton-->
-<!--                android:id="@+id/btn_heart"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginEnd="64dp"-->
-<!--                android:layout_marginTop="24dp"-->
-<!--                android:background="@android:color/transparent"-->
-<!--                android:elevation="10dp"-->
-<!--                android:scaleType="centerCrop"-->
-<!--                android:src="@drawable/ic_heart"-->
-<!--                app:layout_constraintTop_toBottomOf="@+id/tv_Desc_Post"-->
-<!--                app:layout_constraintEnd_toEndOf="parent" />-->
-
-
             <TextView
                 android:id="@+id/tv_Name_UserPost"
                 android:layout_width="wrap_content"
@@ -143,7 +128,6 @@ xmlns:tools="http://schemas.android.com/tools">
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:maxLength="35"
-                android:text="@{postvoicexml.userName}"
                 android:textColor="@color/dark"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -171,7 +155,6 @@ xmlns:tools="http://schemas.android.com/tools">
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="@{postvoicexml.createdAt.toDate().toString()}"
                 android:layout_marginEnd="4dp"
                 android:textColor="@android:color/black"
                 android:layout_gravity="end|center_vertical"
@@ -183,7 +166,30 @@ xmlns:tools="http://schemas.android.com/tools">
 
     </androidx.cardview.widget.CardView>
 
+    <LinearLayout
+        android:id="@+id/btn_group_react"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="8dp"
+        android:background="@drawable/boderdialog"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/card"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal">
 
+        <TextView
+            android:id="@+id/nameUserLike"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="3dp"
+            android:text="Không có hoạt động nào 💖"
+            android:layout_gravity="center"
+            android:textSize="16sp"
+            android:textColor="#E6A5A5A5" />
+    </LinearLayout>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/vertical_centerline"

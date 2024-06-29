@@ -1,7 +1,6 @@
 package com.example.cameraprovider
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
@@ -14,29 +13,35 @@ import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cameraprovider.adapter.FriendsAdapter
+import com.example.cameraprovider.adapter.RequestFriendAdapter
 import com.example.cameraprovider.databinding.FragmentFriendListBinding
 import com.example.cameraprovider.viewmodel.FriendViewmodel
-import com.example.cameraprovider.viewmodel.PostViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-class FriendListFragment:BottomSheetDialogFragment() {
+class FriendListFragment : BottomSheetDialogFragment() {
 
     private lateinit var binding: FragmentFriendListBinding
     private lateinit var frViewModel: FriendViewmodel
+    private lateinit var frRequestAdapter: RequestFriendAdapter
+    private lateinit var friendsAdapter: FriendsAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
-        binding = DataBindingUtil.inflate(inflater,R.layout.fragment_friend_list,container,false)
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_friend_list, container, false)
         frViewModel = ViewModelProvider(requireActivity()).get(FriendViewmodel::class.java)
-
-        arguments?.getParcelable<Intent>("intent")?.let {
-            frViewModel.handleFriendRequest(it)
-        }
+        binding.lifecycleOwner = this
+       binding.vmodel = frViewModel
+//        arguments?.getParcelable<Intent>("intent")?.let {
+//            frViewModel.handleFriendRequest(it)
+//        }
 
         return binding.root
 
@@ -45,9 +50,11 @@ class FriendListFragment:BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+
         binding.btnSenlink.setOnClickListener {
             frViewModel.createDynamicLink()
-        }
+
 
         frViewModel.dynamicLink.observe(viewLifecycleOwner, Observer { link ->
             link?.let {
@@ -62,26 +69,57 @@ class FriendListFragment:BottomSheetDialogFragment() {
             } ?: run {
                 Log.d("dynamiclink", "Dynamic link is null")
             }
-        })
+        }) }
 
         frViewModel.errorMessage.observe(viewLifecycleOwner, Observer { error ->
             error?.let {
-               Toast.makeText(requireContext(),"Vui lòng thử lại",Toast.LENGTH_SHORT)
+                Toast.makeText(requireContext(), "Vui lòng thử lại", Toast.LENGTH_SHORT)
             }
         })
 
-        frViewModel.friendshipResult.observe(viewLifecycleOwner,Observer{frship ->
-            val dialogBuilder = AlertDialog.Builder(requireContext())
-            dialogBuilder.setMessage("Bạn đã gửi một yêu cầu kết bạn tới ${frship?.uid2}.")
-                .setCancelable(false)
-                .setPositiveButton("OK") { dialog, id ->
-                    dialog.dismiss()
-                }
+        binding.listrequestFriend.layoutManager = LinearLayoutManager(requireContext())
+        binding.listfriend.layoutManager = LinearLayoutManager(requireContext())
 
-            val alert = dialogBuilder.create()
-            alert.setTitle("Yêu cầu kết bạn")
-            alert.show()
-        })
+
+        frRequestAdapter = RequestFriendAdapter(requireContext(),
+            mutableListOf(),
+            onAcceptClick = { friendship -> frViewModel.onAcceptClick(friendship)},
+            onDeclineClick = { friendship -> frViewModel.onDeclineClick(friendship) }
+        )
+        binding.listrequestFriend.adapter = frRequestAdapter
+        //friends recycler
+        friendsAdapter = FriendsAdapter(requireContext(),
+            mutableListOf(),
+            onRemoveFriend ={friendId,postion -> frViewModel.onRemove(friendId,postion)} )
+
+        binding.listfriend.adapter = friendsAdapter
+
+
+        frViewModel.getFriendship()
+       frViewModel.getFriendAccepted()
+        //friendshipthay doi trangf thairecycler
+
+        frViewModel.listFriendrequest.observe(viewLifecycleOwner) {
+            if (it != null) {
+                frRequestAdapter.updateFriendships(it)
+                binding.totalRequest.text = "Lời mời kết bạn (${it.size})"
+            } else {
+                binding.totalRequest.text = "Lời mời kết bạn (0)"
+            }
+        }
+
+        //friendlist recycler
+
+        frViewModel.listFriend.observe(viewLifecycleOwner) { friends ->
+            if (friends != null) {
+                friendsAdapter.updateFriends(friends)
+                binding.totalFriends.text = "Bạn bè (${friends.size})/15"
+            } else {
+                binding.totalFriends.text = "Bạn bè (0)"
+            }
+        }
+
+
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -94,7 +132,8 @@ class FriendListFragment:BottomSheetDialogFragment() {
     }
 
     private fun setupFullHeight(bottomSheetDialog: BottomSheetDialog) {
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        val bottomSheet =
+            bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
         val behavior = BottomSheetBehavior.from(bottomSheet!!)
         val layoutParams = bottomSheet?.layoutParams
 
@@ -112,11 +151,6 @@ class FriendListFragment:BottomSheetDialogFragment() {
         return displayMetrics.heightPixels
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        data?.let {
-//            frViewModel.handleFriendRequest(it)
-//        }
-//    }
+
 
 }

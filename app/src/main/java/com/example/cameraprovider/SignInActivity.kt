@@ -3,6 +3,7 @@ package com.example.cameraprovider
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -16,19 +17,11 @@ import com.example.cameraprovider.viewmodel.AuthViewModelFactory
 class SignInActivity : AppCompatActivity() {
 
     lateinit var binding:ActivitySignInBinding
-    private lateinit var authViewModel: AuthViewModel
+    private val authViewModel:AuthViewModel by viewModels { AuthViewModelFactory(UserRepository(),this)}
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding =DataBindingUtil.setContentView(this,R.layout.activity_sign_in)
 
-        val userRepository = UserRepository()
-        val factory = AuthViewModelFactory(userRepository, this)
-        authViewModel = ViewModelProvider(this, factory).get(AuthViewModel::class.java)
-
-        if(authViewModel.islogined()){
-            startActivity(Intent(this,MainActivity::class.java))
-            this.finish()
-        }
         binding.lifecycleOwner = this
         binding.authVModel = authViewModel
 
@@ -39,8 +32,6 @@ class SignInActivity : AppCompatActivity() {
         authViewModel.password.observe(this, { password ->
             authViewModel.validateLoginpw(binding.pwCreate.text.toString() ?: "")
         })
-
-
 
 
         authViewModel.loading.observe(this, { loading ->
@@ -70,7 +61,13 @@ class SignInActivity : AppCompatActivity() {
                 }
             }
         })
-    }
 
+
+        binding.btnForgotPassword.setOnClickListener {
+            startActivity(Intent(this,ForgotPWActivity::class.java))
+        }
+
+
+    }
 
 }

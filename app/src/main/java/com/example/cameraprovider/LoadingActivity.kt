@@ -2,6 +2,7 @@ package com.example.cameraprovider
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -37,10 +38,12 @@ class LoadingActivity : AppCompatActivity() {
 
         authViewModel.loading.observe(this, { loading ->
             binding.apply {
-                if(loading == false){
-                    btnNextSignUp.text = ""
+                if(loading != false){
+                    btnNextSignUp.text =""
                     btnNextSignUp.icon = null
+                   progressBar.visibility = View.VISIBLE
                 }else{
+                    progressBar.visibility = View.INVISIBLE
                     btnNextSignUp.text = "Tiếp tục"
                     btnNextSignUp.setIconResource(R.drawable.ic_next)
                 }
@@ -53,8 +56,7 @@ class LoadingActivity : AppCompatActivity() {
             binding.apply {
                 if(name ==""){
                     btnNextSignUp.isEnabled = true
-                    btnNextSignUp.backgroundTintList =
-                        ActivityCompat.getColorStateList(baseContext, R.color.color_active)
+                    btnNextSignUp.backgroundTintList = ActivityCompat.getColorStateList(baseContext, R.color.color_active)
                 }
             }
         })

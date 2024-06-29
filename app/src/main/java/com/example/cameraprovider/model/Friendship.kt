@@ -1,9 +1,13 @@
 package com.example.cameraprovider.model
 
+import com.google.firebase.Timestamp
+
 data class Friendship(
     val id:String?="",
     val uid1: String?="",
     val uid2: String?="",
     val state: String?="",
-    val timeStamp: com.google.firebase.Timestamp
+    val userAvt:String?="",
+    val userName:String?="",
+    val timeStamp:Timestamp= Timestamp.now()
 )

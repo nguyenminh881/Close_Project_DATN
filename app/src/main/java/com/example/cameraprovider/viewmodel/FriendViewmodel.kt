@@ -1,35 +1,56 @@
 package com.example.cameraprovider.viewmodel
 
+import android.content.Context
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.databinding.Observable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cameraprovider.MainActivity
 import com.example.cameraprovider.model.Friendship
+import com.example.cameraprovider.model.User
 import com.example.cameraprovider.repository.FriendRepository
+import com.example.cameraprovider.repository.MessageRepository
 import com.google.firebase.dynamiclinks.ShortDynamicLink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class FriendViewmodel:ViewModel(),Observable{
+class FriendViewmodel : ViewModel(), Observable {
     private val friendRepository = FriendRepository()
+
+    private val messRepository = MessageRepository()
     private val _dynamicLink = MutableLiveData<String>()
     val dynamicLink: LiveData<String> = _dynamicLink
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
-//    private val _userId = MutableLiveData<String?>()
-//    val userId: LiveData<String?> = _userId
-//
-//    private val _userName = MutableLiveData<String?>()
-//    val userName: LiveData<String?> = _userName
 
-   private val _friendshipResult =  MutableLiveData<Friendship?>()
-    val friendshipResult: LiveData<Friendship?> = _friendshipResult
+    private val _friendshipResult = MutableLiveData<String?>()
+    val friendshipResult: LiveData<String?> = _friendshipResult
+
+    private val _infoUserSendlink = MutableLiveData<Pair<String?, String?>>()
+    val infoUserSendlink: LiveData<Pair<String?, String?>> = _infoUserSendlink
+
+    private val _friendRequest = MutableLiveData<Boolean?>()
+    val friendRequest: LiveData<Boolean?> = _friendRequest
+
+    private val _loading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean> = _loading
+
+
+    private val _listFriendrequest = MutableLiveData<MutableList<Friendship>?>()
+    val listFriendrequest: LiveData<MutableList<Friendship>?> = _listFriendrequest
+
+
+    private val _listFriend = MutableLiveData<MutableList<User>?>()
+    val listFriend: LiveData<MutableList<User>?> = _listFriend
 
     fun createDynamicLink() {
-        viewModelScope.launch{
+        viewModelScope.launch {
             try {
                 val shortDynamicLink = friendRepository.createdynamicLink()
                 _dynamicLink.postValue(shortDynamicLink.toString())
@@ -38,26 +59,180 @@ class FriendViewmodel:ViewModel(),Observable{
             }
         }
     }
-//    fun handleDynamicLink(intent: Intent) {
-//        viewModelScope.launch {
-//            val (userId, userName) = friendRepository.handleDynamicLink(intent)
-//            _userId.value = userId
-//            _userName.value = userName
-//        }
-//    }
-fun handleFriendRequest(intent: Intent) {
-    viewModelScope.launch {
-        try {
 
-            val result = friendRepository.handleFriendRequest(intent)
+    fun handleDynamicLink(intent: Intent) {
+        friendRepository.handleDynamicLink(intent) { result ->
             _friendshipResult.postValue(result)
-        } catch (e: Exception) {
-            _errorMessage.postValue(e.message)
+            Log.d("LInkVmodel", "${_friendshipResult.value}")
         }
     }
-}
+
+    fun getinforUserSendlink(userId: String) {
+        viewModelScope.launch {
+            try {
+                friendRepository.getAvatarUsersendlink(userId).let { result ->
+                    _infoUserSendlink.value = result
+                }
+                Log.d("infoavtandname", "${_infoUserSendlink.value}")
+            } catch (e: Exception) {
+                _errorMessage.postValue("Vui lòng thử lại lần sau")
+            }
+        }
+    }
+
+    fun handleFriendRequest(senderUid: String) {
+        _loading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = friendRepository.handleFriendRequest(senderUid)
+                if (result.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        _loading.value = true
+                        _friendRequest.value = true
+                    }
+                } else {
+                    val exception = result.exceptionOrNull()
+                    withContext(Dispatchers.Main) {
+                        _friendRequest.value = false
+                        _loading.value = false
+                        _errorMessage.value = exception?.message
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _loading.value = false
+                    _friendRequest.value = false
+                    _errorMessage.value = e.message
+                    Log.d("requestfriend", "$e")
+                }
+            }
+        }
+    }
+
+    fun getFriendship() {
+        friendRepository.getFriendships { result ->
+            result.onSuccess {
+                _listFriendrequest.postValue(it)
+                Log.d("friendrequestVmdol", "${_listFriendrequest.postValue(it)}")
+            }.onFailure {
+
+            }
+        }
+    }
+
+    fun onAcceptClick(friendship: Friendship) {
+
+        viewModelScope.launch {
+            try {
+                val result =
+                    friendship.id?.let { friendRepository.updatestateFriendship("Accepted", it) }
+                if (result != null) {
+                    if (result.isSuccess) {
+                        withContext(Dispatchers.Main) {
+
+                            _listFriendrequest.value?.remove(friendship)
+                            _listFriendrequest.value = _listFriendrequest.value
+                        }
+                    } else {
+                        val exception = result.exceptionOrNull()
+                        Log.d("friendrequestVmdol", "$exception")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d("friendrequestVmdol", "$e")
+            }
+        }
+    }
+
+    fun onDeclineClick(friendship: Friendship) {
+        viewModelScope.launch {
+            try {
+                val result =
+                    friendship.id?.let { friendRepository.updatestateFriendship("Declined", it) }
+                if (result != null) {
+                    if (result.isSuccess) {
+                        withContext(Dispatchers.Main) {
+                            _listFriendrequest.value?.remove(friendship)
+                            _listFriendrequest.value = _listFriendrequest.value
+                            _listFriend.value = _listFriend.value
+                        }
+                    } else {
+                        val exception = result.exceptionOrNull()
+                        Log.d("friendrequestVmdol", "$exception")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d("friendrequestVmdol", "$e")
+            }
+        }
+    }
+
+    fun getFriendAccepted() {
+        friendRepository.getFriendAccepted(
+            onSuccess = { friends ->
+                // Xử lý danh sách bạn bè thành công
+                _listFriend.value = friends
+            },
+            onFailure = { exception ->
+                // Xử lý lỗi
+                Log.e("ViewModel", "Lỗi khi lấy danh sách bạn bè", exception)
+            }
+        )
+
+    }
 
 
+    fun onRemove(friendId: String, position: Int) {
+        viewModelScope.launch {
+            try {
+                val result = friendRepository.removeFriend(friendId, position)
+                Log.d("friendrequestVmdol", "${result}")
+                if (result.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        _listFriend.value?.removeAt(position)
+                        _listFriend.value = _listFriend.value
+                    }
+                } else {
+                    val exception = result.exceptionOrNull()
+                    Log.d("friendrequestVmdol", "$exception")
+                }
+            } catch (e: Exception) {
+                Log.d("friendrequestVmdol", "$e")
+            }
+        }
+    }
+
+    private val _friendId = MutableLiveData<Triple<String?, String?, String?>?>()
+    val friendId: LiveData<Triple<String?, String?, String?>?> = _friendId
+    fun ongetid(position: Int) {
+        viewModelScope.launch {
+            try {
+                val friendId = friendRepository.getFriendId(position)
+                if (friendId != null) {
+                    Log.d("friendrequestVmdol", "Friend ID: $friendId")
+                    withContext(Dispatchers.Main) {
+                        _friendId.value = friendId
+                        Log.d(
+                            "friendrequestVmdol",
+                            "Không tìm thấy friendId tại vị trí ${_friendId.value}"
+                        )
+                    }
+                } else {
+                    Log.d("friendrequestVmdol", "Không tìm thấy friendId tại vị trí $position")
+                }
+            } catch (e: Exception) {
+                Log.d("friendrequestVmdol", "Lỗi: ${e.message}")
+            }
+        }
+    }
+
+    init {
+        getsize()
+    }
+
+    fun getsize() {
+        _listFriend.value = _listFriend.value
+    }
 
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 

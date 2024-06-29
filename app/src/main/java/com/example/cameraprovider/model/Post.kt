@@ -11,9 +11,5 @@ data class Post(
     val imageURL: String?="",
     val voiceURL: String?="",
     val createdAt: Timestamp?=null,
-    val likes: MutableList<Like> = mutableListOf()
-)
-data class Like(
-    val userId: String = "",
-    val reactions: MutableList<String> =mutableListOf()
+    val hiddenForUsers: List<String> = emptyList()
 )

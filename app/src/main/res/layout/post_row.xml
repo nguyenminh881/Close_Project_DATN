@@ -66,7 +66,6 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:maxLength="35"
-                    android:text="@{postxml.userName}"
                     android:textColor="@color/dark"
                     android:textSize="20sp"
                     android:textStyle="bold"
@@ -94,7 +93,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
-                    android:text="@{postxml.createdAt.toDate().toString()}"
                     android:textColor="@android:color/black"
                     android:layout_gravity="end|center_vertical"
                     android:layout_marginEnd="4dp"
@@ -105,7 +103,32 @@
 
         </androidx.cardview.widget.CardView>
 
+        <LinearLayout
+            android:id="@+id/btn_group_react"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="8dp"
+            android:clickable="true"
+            android:background="@drawable/boderdialog"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/card"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:orientation="horizontal">
 
+            <TextView
+                android:id="@+id/nameUserLike"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="3dp"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:textSize="16sp"
+                android:text="Không có hoạt động nào 💖"
+                android:textColor="#E6A5A5A5" />
+        </LinearLayout>
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/vertical_centerline"

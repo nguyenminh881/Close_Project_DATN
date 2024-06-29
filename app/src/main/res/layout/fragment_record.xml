@@ -12,7 +12,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         tools:context=".RecordFragment">
 
         <androidx.cardview.widget.CardView
@@ -142,7 +142,12 @@
                 android:background="#00FFFFFF"
                 android:src="@drawable/ic_upload"
                 android:visibility="gone" />
-
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:visibility="gone"
+                android:indeterminateTint="@color/white"/>
             <Space
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

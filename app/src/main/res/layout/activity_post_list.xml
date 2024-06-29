@@ -10,6 +10,9 @@
         <variable
             name="pVmodel"
             type="com.example.cameraprovider.viewmodel.PostViewModel" />
+        <variable
+            name="mVmodel"
+            type="com.example.cameraprovider.viewmodel.MessageViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -59,18 +62,24 @@
 
             </com.facebook.shimmer.ShimmerFrameLayout>
 
-
-
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerView"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefreshLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_marginHorizontal="10dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" >
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+            />
+
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
             <FrameLayout
                 android:id="@+id/img_group_layout"
@@ -81,7 +90,7 @@
                 android:orientation="horizontal"
                 android:layout_marginEnd="40dp"
                 app:layout_constraintBottom_toTopOf="@+id/scrollview_btn"
-                app:layout_constraintEnd_toEndOf="@id/recyclerView">
+                app:layout_constraintEnd_toEndOf="@id/swipeRefreshLayout">
 
                 <ImageView
                     android:id="@+id/img_heart"
@@ -135,6 +144,7 @@
 
             </FrameLayout>
 
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btntest"
                 android:layout_width="wrap_content"
@@ -142,7 +152,7 @@
                 android:elevation="10dp"
                 app:icon="@drawable/ic_setting"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/recyclerView" />
+                app:layout_constraintTop_toTopOf="@+id/swipeRefreshLayout" />
 
             <HorizontalScrollView
                 android:id="@+id/scrollview_btn"
@@ -157,26 +167,25 @@
                 <LinearLayout
                     android:id="@+id/btn_group_layout"
                     android:layout_width="match_parent"
+                    android:visibility="gone"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <EditText
+                    <Button
+                        android:id="@+id/fakeedittext"
                         android:layout_width="260dp"
                         android:layout_height="46dp"
+                        app:backgroundTint="@color/bg_input"
                         android:background="@drawable/edittextbd10dp"
                         android:gravity="center_vertical"
-                        android:hint="Gửi tin nhắn..."
                         android:layout_marginStart="6dp"
-                        android:imeOptions="actionSend"
                         android:layout_marginEnd="10dp"
                         android:textStyle="bold"
-                        android:maxLength="64"
+                        android:text="Gửi câu trả lời..."
                         android:paddingHorizontal="20dp"
-                        android:singleLine="true"
                         android:textColor="@color/white"
-                        android:textColorHint="@color/white"
-                        android:textSize="16dp" />
+                        android:textSize="16sp" />
 
 
                     <ImageButton
@@ -224,7 +233,9 @@
                         android:src="@drawable/ic_angry" />
 
                 </LinearLayout>
+
             </HorizontalScrollView>
+
 
             <LinearLayout
                 android:id="@+id/btn_fnc"
@@ -242,16 +253,19 @@
                     android:id="@+id/btn_share"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
+                    app:backgroundTint="@color/colorbtnctive"
+                    android:background="@drawable/edittextbd10dp"
+                    android:padding="5dp"
                     android:elevation="10dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_heart" />
+                    android:src="@drawable/ic_share" />
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1" />
 
                 <com.google.android.material.button.MaterialButton
+                   android:id="@+id/dangbai"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:background="@drawable/edittextbd10dp"
@@ -271,18 +285,85 @@
 
 
                 <ImageButton
-                    android:id="@+id/btn_open_dialogsheet"
+                    android:id="@+id/btn_delete"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:backgroundTint="@color/colorbtnctive"
-                    android:padding="0dp"
                     android:background="@drawable/edittextbd10dp"
                     android:elevation="10dp"
+                    android:padding="5dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_more" />
+                    android:src="@drawable/ic_delete" />
 
 
             </LinearLayout>
+
+
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/realedittextLayout"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#70000000"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:id="@+id/linearLayout6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginHorizontal="10dp"
+                android:backgroundTint="@color/white"
+                android:background="@drawable/edittextbd10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <EditText
+                    android:id="@+id/realedittext"
+                    android:layout_width="0dp"
+                    android:layout_weight="3"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:paddingStart="20dp"
+                    android:gravity="center_vertical"
+                    android:hint="Trả lời Minh..."
+                    android:imeOptions="actionSend"
+                    android:maxLines="1"
+                    android:text="@={mVmodel.messagesend}"
+                    android:singleLine="true"
+                    android:textColor="@color/dark"
+                    android:textColorHint="@color/dark"
+                    android:textSize="16sp" />
+
+
+                <Button
+                    android:id="@+id/btn_send"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/edittextbd10dp"
+                    android:enabled="false"
+                    android:gravity="center"
+                    android:text="Gửi"
+                    android:textSize="14sp"
+                    app:backgroundTint="#505050"/>
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </layout>

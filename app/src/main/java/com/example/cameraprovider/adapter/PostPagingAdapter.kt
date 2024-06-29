@@ -1,10 +1,19 @@
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.NotificationCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -12,11 +21,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-
+import com.example.cameraprovider.LikesBottomSheetDialog
 import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.PostRowBinding
 import com.example.cameraprovider.databinding.PostRowVoiceBinding
 import com.example.cameraprovider.model.Post
+import com.example.cameraprovider.viewmodel.PostViewModel
+import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,12 +39,14 @@ import java.io.File
 import java.io.IOException
 
 
-class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(POST_COMPARATOR) {
-
-
-    init {
-
-    }
+class PostPagingAdapter(
+    private val isCurrentUser: (Post) -> Boolean,
+    private val viewModel: PostViewModel,
+    private val lifecycleOwner: LifecycleOwner,
+    private val context: Context,
+    private val activity: FragmentActivity
+) :
+    PagingDataAdapter<Post, RecyclerView.ViewHolder>(POST_COMPARATOR) {
 
     companion object {
         const val VIEW_TYPE_IMAGE = 0
@@ -50,9 +63,12 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
         }
     }
 
-
     class ImageViewHolder(val binding: PostRowBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(post: Post) {
+        private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
+        fun bind(
+            post: Post, isCurrentUser: (Post) -> Boolean, viewModel: PostViewModel,
+            lifecycleOwner: LifecycleOwner, context: Context, activity: FragmentActivity
+        ) {
             if (post.userAvatar != null) {
                 Glide.with(binding.root.context)
                     .load(post.userAvatar)
@@ -60,7 +76,7 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .error(R.drawable.avt_base)
                     .transition(DrawableTransitionOptions.withCrossFade(100))
-                    .override(100,100)
+                    .override(100, 100)
                     .into(binding.imgAvtUserPost)
             } else {
                 binding.imgAvtUserPost.setImageResource(R.drawable.avt_defaut)
@@ -73,15 +89,47 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
                     .thumbnail(0.5f)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .error(R.drawable.error)
-                    .override(720,720)
+                    .override(720, 720)
                     .transition(DrawableTransitionOptions.withCrossFade(100))
                     .into(binding.imageViewPost)
             } else {
                 binding.imageViewPost.setImageResource(R.drawable.error)
             }
+            if (isCurrentUser(post)) {
+                binding.tvNameUserPost.text = "Bạn"
+            } else {
+                binding.tvNameUserPost.text = post.userName
+            }
+            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
+            binding.timeStamp.text = timeAgo
 
-            // Gán dữ liệu khác của bài đăng vào view
+            if (post.userId == viewModel.getcurrentId()) {
+
+                currentLikesLiveData?.removeObservers(lifecycleOwner)
+                currentLikesLiveData = viewModel.getLikes(post.postId)
+                binding.btnGroupReact.setOnTouchListener { v, event ->
+                    if (event.action == MotionEvent.ACTION_UP) {
+                        val dialog = LikesBottomSheetDialog(post.postId, viewModel)
+                        dialog.show(activity.supportFragmentManager, "LikesBottomSheetDialog")
+                    }
+                    true // Trả về 'true' để báo hiệu rằng bạn đã xử lý sự kiện chạm
+                }
+                currentLikesLiveData?.observe(lifecycleOwner) { likesData ->
+                    if (likesData.isNotEmpty()) {
+                        binding.nameUserLike.text = "Có ${likesData.size} hoạt động \uD83D\uDC96 \n" +
+                                "Ấn vào để xem"
+                    }
+                    else {
+                        binding.nameUserLike.text = "Không có hoạt động nào ✨"
+                    }
+                }
+            } else {
+                binding.btnGroupReact.visibility = ViewGroup.GONE
+            }
+
             binding.postxml = post
+
+
         }
     }
 
@@ -95,19 +143,65 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
         init {
             setupWaveformView()
         }
-        fun bind(post: Post) {
+
+        private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
+        fun bind(
+            post: Post,
+            isCurrentUser: (Post) -> Boolean,
+            viewModel: PostViewModel,
+            lifecycleOwner: LifecycleOwner,
+            activity: FragmentActivity
+        ) {
+            if (post.userAvatar != null) {
                 Glide.with(binding.root.context)
-                    .load(post.imageURL)
+                    .load(post.userAvatar)
                     .thumbnail(0.25f)
-                    .error(R.drawable.avt_base)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .error(R.drawable.avt_base)
                     .transition(DrawableTransitionOptions.withCrossFade(100))
+                    .override(100, 100)
                     .into(binding.imgAvtUserPost)
+            } else {
+                binding.imgAvtUserPost.setImageResource(R.drawable.avt_defaut)
+            }
+
             post.voiceURL?.let { url ->
                 downloadAudio(url)
             } ?: run {
                 Log.e("VoiceViewHolder", "Voice URL is null")
             }
+            if (isCurrentUser(post)) {
+                binding.tvNameUserPost.text = "Bạn"
+            } else {
+                binding.tvNameUserPost.text = post.userName
+            }
+            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
+            binding.timeStamp.text = timeAgo
+
+            if (post.userId == viewModel.getcurrentId()) {
+
+                currentLikesLiveData?.removeObservers(lifecycleOwner)
+                currentLikesLiveData = viewModel.getLikes(post.postId)
+                binding.btnGroupReact.setOnTouchListener { v, event ->
+                    if (event.action == MotionEvent.ACTION_UP) {
+                        Log.d("PostPagingAdapter", "Button clicked for post: ${post.postId}")
+                        val dialog = LikesBottomSheetDialog(post.postId, viewModel)
+                        dialog.show(activity.supportFragmentManager, "LikesBottomSheetDialog")
+                    }
+                    true // Trả về 'true' để báo hiệu rằng bạn đã xử lý sự kiện chạm
+                }
+                currentLikesLiveData?.observe(lifecycleOwner) { likesData ->
+                    if (likesData.isNotEmpty()) {
+                        binding.nameUserLike.text = "Có ${likesData.size} hoạt động \uD83D\uDC96 \nẤn vào để xem "
+                    }
+                    else {
+                        binding.nameUserLike.text = "Không có hoạt động nào ✨"
+                    }
+                }
+            } else {
+                binding.btnGroupReact.visibility = ViewGroup.GONE
+            }
+
 
             binding.postvoicexml = post
         }
@@ -123,13 +217,10 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
                         Log.d("VoiceViewHolder", "Audio file downloaded successfully")
                         binding.wave.setRawData(localFile.readBytes())
 
+                        mediaPlayer.reset()
+                        mediaPlayer.setDataSource(localFile.absolutePath)
+                        mediaPlayer.prepare()
 
-                        mediaPlayer = MediaPlayer().apply {
-                            setDataSource(localFile.absolutePath)
-                            prepare()
-                        }
-
-                        mediaPlayer
                         Log.d("TAGY", "${mediaPlayer.duration}")
                         time = (mediaPlayer.duration / 1000).toInt()
                         if (time == 60) {
@@ -143,7 +234,20 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
                         binding.play.setOnClickListener {
 
                             if (!isplay) {
-                                playAudio(localFile.absolutePath)
+                                try {
+                                    mediaPlayer.reset()
+                                    mediaPlayer.setDataSource(localFile.absolutePath)
+                                    mediaPlayer.prepare()
+                                    mediaPlayer.start()
+                                    mediaPlayer.setOnCompletionListener {
+                                        stopAudio()
+                                    }
+                                    isplay = true
+                                    binding.play.text = "dừng"
+                                    handler.post(updateWaveform)
+                                } catch (e: IOException) {
+                                    Log.e("VoiceViewHolder", "loi", e)
+                                }
 
                             } else {
                                 stopAudio()
@@ -153,43 +257,20 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("VoiceViewHolder", "Failed to download audio file", e)
-                }
-            }
-        }
-
-        private fun playAudio(filePath: String) {
-            mediaPlayer = MediaPlayer().apply {
-                try {
-                    setDataSource(filePath)
-                    prepare()
-                    start()
-                    setOnCompletionListener {
-                        mediaPlayer?.stop()
-                        mediaPlayer?.release()
-                        isplay = false
-                        binding.play.text = "phát"
-                        handler.removeCallbacks(updateWaveform)
-                        binding.wave.progress = 0f
-
-                    }
-                    isplay = true
-                    binding.play.text = "dừng"
-                    handler.post(updateWaveform)
-                } catch (e: IOException) {
-                    Log.e("VoiceViewHolder", "Failed to play audio", e)
+                    Log.e("VoiceViewHolder", "loi gi dau xanh", e)
                 }
             }
         }
 
         private fun stopAudio() {
-            mediaPlayer?.stop()
-            binding.play.text = "phát"
-            isplay = false
-            handler.removeCallbacks(updateWaveform)
-            binding.wave.progress = 0f
-            mediaPlayer?.reset()
-
+            if (isplay) {
+                mediaPlayer.stop()
+                mediaPlayer.reset()
+                isplay = false
+                binding.play.text = "phát"
+                handler.removeCallbacks(updateWaveform)
+                binding.wave.progress = 0f
+            }
         }
 
         private val updateWaveform = object : Runnable {
@@ -251,9 +332,17 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
         val post = getItem(position)
         if (post != null) {
             when (holder) {
-                is ImageViewHolder -> holder.bind(post)
+                is ImageViewHolder -> holder.bind(
+                    post,
+                    isCurrentUser,
+                    viewModel,
+                    lifecycleOwner,
+                    context,
+                    activity
+                )
 
-                is VoiceViewHolder -> holder.bind(post)
+                is VoiceViewHolder -> holder.bind(post, isCurrentUser, viewModel, lifecycleOwner,
+                    activity)
             }
         }
     }
@@ -273,10 +362,21 @@ class PostPagingAdapter( ) : PagingDataAdapter<Post, RecyclerView.ViewHolder>(PO
     fun getPostId(position: Int): String? {
         return getItem(position)?.postId
     }
-//
-//
-//    fun onIconClick(postId: String) {
-//        viewModel.setContent(postId)
-//    }
+
+    fun getPostUserId(position: Int): String? {
+        return getItem(position)?.userId
+    }
+
+    fun getContentFile(position: Int): String? {
+        if (getItemViewType(position) == VIEW_TYPE_IMAGE) {
+            return getItem(position)?.imageURL
+        } else {
+            return getItem(position)?.voiceURL
+        }
+    }
+
+    fun getPost(position: Int): Post? {
+        return getItem(position)
+    }
 
 }

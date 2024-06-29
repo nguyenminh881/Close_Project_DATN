@@ -14,6 +14,7 @@ import androidx.databinding.Observable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import com.example.cameraprovider.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,20 +22,28 @@ import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
 import androidx.lifecycle.viewModelScope
 import com.bumptech.glide.Glide
+import com.example.cameraprovider.AdminActivity
 import com.example.cameraprovider.LoadingActivity
 import com.example.cameraprovider.MainActivity
+import com.example.cameraprovider.ProfileActivity
+import com.example.cameraprovider.R
 import com.example.cameraprovider.StartAppActivity
 import com.example.cameraprovider.model.User
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.random.Random
 
 
 class AuthViewModel(private val userRepository: UserRepository, private val context: Context) :
@@ -107,20 +116,21 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
     lateinit var imgUri: Uri
 
+
 //    private lateinit var imgURI:Uri
 
     //validate email
     private fun isBasicValidEmail(email: String): Boolean {
-        val basicEmailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+        val basicEmailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z0-9-]+$"
         return Pattern.compile(basicEmailRegex).matcher(email).matches()
     }
 
-    private fun isValidEmail(emailValue: String): Boolean {
-        val emailRegex =
-            "^[A-Za-z0-9._%+-]+@(gmail\\.com|yahoo\\.com|outlook\\.com|.*\\.edu(\\.[a-z]{2,})?)$"
-        val pattern = Pattern.compile(emailRegex)
-        return pattern.matcher(emailValue).matches()
-    }
+//    private fun isValidEmail(emailValue: String): Boolean {
+//        val emailRegex =
+//            "^[A-Za-z0-9._%+-]+@(gmail\\.com|yahoo\\.com|outlook\\.com|.*\\.edu(\\.[a-z]{2,})?)$"
+//        val pattern = Pattern.compile(emailRegex)
+//        return pattern.matcher(emailValue).matches()
+//    }
 
     //validate pw
     private fun isValidPassword(passwordValue: String): Boolean {
@@ -150,9 +160,6 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
         } else if (!isBasicValidEmail(emailValue)) {
             isValid = false
             _emailError.value = "Email không hợp lệ"
-        } else if (!isValidEmail(emailValue)) {
-            isValid = false
-            _emailError.value = "Email này không được hỗ trợ"
         } else if (handleSignUpError(exception)) {
             isValid = false
             _emailError.value = "Tài khoản email đã tồn tại. Vui lòng thử email khác!"
@@ -184,8 +191,8 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                 _emailHelperText.value = "^"
             }
 
-            email.length in 1..7 -> {
-                _emailHelperText.value = "Hỗ trợ email: gmail.com, outlook và edu"
+            email.length in 1..3 -> {
+                _emailHelperText.value = "Chọn email chính chủ của bạn"
             }
 
             else -> {
@@ -207,7 +214,7 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
             !isValidPassword(password) && password.length > 4 -> {
                 _passwordHelperText.value =
-                    "và có ít nhất 1 kí tự in hoa, 1 chữ số"
+                    "và có ít nhất 1 kí tự in hoa, 1 chữ số, 1 chữ thường"
             }
 
             isValidPassword(password) -> {
@@ -256,7 +263,11 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                     !validateEmailAndPassword(emailValue, passwordValue, e)
                 }
             } catch (e: FirebaseNetworkException) {
-                Toast.makeText(context,"Vui lòng kiểm tra kết nối mạng của bạn",Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    context,
+                    "Vui lòng kiểm tra kết nối mạng của bạn",
+                    Toast.LENGTH_SHORT
+                )
             }
         }
     }
@@ -267,7 +278,8 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
         intent.type = "image/*"
         (context as Activity).startActivityForResult(intent, REQUEST_IMAGE_GET)
     }
-
+    private val _imgUriInitialized = MutableLiveData<Boolean>(false)
+    val imgUriInitialized: LiveData<Boolean> = _imgUriInitialized
     fun handleImageResult(
         requestCode: Int,
         resultCode: Int,
@@ -279,13 +291,12 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                 REQUEST_IMAGE_GET -> {
                     val originalImageUri = data?.data
                     if (originalImageUri != null) {
-                        // Lấy Uri của ảnh đã resize
                         viewModelScope.launch(Dispatchers.IO) {
                             val resizedImageUri = getResizedImageUri(context, originalImageUri)
 
                             // Gán imgUri bằng Uri của ảnh đã resize
                             imgUri = resizedImageUri!!
-
+                            _imgUriInitialized.postValue(true)
                             // Hiển thị ảnh đã resize lên ShapeableImageView
                             withContext(Dispatchers.Main) {
                                 if (resizedImageUri != null) {
@@ -300,6 +311,7 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
             }
         }
     }
+
     private suspend fun getResizedImageUri(context: Context, imgUri: Uri): Uri? {
         val resizedBitmap = Glide.with(context)
             .asBitmap()
@@ -310,6 +322,7 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
         return saveBitmapToStorage(resizedBitmap, context)
     }
+
     private fun saveBitmapToStorage(bitmap: Bitmap, context: Context): Uri? {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "JPEG_${timeStamp}_"
@@ -332,62 +345,59 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
     }
 
 
-    fun updatenamehelper(
-        name: String
-    ) {
-        if (name.length >= 6) {
-            _namehelper.value = ""
-        } else {
-            _namehelper.value = "^"
-        }
+    fun updatenamehelper(name: String) {
+        when {
+            name.isEmpty() -> {
+                _namehelper.value = "^"
+            }
 
+            name.length <= 3 -> {
+                _namehelper.value = "Vui lòng điền tên dài hơn"
+            }
+
+            else -> {
+                _namehelper.value = ""
+                _nameError.value = ""
+            }
+        }
     }
 
-    private fun validateNameAndAvt(
-        name: String
-    ): Boolean {
-        var isValid = true
-        if (name == "") {
-            _nameError.value = "Vui lòng nhập tên"
-            isValid = false
-        } else if (name.length < 3) {
-            _nameError.value = "Vui lòng chọn lại tên khác"
-            isValid = false
-        }
-        return isValid
-    }
-
+    //
     fun updateAvtAndNameUser() {
-        val userNameValue = nameUser.value ?: ""
+        var userNameValue = nameUser.value ?: ""
         _loading.value = true
-
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val updateResult = userRepository.createAvtandNameUser(imgUri, userNameValue)
-                val exception = updateResult.exceptionOrNull()
-                withContext(Dispatchers.Main) {
-                    if (updateResult.isSuccess) {
+                if (updateResult.isSuccess) {
+                    withContext(Dispatchers.Main) {
                         _loading.value = true
                         Log.d("TAGY", "thanh cong")
-                        val intent = Intent(context, MainActivity::class.java)
-                        context.startActivity(intent)
+                        val i = Intent(context, MainActivity::class.java)
+                        i.flags =
+                            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(i)
                         if (context is Activity) {
                             context.finish()
                         }
                         _updateResult.value = true
                         _loading.value = false
-                    } else {
-                        !validateNameAndAvt(userNameValue)
-                        Log.d("TAGY", "error update avtname: $exception $imgUri")
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        val exception = updateResult.exceptionOrNull()
                         _loading.value = false
+                        _updateResult.value = false
+                        _nameError.value = "Vui lòng chọn ảnh đại diện"
+                        Log.d("TAGY", "error update avtname: $exception $imgUri")
                     }
                 }
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     _loading.value = false
-                    !validateNameAndAvt(userNameValue)
-                    Log.d("TAGY", "error update avtnme: $e")
-
+                    _updateResult.value = false
+                    _nameError.value = "Vui lòng chọn ảnh đại diện"
                 }
             }
         }
@@ -397,19 +407,19 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
     private fun handleLoginError(exception: Throwable?): Boolean {
         var ischeck = true
         if (exception is FirebaseAuthInvalidCredentialsException) {
-            _pwErrorLg.postValue( exception.message)
+            _pwErrorLg.postValue(exception.message)
             ischeck = false
-        }else if (exception is FirebaseAuthInvalidUserException) {
-            _pwErrorLg.postValue( exception.message)
+        } else if (exception is FirebaseAuthInvalidUserException) {
+            _pwErrorLg.postValue(exception.message)
             ischeck = false
-        }else if (exception is FirebaseNetworkException) {
-            _pwErrorLg.postValue( exception.message)
+        } else if (exception is FirebaseNetworkException) {
+            _pwErrorLg.postValue(exception.message)
             ischeck = false
-        }else if (exception is FirebaseNetworkException) {
-            _pwErrorLg.postValue( exception.message)
+        } else if (exception is FirebaseNetworkException) {
+            _pwErrorLg.postValue(exception.message)
             ischeck = false
-        }else{
-            _pwErrorLg.postValue( exception?.message)
+        } else {
+            _pwErrorLg.postValue(exception?.message)
         }
         return ischeck
     }
@@ -447,10 +457,22 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                 if (loginResult.isSuccess) {
                     withContext(Dispatchers.Main) {
                         _loading.value = true
-                        context.startActivity(Intent(context, MainActivity::class.java))
-                        if (context is Activity) {
-                            context.finish()
+                        if (emailValue == "nguyennhuminh556@gmail.com") {
+                            val i = Intent(context, AdminActivity::class.java)
+                            i.flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(i)
+                        } else {
+
+                            val i = Intent(context, MainActivity::class.java)
+                            i.flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(i)
+                            if (context is Activity) {
+                                context.finish()
+                            }
                         }
+
                         Log.d("TAGY", "Login successful")
                         _loginResult.value = true
                     }
@@ -494,19 +516,150 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
         }
     }
 
-   fun islogin(){
-       var islogin = userRepository.isUserLoggedIn()
-       if(islogin ){
-           context.startActivity(Intent(context,MainActivity::class.java))
+    fun getCurrentId(): String {
+        return userRepository.getCurrentUid()
+    }
 
-       }
-   }
-
-    fun islogined():Boolean{
+    fun islogined(): Boolean {
         var islogin = userRepository.isUserLoggedIn()
         return islogin
     }
 
+    fun isadmin(): Boolean {
+        var isAdmin = userRepository.isAdmin()
+        return isAdmin
+    }
+
+    @Bindable
+    var emailforgot = MutableLiveData<String?>()
+    private val _btntext = MutableLiveData<String?>()
+    val btntext: LiveData<String?> get() = _btntext
+
+
+    fun forgotPassword() {
+        viewModelScope.launch {
+            var emailfg = emailforgot.value ?: ""
+            val resetEmail = userRepository.forgotPassword(emailfg)
+            if (resetEmail.isSuccess) {
+                _btntext.value = "Đã gửi, Vui lòng kiểm tra email"
+            } else {
+                _btntext.value = "Vui lòng thử lại"
+            }
+        }
+    }
+
+    private fun validatepw(newpw: String): Boolean {
+        var isValid = true
+        if (newpw.isEmpty()) {
+            isValid = false
+            _passwordError.value = "^"
+        } else if (newpw.length < 6) {
+            isValid = false
+            _passwordError.value = "Mật khẩu phải lớn hơn 6 ký tự"
+        } else if (!isValidPassword(newpw)) {
+            isValid = false
+            _passwordError.value =
+                "Mật khẩu phải chứa ít nhất 1 kí tự in hoa, 1 chữ thường và 1 chữ số"
+        } else {
+            _passwordError.value = null
+        }
+        return isValid
+    }
+
+    //update name
+    private val _UpdateError = MutableLiveData<String>()
+    val UpdateError: LiveData<String> get() = _UpdateError
+    fun updatepw() {
+        val newpwvalue = password.value ?: ""
+        _loading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = userRepository.updatePassword(newpwvalue)
+                if (result.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        _loading.value = true
+                        Log.d("TAGY", "update success")
+                        _UpdateError.value = "mật khẩu"
+                        _loading.value = false
+                    }
+                } else {
+                    val exception = result.exceptionOrNull()
+                    withContext(Dispatchers.Main) {
+                        !validatepw(newpwvalue)
+                        Log.d("TAGY", "update false $exception")
+
+                        if (exception is FirebaseAuthRecentLoginRequiredException) {
+                            _UpdateError.value = "Vui lòng đăng nhập lại trước khi đổi mật khẩu"
+                        } else if (exception is FirebaseNetworkException) {
+                            _UpdateError.value = "Vui lòng kiểm tra lại kết nối"
+                        }
+                        _loading.value = false
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    !validatepw(newpwvalue)
+                    if (e is FirebaseAuthRecentLoginRequiredException) {
+                        _UpdateError.value = "Vui lòng đăng nhập lại trước khi đổi mật khẩu"
+                    } else if (e is FirebaseNetworkException) {
+                        _UpdateError.value = "Vui lòng kiểm tra lại kết nối"
+                    }
+                    _updateResult.value = false
+                    Log.d("TAGY", "$e")
+                    _loading.value = false
+                }
+            }
+        }
+    }
+
+    fun updatename() {
+        val newnamevalue = nameUser.value ?: ""
+        _loading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = userRepository.updateName(newnamevalue)
+                if (result.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        _loading.value = true
+                        Log.d("TAGY", "update success")
+                        _getUserResult.value?.nameUser = newnamevalue
+                        _UpdateError.value = "tên"
+                        _loading.value = false
+                    }
+                    getInfo()
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _UpdateError.value = "Kiểm tra lại kết nối hoặc thử lại sau"
+                        _loading.value = false
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _UpdateError.value = "Kiểm tra lại kết nối hoặc thử lại sau"
+                    _loading.value = false
+                }
+            }
+        }
+    }
+
+
+    fun updateAvt() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _imgUriInitialized.asFlow().filter { it }.first()
+            val result = userRepository.updateAvatar(imgUri)
+            if (result.isSuccess) {
+                withContext(Dispatchers.Main) {
+                _getUserResult.value?.let{
+
+                    it.avatarUser = it.avatarUser
+                }
+                _updateResult.value = true}
+            } else {
+                withContext(Dispatchers.Main) {
+                _updateResult.value = false}
+            }
+        }
+    }
 
     fun logout() {
         viewModelScope.launch {

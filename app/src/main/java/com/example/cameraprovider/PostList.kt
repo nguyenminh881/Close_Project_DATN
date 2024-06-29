@@ -1,20 +1,36 @@
 package com.example.cameraprovider
 
 import PostPagingAdapter
+import PostPagingAdapter.Companion.VIEW_TYPE_IMAGE
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.DocumentsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.FileProvider
+import androidx.core.net.toFile
+import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 
 import androidx.lifecycle.lifecycleScope
@@ -25,42 +41,80 @@ import androidx.recyclerview.widget.RecyclerView
 
 import androidx.recyclerview.widget.SnapHelper
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.example.cameraprovider.databinding.ActivityPostListBinding
+import com.example.cameraprovider.viewmodel.MessageViewModel
+
 import com.example.cameraprovider.viewmodel.PostViewModel
-import com.facebook.shimmer.ShimmerFrameLayout
-import kotlinx.coroutines.flow.collect
+import com.github.marlonlom.utilities.timeago.TimeAgo
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
+
 import kotlinx.coroutines.launch
-import kotlin.properties.Delegates
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 
 class PostList : AppCompatActivity() {
 
     private lateinit var binding: ActivityPostListBinding
     lateinit var postApdapter: PostPagingAdapter
     private val postViewModel: PostViewModel by viewModels()
+    private val messViewModel: MessageViewModel by viewModels()
     private var currentPostPosition = 0
-    private var isListEmpty = 0
+    private var isKeyboardVisible = false
+    private var isedtVisible = false
+    private lateinit var imm: InputMethodManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_post_list)
 
         setupRecyclerView()
 
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            postApdapter.refresh()
+            binding.shimmerLayout.startShimmer()
+            binding.shimmerLayout.visibility = View.VISIBLE
+
+            //  trạng thái tải dữ liệu
+            lifecycleScope.launch {
+                postApdapter.loadStateFlow.collectLatest { loadStates ->
+                    // Kiểm tra xem dữ liệu đã được tải xong chưa
+                    if (loadStates.refresh is LoadState.NotLoading) {
+                        binding.swipeRefreshLayout.isRefreshing = false
+                        binding.shimmerLayout.stopShimmer()
+                        binding.shimmerLayout.visibility = View.GONE
+                        binding.recyclerView.scrollToPosition(0)
+                    }
+                }
+            }
+        }
+
+
+
         lifecycleScope.launch {
             postViewModel.posts
-                .collect { pagingData ->
+                .collectLatest { pagingData ->
                     postApdapter.submitData(pagingData)
                 }
 
         }
+
         postApdapter.addLoadStateListener { loadState ->
 
             if (loadState.refresh is LoadState.Loading) {
                 binding.shimmerLayout.startShimmer()
+
             } else {
                 binding.shimmerLayout.stopShimmer()
+
                 binding.shimmerLayout.visibility = View.GONE
             }
 
@@ -97,14 +151,35 @@ class PostList : AppCompatActivity() {
             }
 
         }
-        // Theo dõi vị trí của item hiện tại trong RecyclerView
+
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                 currentPostPosition = layoutManager.findFirstVisibleItemPosition()
+                if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.iscurrentId()) {
+                    binding.btnGroupLayout.visibility = View.GONE
+
+                } else {
+                    binding.btnGroupLayout.visibility = View.VISIBLE
+                }
+
+                binding.btnShare.setOnClickListener {
+                    val url = postApdapter.getContentFile(currentPostPosition)
+                    if (url != null) {
+                        if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
+                            shareImage(this@PostList, url)
+                        } else {
+                            shareAudio(this@PostList, url)
+                        }
+                    }
+                }
+
             }
+
         })
+
+
         //tạo animation
         val likeAnimation = listOf(
             AnimationUtils.loadAnimation(this, R.anim.heartflyy),
@@ -112,9 +187,7 @@ class PostList : AppCompatActivity() {
             AnimationUtils.loadAnimation(this, R.anim.heartflyy),
             AnimationUtils.loadAnimation(this, R.anim.heartflyy)
         )
-        postViewModel.likeEvent.observe(this, Observer { postId ->
-            Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
-        })
+
         //set clicked icon
         binding.apply {
             btnHeart.setOnClickListener {
@@ -133,7 +206,6 @@ class PostList : AppCompatActivity() {
                     override fun onAnimationRepeat(animation: Animation?) {
 
                     }
-
                 })
 
             }
@@ -195,6 +267,135 @@ class PostList : AppCompatActivity() {
             }
         }
 
+
+        postViewModel.likeEvent.observe(this, Observer { postId ->
+            Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
+        })
+
+        binding.dangbai.setOnClickListener {
+            this.onStop()
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_out_down, R.anim.slide_in_down)
+        }
+        imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+
+
+        // Xử lý khi click vào fakeedittext
+        binding.fakeedittext.setOnClickListener {
+            toggleEditTextVisibility()
+        }
+
+        // Xử lý khi click vào realedittextLayout để ẩn bàn phím
+        binding.realedittextLayout.setOnClickListener {
+            hideKeyboard()
+            binding.realedittextLayout.visibility = View.GONE
+        }
+
+        binding.mVmodel = messViewModel
+
+
+        messViewModel.messagesend.observe(this){
+            if(messViewModel.messagesend.value != null){
+                binding.btnSend.isEnabled = true
+            }
+            else{
+                binding.btnSend.isEnabled = false
+            }
+        }
+            // Xử lý khi click vào button gửi để ẩn bàn phím
+        binding.btnSend.setOnClickListener {
+            val content = postApdapter.getPost(currentPostPosition)!!.content?:""
+            val userAvt = postApdapter.getPost(currentPostPosition)!!.userAvatar?:""
+            val imgUrl = postApdapter.getPost(currentPostPosition)!!.imageURL
+            val VoiceUrl= postApdapter.getPost(currentPostPosition)!!.voiceURL
+            val receiverId=postApdapter.getPost(currentPostPosition)!!.userId
+            val postId =postApdapter.getPost(currentPostPosition)!!.postId
+            val timeAgo = TimeAgo.using(postApdapter.getPost(currentPostPosition)!!.createdAt!!.toDate().time)
+            val createAt = timeAgo
+
+
+            messViewModel.sendMessage(postId,receiverId,imgUrl.toString(),VoiceUrl.toString(),content ,createAt,userAvt)
+
+            messViewModel.sendSuccess.observe(this){
+                hideKeyboard()
+                binding.realedittextLayout.visibility = View.GONE
+                binding.realedittext.setText("")
+                Snackbar.make(binding.root, "Gửi thành công!", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+
+        postViewModel.deletePost.observe(this){
+            if(it==true){
+                postApdapter.refresh()
+                Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
+
+            }else{
+                Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnDelete.setOnClickListener {
+            val post = postApdapter.getPost(currentPostPosition) ?: return@setOnClickListener
+            val postId = post.postId
+            val userPostId = post.userId
+            if(userPostId == postViewModel.getcurrentId()){
+                MaterialAlertDialogBuilder(this@PostList)
+                    .setTitle("Xóa bài viết")
+                    .setMessage("Bạn có chắc chắn muốn xóa bài đăng này?")
+                    .setPositiveButton("Xóa") { dialog, _ ->
+                        postViewModel.deletePost(postId)
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
+
+            }else{
+                MaterialAlertDialogBuilder(this@PostList)
+                    .setTitle("Xóa bài viết")
+                    .setMessage("Bài đăng sẽ không hiển thị cho bạn nhưng vẫn có thể hiển thị ở một nơi khác!")
+                    .setPositiveButton("Ẩn") { dialog, _ ->
+                        postViewModel.deletePost(postId)
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
+            }
+        }
+
+    }
+
+    private fun toggleEditTextVisibility() {
+        if (!isKeyboardVisible) {
+            binding.realedittextLayout.visibility = View.VISIBLE
+            binding.realedittext.hint = "Trả lời ${postApdapter.getPost(currentPostPosition)?.userName}..."
+
+            binding.realedittext.requestFocus()
+            showKeyboard()
+
+
+
+
+            isKeyboardVisible = true
+        } else {
+            hideKeyboard()
+            isKeyboardVisible = false
+            binding.realedittextLayout.visibility = View.GONE
+        }
+    }
+
+    private fun showKeyboard() {
+        imm.showSoftInput(binding.realedittext, InputMethodManager.SHOW_IMPLICIT)
+        isKeyboardVisible = true
+    }
+
+    private fun hideKeyboard() {
+        if (currentFocus != null) {
+            imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
+            currentFocus == null
+            isKeyboardVisible = false
+        }
     }
 
 
@@ -205,13 +406,107 @@ class PostList : AppCompatActivity() {
         val snapHelper: SnapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(binding.recyclerView)
 
-        postApdapter = PostPagingAdapter()
+        postApdapter = PostPagingAdapter(
+            isCurrentUser = { post -> post.userId == postViewModel.iscurrentId() },
+            postViewModel,
+            this,
+            this,
+            activity = this@PostList
+        )
         binding.recyclerView.adapter = postApdapter
     }
 
     override fun finish() {
         super.finish()
         overridePendingTransition(R.anim.slide_in_down, R.anim.slide_out_down)
+    }
+
+    //    override fun onResume() {
+//        super.onResume()
+//        postViewModel.checknewlike(this)
+//    }
+    private fun shareImage(context: Context, imageUrl: String) {
+        Glide.with(context)
+            .asBitmap()
+            .load(imageUrl)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(
+                    resource: Bitmap,
+                    transition: Transition<in Bitmap>?
+                ) {//khi anh da san sang
+                    try {
+                        val file = File(
+                            context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                            "shared_image.png"
+                        )
+                        val out =
+                            FileOutputStream(file)//Mở một luồng để ghi dữ liệu vào tệp.
+                        resource.compress(Bitmap.CompressFormat.PNG, 100, out)//nen
+                        out.flush()//Đẩy dữ liệu còn lại vào file.
+                        out.close()//Đóng luồng đầu ra.
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            file
+                        )
+                        shareUri(context, uri, "image/*")
+                    } catch (e: IOException) {
+                        Log.e("ShareImage", "không thể lưu ảnh", e)
+                    }
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+    }
+
+    //tải file
+    private fun shareAudio(context: Context, audioUrl: String) {
+        Thread {//tạo luồng tải dưới nền
+            try {
+                val url = URL(audioUrl)
+                val connect = url.openConnection() as HttpURLConnection//mo ket noi http
+                connect.requestMethod = "GET"
+                connect.connect()
+
+                if (connect.responseCode == HttpURLConnection.HTTP_OK) {
+                    val file = File(
+                        context.getExternalFilesDir(Environment.DIRECTORY_MUSIC),
+                        "shared_audio.mp3"
+                    )
+                    val inputStream = connect.inputStream
+                    val outputStream = FileOutputStream(file)
+
+                    val buffer =
+                        ByteArray(1024)//tao bo nho dem byte de luu tru du lieu vao file am thanh
+                    var len: Int //tao bien dee luu du lieu doc dc từ luồng
+                    while (inputStream.read(buffer).also { len = it } != -1) {
+                        outputStream.write(buffer, 0, len)
+                    }//Đọc dữ liệu từ luồng đầu vào vào bộ đệm cho đến khi kết thúc luồng.
+
+                    outputStream.close()//Đóng luồng đầu ra.
+                    inputStream.close()//Đóng luồng đầu vào.
+
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                    shareUri(context, uri, "audio/*")
+                }
+            } catch (e: IOException) {
+                Log.e("ShareAudio", "không thể lưu voice", e)
+            }
+        }.start()
+    }
+
+    private fun shareUri(context: Context, uri: Uri, ty: String) {
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = ty
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, null))
     }
 
 }

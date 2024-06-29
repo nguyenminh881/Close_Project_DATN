@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.cameraprovider.viewmodel.AuthViewModel" />
+    </data>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
+    android:layout_marginHorizontal="10dp"
+    android:orientation="vertical"
+    android:backgroundTint="@color/dark"
+    android:background="@color/dark"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp"
+        android:text="Chọn mật khẩu mới"
+        android:textColor="@color/white"
+        android:textSize="26sp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/etInput"
+        style="@style/textfield"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:hint="Chọn mật khẩu"
+        app:error="@{viewModel.passwordError}"
+        app:helperText="@{viewModel.passwordHelperText}"
+        app:passwordToggleEnabled="true"
+        app:passwordToggleTint="@color/keylight">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/newpw"
+            android:paddingStart="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:inputType="textPassword"
+            android:maxLines="1"
+            android:text="@={viewModel.password}"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/subkey"
+            android:textColorLink="@color/white"
+            android:textSize="16sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/etNewName"
+        style="@style/textfield"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:visibility="gone"
+        android:hint="Chọn tên"
+        app:error="@{viewModel.nameError}"
+        app:helperText="@{viewModel.namehelper}">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nameCreate"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:paddingStart="10dp"
+            android:inputType="text"
+            android:maxLength="12"
+            android:maxLines="1"
+            android:text="@={viewModel.nameUser}"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/subkey"
+            android:textColorLink="@color/white"
+            android:textSize="20sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp">
+
+        <Button
+            android:id="@+id/btnConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:backgroundTint="@color/colorbtnctive"
+            android:text="Lưu"
+            android:enabled="false"
+            android:layout_marginHorizontal="10dp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:indeterminateTint="#404040"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</LinearLayout>
+</layout>

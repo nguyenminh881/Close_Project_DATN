@@ -18,6 +18,9 @@ class UserRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val fireStore: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+
+
+    ////dang ki tai khoan
     suspend fun signUp(email: String, password: String): Result<Boolean> {
         return try {
             auth.createUserWithEmailAndPassword(email, password).await()
@@ -31,7 +34,7 @@ class UserRepository {
                     avatarUser = "",
                     nameUser = "",
                     passwordUser = "",
-                    friendUser = mutableListOf()
+                    token = ""
                 )
                 fireStore.collection("users").document(userId).set(user).await()
                 Result.success(true)
@@ -45,6 +48,8 @@ class UserRepository {
         }
     }
 
+
+    /// dang ki ten va anh dai dien
     suspend fun createAvtandNameUser(imageUri: Uri, name: String): Result<Boolean> {
         return try {
             val uniqueID = UUID.randomUUID().toString()
@@ -56,10 +61,17 @@ class UserRepository {
 
             val userId = auth.currentUser?.uid
             if (userId != null) {
-                val updates = mapOf(
-                    "avatarUser" to downloadUrl.toString(),
-                    "nameUser" to name
-                )
+                val updates = if (downloadUrl != null) {
+                    mapOf(
+                        "avatarUser" to downloadUrl.toString(),
+                        "nameUser" to name
+                    )
+                } else {
+                    mapOf(
+                        "avatarUser" to null,
+                        "nameUser" to name
+                    )
+                }
                 fireStore.collection("users").document(userId).update(updates).await()
                 Result.success(true)
             } else {
@@ -69,37 +81,52 @@ class UserRepository {
             Result.failure(e)
         }
     }
+
+    ////dang nhap
     suspend fun login(email: String, password: String): Result<Boolean> {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
-            Result.success(true)
+            val user = auth.currentUser
+            val accessToken = user?.getIdToken(true)?.await()?.token
+            if (accessToken != null) {
+                // Lưu accessToken vào nơi phù hợp ở đây
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Access token is null"))
+            }
+//            Result.success(true)
         } catch (e: FirebaseAuthInvalidCredentialsException) {
             // Mật khẩu không đúng
-            Result.failure(Exception("Tài khoản hoặc mật khẩu không chính xác"))
+            Result.failure(Exception("Tài khoản hoặc mật khẩu không đúng"))
         } catch (e: FirebaseAuthInvalidUserException) {
             // Không tìm thấy người dùng với email này
             Result.failure(Exception("Tài khoản không tồn tại"))
         } catch (e: FirebaseNetworkException) {
             Result.failure(Exception("Lỗi mạng khi đăng nhập"))
-        } catch (e: FirebaseTooManyRequestsException) {
-            // Tài khoản bị vô hiệu hóa do nhiều lần thử đăng nhập không thành công
-            Result.failure(Exception("Tài khoản đã bị vô hiệu hóa do nhiều lần đăng nhập không thành công"))
         } catch (e: Exception) {
             // Lỗi chung
             Result.failure(Exception("Vui lòng nhập đầy đủ tài khoản và mật khẩu"))
         }
     }
 
-     fun isUserLoggedIn(): Boolean {
+    ///kiem tra dang nhap
+    fun isUserLoggedIn(): Boolean {
         val current = auth.currentUser
-         return current!=null
-     }
+        return current != null && current.uid != "371wt5dQRwMLEAKYt4qfopguSNf1"
+    }
+
+    //isadmin
+    fun isAdmin(): Boolean {
+        val current = auth.currentUser
+        return current != null && current.uid == "371wt5dQRwMLEAKYt4qfopguSNf1"
+    }
 
     private var isDataLoaded = false
     private var cachedUser: User? = null
     suspend fun getInfoUser(): Result<User> {
         if (isDataLoaded) {
-            return cachedUser?.let { Result.success(it) } ?: Result.failure(Exception("No cached data"))
+            return cachedUser?.let { Result.success(it) }
+                ?: Result.failure(Exception("No cached data"))
         }
         return try {
             val currentUser = auth.currentUser
@@ -139,7 +166,70 @@ class UserRepository {
         }
     }
 
+    fun getCurrentUid(): String {
+        return auth.currentUser?.uid.toString()
+    }
 
+
+    //quenmatkhau
+
+    suspend fun forgotPassword(email: String): Result<Boolean> {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            Result.success(true)
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    suspend fun updateAvatar(imageUri: Uri): Result<Boolean> {
+        return try {
+            val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
+            val uniqueID = UUID.randomUUID().toString()
+            val fileName = "avt_${auth.currentUser!!.uid}_$uniqueID"
+            val storageReference =
+                storage.reference.child("${auth.currentUser!!.uid}/avatar/$fileName")
+            val uploadTask = storageReference.putFile(imageUri).await()
+            val downloadUrl = storageReference.downloadUrl.await()
+
+            val userId = user.uid
+            val updates = mapOf(
+                "avatarUser" to downloadUrl.toString()
+            )
+            fireStore.collection("users").document(userId).update(updates).await()
+
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    //doi ten
+    suspend fun updateName(newName: String): Result<Boolean> {
+        return try {
+            val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
+            val userId = user.uid
+            val docRef = fireStore.collection("users").document(userId)
+            docRef.update("nameUser", newName).await() // Chờ Task hoàn thành
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    // doi mat khau
+    suspend fun updatePassword(newPassword: String): Result<Boolean> {
+        return try {
+            val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
+            user.updatePassword(newPassword).await() // Chờ Task hoàn thành
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    //dang xuat
     fun logout() {
         auth.signOut()
     }

@@ -1,14 +1,17 @@
 package com.example.cameraprovider
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +26,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.example.cameraprovider.databinding.FragmentRecordBinding
+import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.viewmodel.PostViewModel
 import rm.com.audiowave.AudioWaveView
 import rm.com.audiowave.OnProgressListener
@@ -34,8 +38,8 @@ import java.util.UUID
 class RecordFragment : Fragment() {
 
     lateinit var binding: FragmentRecordBinding
-    var isRecording: Boolean = false
-    var isPlaying: Boolean = false
+    private var isRecording: Boolean = false
+   private var isPlaying: Boolean = false
     private lateinit var fileName: String
     private lateinit var mediaRecorder: MediaRecorder
     private lateinit var postViewModel: PostViewModel
@@ -54,9 +58,10 @@ class RecordFragment : Fragment() {
                 }
             }
             if (!permissionGranted) {
+                binding.play.text = "Ghi âm"
                 Toast.makeText(
                     context,
-                    "Yêu cầu cấp quyền thu âm",
+                    "Yêu cầu cấp quyền thu âm, vào cài đặt ứng dụng để cấp quyền!",
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
@@ -72,6 +77,7 @@ class RecordFragment : Fragment() {
     ): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_record, container, false)
         postViewModel = ViewModelProvider(requireActivity()).get(PostViewModel::class.java)
+        requestPermissions()
         return binding.root
     }
 
@@ -80,6 +86,8 @@ class RecordFragment : Fragment() {
         val audioFileName = UUID.randomUUID().toString() + ".aac"
         fileName = File(requireActivity().externalCacheDir, audioFileName).absolutePath
         requestPermissions()
+        mediaPlayer = MediaPlayer()
+
 
         binding.btnrecord.setOnClickListener {
             toggleRecording()
@@ -89,14 +97,79 @@ class RecordFragment : Fragment() {
             setOnClickListener {
                 toggleRecording()
             }
+            if(isRecording == true){
+                binding.play.isEnabled = false
+            }
         }
+
+
 
         setupWaveformView()
         postAudio()
 
+
+
+        postViewModel.postResultLiveData.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is PostRepository.PostResult.Success -> {
+                    resetVoiceRecording()
+                }
+                else-> {
+                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        binding.btnLeft.setOnClickListener {
+            resetVoiceRecording()
+        }
+    }
+    private fun resetVoiceRecording() {
+
+        val audioFile = File(fileName)
+        if (audioFile.exists()) {
+            audioFile.delete()
+        }
+        binding.wave.setRawData(ByteArray(0))
+        isRecording = false
+        isPlaying = false
+        binding.play.apply {
+            text = "Ghi âm"
+            setOnClickListener {
+                toggleRecording()
+            }
+        }
+        mediaPlayer.release()
+        binding.wave.progress = 0f
+        binding.tvTimer.text = "00:59"
+        binding.edt1.text.clear()
+        binding.btnLeft.visibility = View.INVISIBLE
+        binding.btnPost.visibility = View.GONE
+        binding.btnrecord.visibility = View.VISIBLE
+        binding.progressBar.visibility = View.GONE
+
     }
 
+    private fun capquyencam() {
+        val builder = android.app.AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+        builder.setTitle("Bật quyền truy cập Micro")
+            .setMessage("Đến cài đặt ứng dụng và đảm bảo Close có quyền truy cập micro của bạn")
+            .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
+                dialog.dismiss()
+                val intent = Intent().apply {
+                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    data = Uri.fromParts("package", requireActivity().packageName, null)
+                }
+                startActivity(intent)
+            }
+            .setNegativeButton("HỦY") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
     private fun toggleRecording() {
+        if(!allPermissionsGranted()){
+            capquyencam()
+        }
         if (!isRecording) {
             startRecording()
             binding.play.text = "Đang ghi âm"
@@ -139,6 +212,7 @@ class RecordFragment : Fragment() {
             }
         } else {
             requestPermissions()
+            capquyencam()
         }
     }
 
@@ -288,6 +362,10 @@ class RecordFragment : Fragment() {
 
     private fun postAudio() {
         binding.btnPost.setOnClickListener {
+            binding.btnPost.isEnabled = false
+            binding.btnLeft.visibility =View.INVISIBLE
+            binding.btnPost.visibility =View.GONE
+            binding.progressBar.visibility = View.VISIBLE
             val fileUri = FileProvider.getUriForFile(
                 requireContext(),
                 "${requireContext().packageName}.fileprovider",

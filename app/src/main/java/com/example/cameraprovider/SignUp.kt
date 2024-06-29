@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.databinding.DataBindingUtil
@@ -20,15 +21,10 @@ import com.google.firebase.ktx.Firebase
 
 class SignUp : AppCompatActivity() {
     lateinit var binding: ActivitySignUpBinding
-    private lateinit var authViewModel: AuthViewModel
+    private val authViewModel:AuthViewModel by viewModels { AuthViewModelFactory(UserRepository(),this)}
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_sign_up)
-
-
-        val userRepository = UserRepository()
-        val factory = AuthViewModelFactory(userRepository, this)
-        authViewModel = ViewModelProvider(this, factory).get(AuthViewModel::class.java)
         binding.lifecycleOwner = this
         binding.authVModel = authViewModel
 

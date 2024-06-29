@@ -88,6 +88,20 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_forgot_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginBottom="30dp"
+            android:backgroundTint="@color/colorbtnctive"
+            android:gravity="center"
+            android:text="Quên mật khẩu"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintTop_toBottomOf="@+id/Ed_password_signin"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_signin"
             android:layout_width="match_parent"
             android:layout_height="70dp"
@@ -99,6 +113,7 @@
             android:text="Tiếp tục"
             android:textColor="@color/black"
             android:textSize="16sp"
+            android:enabled="false"
             app:icon="@drawable/ic_next"
             app:iconTint="@color/black"
             app:iconGravity="textEnd"

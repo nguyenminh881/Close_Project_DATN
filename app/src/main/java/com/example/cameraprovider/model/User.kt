@@ -1,11 +1,11 @@
 package com.example.cameraprovider.model
 
 data class User(
-    val UserId: String = "",
+    var UserId: String = "",
     val phoneNumber: String = "",
     val emailUser: String = "",
-    val avatarUser: String = "",
-    val nameUser: String = "",
+    var avatarUser: String = "",
+    var nameUser: String = "",
     val passwordUser: String = "",
-    val friendUser: MutableList<String> = mutableListOf()
+    val token: String? = null
 )
