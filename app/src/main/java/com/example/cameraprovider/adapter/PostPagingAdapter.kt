@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
@@ -21,6 +22,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.signature.ObjectKey
 import com.example.cameraprovider.LikesBottomSheetDialog
 import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.PostRowBinding
@@ -44,8 +46,8 @@ class PostPagingAdapter(
     private val viewModel: PostViewModel,
     private val lifecycleOwner: LifecycleOwner,
     private val context: Context,
-    private val activity: FragmentActivity
-) :
+    private val activity: FragmentActivity,
+    private val onPostViewed: (String) -> Unit) :
     PagingDataAdapter<Post, RecyclerView.ViewHolder>(POST_COMPARATOR) {
 
     companion object {
@@ -89,6 +91,7 @@ class PostPagingAdapter(
                     .thumbnail(0.5f)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .error(R.drawable.error)
+                    .signature(ObjectKey(post.postId))
                     .override(720, 720)
                     .transition(DrawableTransitionOptions.withCrossFade(100))
                     .into(binding.imageViewPost)
@@ -338,12 +341,16 @@ class PostPagingAdapter(
                     viewModel,
                     lifecycleOwner,
                     context,
-                    activity
+                    activity,
+
                 )
 
                 is VoiceViewHolder -> holder.bind(post, isCurrentUser, viewModel, lifecycleOwner,
                     activity)
             }
+            onPostViewed(post.postId)
+        }else{
+            Toast.makeText(context, "Không còn bài viết nào", Toast.LENGTH_SHORT).show()
         }
     }
 

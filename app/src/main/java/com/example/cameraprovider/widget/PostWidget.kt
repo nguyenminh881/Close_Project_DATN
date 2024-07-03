@@ -1,10 +1,8 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.widget
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -16,11 +14,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.AppWidgetTarget
+import com.example.cameraprovider.MainActivity
+import com.example.cameraprovider.PostList
+import com.example.cameraprovider.R
 import com.example.cameraprovider.viewmodel.widgetViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PostWidget() : AppWidgetProvider(), LifecycleOwner {
     private val viewModel = widgetViewModel()
@@ -63,7 +63,8 @@ class PostWidget() : AppWidgetProvider(), LifecycleOwner {
                 views.setTextViewText(R.id.tv_Caption_Post, post.content)
 
                 // Load ảnh bài đăng
-                val postImageTarget = AppWidgetTarget(context, R.id.imageView_post, views, appWidgetId)
+                val postImageTarget = AppWidgetTarget(context,
+                    R.id.imageView_post, views, appWidgetId)
                 Glide.with(context)
                     .asBitmap()
                     .load(post.imageURL)
@@ -74,12 +75,18 @@ class PostWidget() : AppWidgetProvider(), LifecycleOwner {
                     )
                     .into(postImageTarget)
 
-                val avatarImageTarget = AppWidgetTarget(context, R.id.imageView_avatar, views, appWidgetId)
+                val avatarImageTarget = AppWidgetTarget(context,
+                    R.id.imageView_avatar, views, appWidgetId)
                 Glide.with(context)
                     .asBitmap()
                     .load(post.userAvatar)
                     .circleCrop()
                     .into(avatarImageTarget)
+
+                val clickIntent = Intent(context, PostList::class.java)
+                val pendingIntent = PendingIntent.getActivity(context, 0, clickIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+                views.setOnClickPendingIntent(R.id.layoutwidgetpost, pendingIntent)
+
             } else {
 
                 views.setTextViewText(R.id.tv_Name_UserPost, "Không có bài đăng")

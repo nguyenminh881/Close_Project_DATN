@@ -1,5 +1,6 @@
 package com.example.cameraprovider
 
+import android.app.ActivityOptions
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -67,19 +68,11 @@ class SignUp : AppCompatActivity() {
             }
         })
 
-//        authViewModel.signupResult.observe(this, { success ->
-//            if (success) {
-//                finish()
-//            }
-//        })
-//        authViewModel.islogin()
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, StartAppActivity::class.java)
+            startActivity(intent)
+        }
     }
-//    override fun onBackPressed() {
-//        if (authViewModel.islogin() == false) {
-//            // Nếu người dùng chưa đăng nhập, cho phép quay lại trang trước đó
-//            super.onBackPressed()
-//        }
-//        // Ngược lại, không làm gì cả (không cho phép quay lại trang đăng nhập)
-//    }
+
 
 }

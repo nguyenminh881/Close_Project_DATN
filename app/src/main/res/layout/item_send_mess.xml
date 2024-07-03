@@ -15,6 +15,18 @@
         android:layout_height="wrap_content"
         android:layout_marginVertical="10dp">
 
+        <TextView
+            android:id="@+id/tvCreatedAt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Created At"
+            android:textSize="12sp"
+            android:layout_marginBottom="16dp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/voice_cmt"
@@ -26,7 +38,7 @@
             android:backgroundTint="@color/white"
             android:background="@drawable/edittextbd10dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/tvCreatedAt">
 
             <LinearLayout
                 android:id="@+id/linear"
@@ -195,6 +207,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
+            android:id="@+id/message_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -215,6 +228,32 @@
             android:textColor="@color/white"
             android:textSize="16sp"/>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/subCreateAt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Created At"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@+id/message_layout"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/message_layout"/>
+
+        <TextView
+            android:id="@+id/state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="da xem"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="10dp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@+id/message_layout"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@+id/subCreateAt"/>
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline"

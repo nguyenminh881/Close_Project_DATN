@@ -2,6 +2,7 @@ package com.example.cameraprovider
 
 import PostPagingAdapter
 import PostPagingAdapter.Companion.VIEW_TYPE_IMAGE
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -35,6 +36,7 @@ import androidx.lifecycle.Observer
 
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
+import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -44,6 +46,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.cameraprovider.databinding.ActivityPostListBinding
+import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
 
 import com.example.cameraprovider.viewmodel.PostViewModel
@@ -68,9 +71,10 @@ class PostList : AppCompatActivity() {
     lateinit var postApdapter: PostPagingAdapter
     private val postViewModel: PostViewModel by viewModels()
     private val messViewModel: MessageViewModel by viewModels()
-    private var currentPostPosition = 0
+    private var currentPostPosition = -1
     private var isKeyboardVisible = false
     private var isedtVisible = false
+    private val frVModel: FriendViewmodel by viewModels()
     private lateinit var imm: InputMethodManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,9 +83,13 @@ class PostList : AppCompatActivity() {
         setupRecyclerView()
 
         binding.swipeRefreshLayout.setOnRefreshListener {
+            postViewModel.clearNewpostsize()
+            binding.swipeRefreshLayout.isRefreshing = true
+            binding.btnNewpost.visibility = View.INVISIBLE
             postApdapter.refresh()
             binding.shimmerLayout.startShimmer()
             binding.shimmerLayout.visibility = View.VISIBLE
+
 
             //  trạng thái tải dữ liệu
             lifecycleScope.launch {
@@ -98,14 +106,21 @@ class PostList : AppCompatActivity() {
         }
 
 
-
+///gan dl vao paging
         lifecycleScope.launch {
             postViewModel.posts
                 .collectLatest { pagingData ->
-                    postApdapter.submitData(pagingData)
+                    if(pagingData != null){
+                        postApdapter.submitData(pagingData?: PagingData.empty())
+                    }else{
+                        postApdapter.submitData(PagingData.empty())
+                    }
+
                 }
 
         }
+
+
 
         postApdapter.addLoadStateListener { loadState ->
 
@@ -151,7 +166,7 @@ class PostList : AppCompatActivity() {
             }
 
         }
-
+//lang nghe cuon
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
@@ -272,6 +287,7 @@ class PostList : AppCompatActivity() {
             Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
         })
 
+        //back ve main
         binding.dangbai.setOnClickListener {
             this.onStop()
             val intent = Intent(this, MainActivity::class.java)
@@ -281,12 +297,12 @@ class PostList : AppCompatActivity() {
         imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
 
 
-        // Xử lý khi click vào fakeedittext
+        //
         binding.fakeedittext.setOnClickListener {
             toggleEditTextVisibility()
         }
 
-        // Xử lý khi click vào realedittextLayout để ẩn bàn phím
+        // để ẩn bàn phím
         binding.realedittextLayout.setOnClickListener {
             hideKeyboard()
             binding.realedittextLayout.visibility = View.GONE
@@ -294,7 +310,7 @@ class PostList : AppCompatActivity() {
 
         binding.mVmodel = messViewModel
 
-
+//cmt
         messViewModel.messagesend.observe(this){
             if(messViewModel.messagesend.value != null){
                 binding.btnSend.isEnabled = true
@@ -325,13 +341,16 @@ class PostList : AppCompatActivity() {
             }
         }
 
+//xoa bai
+        postViewModel.deletePost.observe(this) { isDeleted ->
+            if (isDeleted == true) {
 
-        postViewModel.deletePost.observe(this){
-            if(it==true){
-                postApdapter.refresh()
+                lifecycleScope.launch {
+                    postApdapter.refresh()
+                }
+                postApdapter.notifyItemRemoved(currentPostPosition)
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
-
-            }else{
+            } else {
                 Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
             }
         }
@@ -340,19 +359,21 @@ class PostList : AppCompatActivity() {
             val post = postApdapter.getPost(currentPostPosition) ?: return@setOnClickListener
             val postId = post.postId
             val userPostId = post.userId
+
             if(userPostId == postViewModel.getcurrentId()){
-                MaterialAlertDialogBuilder(this@PostList)
+                MaterialAlertDialogBuilder(this@PostList,R.style.AlertDialogTheme)
                     .setTitle("Xóa bài viết")
                     .setMessage("Bạn có chắc chắn muốn xóa bài đăng này?")
                     .setPositiveButton("Xóa") { dialog, _ ->
                         postViewModel.deletePost(postId)
+
                         dialog.dismiss()
                     }
                     .setNegativeButton("Hủy", null)
                     .show()
 
             }else{
-                MaterialAlertDialogBuilder(this@PostList)
+                MaterialAlertDialogBuilder(this@PostList,R.style.AlertDialogTheme)
                     .setTitle("Xóa bài viết")
                     .setMessage("Bài đăng sẽ không hiển thị cho bạn nhưng vẫn có thể hiển thị ở một nơi khác!")
                     .setPositiveButton("Ẩn") { dialog, _ ->
@@ -361,6 +382,73 @@ class PostList : AppCompatActivity() {
                     }
                     .setNegativeButton("Hủy", null)
                     .show()
+            }
+        }
+//
+
+
+
+
+
+
+        //profile
+        binding.btnBottomSheetProfile.setOnClickListener {
+            // Đóng activity hiện tại
+            finish()
+            // Mở ProfileActivity
+            val intent = Intent(this, ProfileActivity::class.java)
+            val options = ActivityOptions.makeCustomAnimation(
+                this,
+                R.anim.slide_in_up, R.anim.slide_out_up
+            )
+            startActivity(intent,options.toBundle())
+        }
+
+
+
+//messs
+
+        binding.btnMessage.setOnClickListener {
+            intent = Intent(this, ChatActivity::class.java)
+            val options = ActivityOptions.makeCustomAnimation(
+                this,
+                R.anim.slide_in_up, R.anim.slide_out_up
+            )
+            startActivity(intent,options.toBundle())
+        }
+
+
+        postViewModel.newPostCount.observe(this){
+            if(it > 0){
+                binding.btnNewpost.visibility = View.VISIBLE
+                binding.btnNewpost.text = "Mới(${it})"
+            }else{
+                binding.btnNewpost.visibility = View.INVISIBLE
+            }
+        }
+
+
+        binding.btnNewpost.setOnClickListener {
+            postViewModel.clearNewpostsize()
+            binding.swipeRefreshLayout.isRefreshing = true
+            binding.btnNewpost.visibility = View.INVISIBLE
+            binding.recyclerView.smoothScrollToPosition(0)
+            postApdapter.refresh()
+            binding.shimmerLayout.startShimmer()
+            binding.shimmerLayout.visibility = View.VISIBLE
+
+
+            //  trạng thái tải dữ liệu
+            lifecycleScope.launch {
+                postApdapter.loadStateFlow.collectLatest { loadStates ->
+                    // Kiểm tra xem dữ liệu đã được tải xong chưa
+                    if (loadStates.refresh is LoadState.NotLoading) {
+                        binding.swipeRefreshLayout.isRefreshing = false
+                        binding.shimmerLayout.stopShimmer()
+                        binding.shimmerLayout.visibility = View.GONE
+                        binding.recyclerView.scrollToPosition(0)
+                    }
+                }
             }
         }
 
@@ -411,7 +499,8 @@ class PostList : AppCompatActivity() {
             postViewModel,
             this,
             this,
-            activity = this@PostList
+            activity = this@PostList,
+            onPostViewed = {postId-> postViewModel.onPostViewed(postId)}
         )
         binding.recyclerView.adapter = postApdapter
     }

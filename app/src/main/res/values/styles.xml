@@ -48,12 +48,15 @@
     </style>
 
     <style name="AlertDialogTheme" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-        <item name="android:background">#DCDCDC</item>
+        <item name="android:background">@color/white</item>
+        <item name="android:textColor">@color/dark</item>
+
+        <item name="android:titleTextColor">@color/dark</item>
         <item name="buttonBarPositiveButtonStyle">@style/AlertDialogButtonStyle</item>
         <item name="buttonBarNegativeButtonStyle">@style/AlertDialogButtonStyle</item>
     </style>
 
     <style name="AlertDialogButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColor">@color/colorbtnctive</item>
     </style>
 </resources>

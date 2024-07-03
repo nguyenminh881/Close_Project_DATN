@@ -1,5 +1,6 @@
 package com.example.cameraprovider.repository
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
@@ -16,6 +17,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.example.cameraprovider.model.Like
+import com.example.cameraprovider.model.LikeStatus
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
@@ -23,10 +25,21 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FieldValue
 
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.net.URLDecoder
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
 
 
 class PostRepository {
@@ -65,7 +78,8 @@ class PostRepository {
                     imageURL = if (isImage) downloadUrl.toString() else "",
                     voiceURL = if (!isImage) downloadUrl.toString() else "",
                     createdAt = timeStamp,
-                    hiddenForUsers = emptyList()
+                    hiddenForUsers = emptyList(),
+                    viewedBy = emptyList()
                 )
                 newPostRef.set(post).await()
                 PostResult.Success(postId = "")
@@ -119,14 +133,16 @@ class PostRepository {
 
                     if (likeQuerySnapshot.isEmpty) {
                         // Tạo bản ghi "like" mới nếu chưa tồn tại
-                        val postDocument = transaction.get(fireStore.collection("posts").document(postId))
+                        val postDocument =
+                            transaction.get(fireStore.collection("posts").document(postId))
                         val ownerId = postDocument.getString("userId") ?: ""
                         val newLike = Like(
                             postId = postId,
                             userId = userId,
                             ownerId = ownerId,
                             reactions = listOf(icon),
-                            createdAt = timeStamp
+                            createdAt = timeStamp,
+                            status = LikeStatus.NEW
                         )
                         transaction.set(fireStore.collection("likes").document(), newLike)
                     } else {
@@ -143,10 +159,12 @@ class PostRepository {
                                 existingLike.reactions.toMutableList().apply { add(icon) }
                             }
 
-                            transaction.update(likeDocumentSnapshot.reference, mapOf(
-                                "reactions" to updatedReactions,
-                                "createdAt" to timeStamp
-                            ))
+                            transaction.update(
+                                likeDocumentSnapshot.reference, mapOf(
+                                    "reactions" to updatedReactions,
+                                    "createdAt" to timeStamp
+                                )
+                            )
                         } else {
                             throw IllegalStateException("Lỗi")
                         }
@@ -157,6 +175,7 @@ class PostRepository {
             }
         }
     }
+
     private fun updateReactions(reactions: MutableList<String>, newIcon: String) {
         if (reactions.size >= 4) {
             reactions.removeAt(0)
@@ -196,7 +215,11 @@ class PostRepository {
                                 }
                             }
                         }.addOnFailureListener { exception ->
-                            Log.e("PostRepository", "Lỗi khi lấy like: ${exception.message}", exception)
+                            Log.e(
+                                "PostRepository",
+                                "Lỗi khi lấy like: ${exception.message}",
+                                exception
+                            )
                         }
                 }
             }
@@ -211,17 +234,82 @@ class PostRepository {
             maxOutputTokens = 80
         }
     )
+
+    val currentTime = LocalTime.now()
+    val currentDate = LocalDate.now()
+    val dayOfWeek = when (currentDate.dayOfWeek) {
+        DayOfWeek.MONDAY -> "thứ Hai"
+        DayOfWeek.TUESDAY -> "thứ Ba"
+        DayOfWeek.WEDNESDAY -> "thứ Tư"
+        DayOfWeek.THURSDAY -> "thứ Năm"
+        DayOfWeek.FRIDAY -> "thứ Sáu"
+        DayOfWeek.SATURDAY -> "thứ Bảy"
+        DayOfWeek.SUNDAY -> "Chủ nhật"
+    }
+    val dayOfMonth = currentDate.dayOfMonth
+
+    val month = when (currentDate.monthValue) {
+        1 -> "Tháng Một"
+        2 -> "Tháng Hai"
+        3 -> "Tháng Ba"
+        4 -> "Tháng Tư"
+        5 -> "Tháng Năm"
+        6 -> "Tháng Sáu"
+        7 -> "Tháng Bảy"
+        8 -> "Tháng Tám"
+        9 -> "Tháng Chín"
+        10 -> "Tháng Mười"
+        11 -> "Tháng Mười Một"
+        else -> "Tháng Mười Hai"
+    }
+    val year = currentDate.year
+    val timeOfDay = when {
+        currentTime.isAfter(LocalTime.of(4, 0)) && currentTime.isBefore(
+            LocalTime.of(
+                11,
+                0
+            )
+        ) -> "buổi sáng thứ $dayOfWeek, ngày $dayOfMonth tháng $month"
+
+        currentTime.isAfter(LocalTime.of(11, 0)) && currentTime.isBefore(
+            LocalTime.of(
+                13,
+                30
+            )
+        ) -> "buổi trưa thứ $dayOfWeek, ngày $dayOfMonth tháng $month"
+
+        currentTime.isAfter(LocalTime.of(13, 30)) && currentTime.isBefore(
+            LocalTime.of(
+                18,
+                30
+            )
+        ) -> "buổi chiều thứ $dayOfWeek, ngày $dayOfMonth tháng $month"
+
+        currentTime.isAfter(LocalTime.of(18, 30)) && currentTime.isBefore(
+            LocalTime.of(
+                23,
+                59
+            )
+        ) -> "buổi tối thứ $dayOfWeek, ngày $dayOfMonth tháng $month"
+
+        else -> "đêm khuya thứ $dayOfWeek, ngày $dayOfMonth tháng $month"
+    }
+
     suspend fun generateContentFromImage(imageBytes: Bitmap): String {
         val inputContent = content {
             image(imageBytes)
-            text("Viết một caption ngắn (dưới 100 ký tự) và sáng tạo cho bức ảnh này, tập trung vào [mô tả ngắn gọn nội dung chính của bức ảnh]. " +
-                    "Nếu bức ảnh thể hiện tâm trạng con người, hãy diễn đạt tâm trạng bằng cách sử dụng ngôn ngữ hình ảnh, ẩn dụ, hoặc so sánh. " +
-                    "Nếu là phong cảnh, hoạt động, hay món ăn, hãy mô tả và có thể thêm 1-2 biểu tượng cảm xúc phù hợp. " +
-                    "Phải phù hợp với việc chia sẻ đến mọi người" +
-                    " Không tạo ra hastag" +
-                    "Vì người chụp bức ảnh đó muốn chia sẻ đến mới mọi người nên ưu tiên ngôi kể thứ nhất" +
-                    "Nếu bức ảnh đó chứa một chân dung duy nhất thì có khả năng người chụp ảnh sẽ muốn mô tả tâm trạng bản thân, ưu tiên dùng ngôi thứ 1" +
-                    "Bắt buộc phải sử dụng Tiếng Việt")
+            text(
+                "Viết một caption ngắn (dưới 100 ký tự) và sáng tạo cho bức ảnh này, tập trung vào [mô tả ngắn gọn nội dung chính của bức ảnh]. " +
+                        "Nếu bức ảnh thể hiện tâm trạng con người, hãy diễn đạt tâm trạng bằng cách sử dụng ngôn ngữ hình ảnh, ẩn dụ, hoặc so sánh. " +
+                        "Nếu là phong cảnh, hoạt động, hay món ăn, hãy mô tả và có thể thêm 1-2 biểu tượng cảm xúc phù hợp. " +
+                        "Phải phù hợp với việc chia sẻ đến mọi người" +
+                        " Không tạo ra hastag" +
+                        "Vì người chụp bức ảnh đó muốn chia sẻ đến mới mọi người nên ưu tiên ngôi kể thứ nhất" +
+                        "Nếu bức ảnh đó chứa một chân dung duy nhất thì có khả năng người chụp ảnh sẽ muốn mô tả tâm trạng bản thân, ưu tiên dùng ngôi thứ 1" +
+                        "Bắt buộc phải sử dụng Tiếng Việt" +
+                        "Có hoặc không sử dụng bối cảnh thời gian là $timeOfDay khi ảnh là chụp phong cảnh ngoài trời" +
+                        " Hôm nay là $dayOfWeek, ngày $dayOfMonth tháng $month năm $year có thể tận dụng thông tin về ngày tháng năm này để cải thiện caption tùy vào bối cảnh, nội dung của ảnh."
+            )
         }
         val response = imageGenerativeModel.generateContent(inputContent)
         return response.text.toString()
@@ -276,13 +364,17 @@ class PostRepository {
                     val post = postSnapshot.toObject(Post::class.java)
                     if (post != null) {
                         if (post.userId == currentId) {
+                            val decodedImageUrl = URLDecoder.decode(post.imageURL, "UTF-8")
+                            val decodedVoiceUrl = URLDecoder.decode(post.imageURL, "UTF-8")
                             when {
-                                post.imageURL == null && post.voiceURL != null -> {
-                                    val voiceRef = storage.getReferenceFromUrl(post.voiceURL)
+                                post.imageURL == "" && post.voiceURL != "" -> {
+                                    val voiceRef = storage.getReferenceFromUrl(decodedVoiceUrl)
+                                    Log.d("XOAVOICE", "delete URL obtained: $voiceRef")
                                     voiceRef.delete().await()
                                 }
-                                post.imageURL != null && post.voiceURL == null -> {
-                                    val imageRef = storage.getReferenceFromUrl(post.imageURL)
+
+                                post.imageURL != "" && post.voiceURL == "" -> {
+                                    val imageRef = storage.getReferenceFromUrl(decodedImageUrl)
                                     imageRef.delete().await()
                                 }
                             }
@@ -320,7 +412,8 @@ class PostRepository {
                             postRef.delete().await()
                             true
                         } else {
-                            postRef.update("hiddenForUsers", FieldValue.arrayUnion(currentId)).await()
+                            postRef.update("hiddenForUsers", FieldValue.arrayUnion(currentId))
+                                .await()
                             true
                         }
                     } else {
@@ -338,5 +431,89 @@ class PostRepository {
         }
     }
 
+
+    fun updateViewedBy(postId: String, onResult: (Boolean) -> Unit) {
+        val postRef = fireStore.collection("posts").document(postId)
+        val currentId = auth.currentUser?.uid
+        postRef.update("viewedBy", FieldValue.arrayUnion(currentId))
+            .addOnSuccessListener {
+                Log.d("PostRepository", "Post $postId viewed by $currentId")
+                onResult(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e("PostRepository", "Error $postId add viewed", e)
+                onResult(false)
+            }
+    }
+
+
+
+
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun listenForNewPosts(onNewPostCount: (Int) -> Unit) {
+      repositoryScope.launch {
+                val currentUserId = auth.currentUser?.uid ?: return@launch
+                val friendIds = getFriendIds(currentUserId)
+
+          if(friendIds.isNotEmpty()){
+
+
+                val postRef = fireStore.collection("posts")
+                    .whereIn("userId", friendIds)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+
+                postRef.addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("PostRepository", "Listen failed: ${error.message}")
+                        return@addSnapshotListener
+                    }
+
+
+                    if (snapshot != null) {
+                        val posts = snapshot.toObjects(Post::class.java)
+
+                        val newPosts = posts.filter { !it.viewedBy.contains(currentUserId) }
+                        onNewPostCount(newPosts.size)
+                    }
+                }
+            }else{
+              onNewPostCount(0)
+              Log.d("PostRepository", "Không có bạn bè để truy vấn.")
+          }
+      }
+    }
+
+    private suspend fun getFriendIds(currentUserId: String): List<String> {
+        return try {
+            val query1 = fireStore.collection("friendships")
+                .whereEqualTo("uid1", currentUserId)
+                .whereEqualTo("state", "Accepted")
+
+            val query2 = fireStore.collection("friendships")
+                .whereEqualTo("uid2", currentUserId)
+                .whereEqualTo("state", "Accepted")
+
+            val combinedTask = Tasks.whenAllSuccess<QuerySnapshot>(query1.get(), query2.get())
+                .await()
+
+            val friendIds = mutableSetOf<String>()
+            for (result in combinedTask) {
+                result.documents.forEach { doc ->
+                    val uid1 = doc.getString("uid1")
+                    val uid2 = doc.getString("uid2")
+                    if (uid1 != currentUserId && uid1 != null) {
+                        friendIds.add(uid1)
+                    }
+                    if (uid2 != currentUserId && uid2 != null) {
+                        friendIds.add(uid2)
+                    }
+                }
+            }
+            friendIds.toList()
+        } catch (e: Exception) {
+            Log.e("PostRepository", "Error fetching friend IDs", e)
+            emptyList()
+        }
+    }
 
 }

@@ -107,7 +107,29 @@ class PostViewModel() : ViewModel(), Observable {
         }
     }
 
+    private val _newPostCount = MutableLiveData<Int>(0)
+    val newPostCount: LiveData<Int> = _newPostCount
 
+    init {
+        postRepository.listenForNewPosts { newCount ->
+            _newPostCount.postValue(newCount)
+        }
+    }
+
+    fun onPostViewed(postId: String) {
+        postRepository.updateViewedBy(postId) { success ->
+            if (success) {
+                _newPostCount.value = 0
+                Log.e("PostViewModel", "Updated viewed by")
+
+            } else {
+                Log.e("PostViewModel", "Failed to update viewed by")
+            }
+        }
+    }
+    fun clearNewpostsize(){
+        _newPostCount.value = 0
+    }
     fun clearContentgena(){
         _contentgena.value = ""
     }

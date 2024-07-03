@@ -1,10 +1,11 @@
 package com.example.cameraprovider.repository
 
+
 import android.net.Uri
 import android.util.Log
+import com.example.cameraprovider.model.Post
 import com.example.cameraprovider.model.User
 import com.google.firebase.FirebaseNetworkException
-import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
@@ -12,6 +13,8 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.net.URLDecoder
 import java.util.UUID
 
 class UserRepository {
@@ -29,12 +32,10 @@ class UserRepository {
             if (userId != null) {
                 val user = User(
                     UserId = userId,
-                    phoneNumber = "",
                     emailUser = email,
                     avatarUser = "",
                     nameUser = "",
                     passwordUser = "",
-                    token = ""
                 )
                 fireStore.collection("users").document(userId).set(user).await()
                 Result.success(true)
@@ -86,26 +87,27 @@ class UserRepository {
     suspend fun login(email: String, password: String): Result<Boolean> {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
-            val user = auth.currentUser
-            val accessToken = user?.getIdToken(true)?.await()?.token
-            if (accessToken != null) {
-                // Lưu accessToken vào nơi phù hợp ở đây
-                Result.success(true)
-            } else {
-                Result.failure(Exception("Access token is null"))
-            }
-//            Result.success(true)
-        } catch (e: FirebaseAuthInvalidCredentialsException) {
-            // Mật khẩu không đúng
-            Result.failure(Exception("Tài khoản hoặc mật khẩu không đúng"))
-        } catch (e: FirebaseAuthInvalidUserException) {
-            // Không tìm thấy người dùng với email này
-            Result.failure(Exception("Tài khoản không tồn tại"))
-        } catch (e: FirebaseNetworkException) {
-            Result.failure(Exception("Lỗi mạng khi đăng nhập"))
+
+            Result.success(true)
         } catch (e: Exception) {
-            // Lỗi chung
-            Result.failure(Exception("Vui lòng nhập đầy đủ tài khoản và mật khẩu"))
+            when (e) {
+
+                is FirebaseAuthInvalidCredentialsException -> {
+                    Log.e("LoginError", "Invalid credentials: ${e.message}")
+                    Result.failure(e)
+                }
+
+                is FirebaseNetworkException -> {
+                    Log.e("LoginError", "Network error: ${e.message}")
+                    Result.failure(e)
+                }
+
+                else -> {
+                    Log.e("LoginError", "Other error: ${e.message}")
+                    Result.failure(e)
+                }
+
+            }
         }
     }
 
@@ -229,6 +231,146 @@ class UserRepository {
         }
     }
 
+    private suspend fun deleteAllPostUser(userId: String) {
+        val postsSnapshot = fireStore.collection("posts")
+            .whereEqualTo("userId", userId)
+            .get()
+            .await()
+
+        // Duyệt qua từng bài viết và xóa chúng
+        for (document in postsSnapshot.documents) {
+            val postRef = document.reference
+            val post = document.toObject(Post::class.java)
+            if (post != null) {
+                val decodedImageUrl = URLDecoder.decode(post.imageURL, "UTF-8")
+                val decodedVoiceUrl = URLDecoder.decode(post.imageURL, "UTF-8")
+                when {
+                    post.imageURL == null && post.voiceURL != null -> {
+                        val voiceRef = storage.getReferenceFromUrl(decodedVoiceUrl)
+                        voiceRef.delete().await()
+                    }
+
+                    post.imageURL != null && post.voiceURL == null -> {
+                        val imageRef = storage.getReferenceFromUrl(decodedImageUrl)
+                        imageRef.delete().await()
+                    }
+                }
+
+                val likesSnapshot = fireStore.collection("likes")
+                    .whereEqualTo("postId", post.postId)
+                    .get()
+                    .await()
+                if (!likesSnapshot.isEmpty) {
+                    likesSnapshot.documents.forEach { it.reference.delete().await() }
+                }
+
+                val messagesSnapshot = fireStore.collection("messages")
+                    .whereEqualTo("postId", post.postId)
+                    .get()
+                    .await()
+                if (!messagesSnapshot.isEmpty) {
+                    messagesSnapshot.documents.forEach {
+                        it.reference.update(
+                            mapOf(
+                                "postId" to "",
+                                "imageUrl" to "",
+                                "voiceUrl" to "",
+                                "timestamp" to "",
+                                "content" to "",
+                                "avtpost" to ""
+                            )
+                        ).await()
+                    }
+                }
+
+                postRef.delete().await()
+            }
+        }
+    }
+
+    suspend fun deleteAccount():Result<Boolean>  {
+        val user = auth.currentUser
+        val userId = user?.uid
+        return if (user != null && userId != null) {
+
+            try {
+                //xoa tn
+                val messagesSnapshot = fireStore.collection("messages")
+                    .whereEqualTo("senderId", userId)
+                    .get()
+                    .await()
+
+                for (document in messagesSnapshot.documents) {
+                    document.reference.delete().await()
+                }
+
+                // xoa like
+                val likesSnapshot = fireStore.collection("likes")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .await()
+
+                for (document in likesSnapshot.documents) {
+                    document.reference.delete().await()
+                }
+
+                // xoa khoi ban be
+                val friendshipsSnapshot = fireStore.collection("friendships")
+                    .whereEqualTo("uid1", userId)
+                    .get()
+                    .await()
+
+                for (document in friendshipsSnapshot.documents) {
+                    document.reference.delete().await()
+                }
+
+                val friendshipsSnapshot2 = fireStore.collection("friendships")
+                    .whereEqualTo("uid2", userId)
+                    .get()
+                    .await()
+
+                for (document in friendshipsSnapshot2.documents) {
+                    document.reference.delete().await()
+                }
+
+                val storageRef = storage.reference.child(userId)
+                storageRef.child("avatar").listAll().await().items.forEach { it.delete().await() }
+                storageRef.child("post_voice").listAll().await().items.forEach { it.delete().await() }
+                storageRef.child("post_image").listAll().await().items.forEach { it.delete().await() }
+
+                // xoa users
+                fireStore.collection("users").document(userId).delete().await()
+
+                user.delete().await()
+                Log.d("UserRepository", "User account deleted.")
+                Result.success(true)
+            } catch (e: Exception) {
+                Log.e("UserRepository", "Error deleting user account: ${e.message}", e)
+                Result.failure(e)
+            }
+        } else {
+            Result.failure(Exception("Chưa đăng nhập"))
+        }
+    }
+    suspend fun deletenewAccount(): Boolean {
+        val user = auth.currentUser
+        return if (user != null) {
+            try {
+                // xoa users
+                val userId = user.uid
+                fireStore.collection("users").document(userId).delete().await()
+
+                user.delete().await()
+                Log.d("UserRepository", "User account deleted.")
+                true
+            } catch (e: Exception) {
+                Log.e("UserRepository", "Error deleting user account", e)
+                false
+            }
+        } else {
+            false
+        }
+    }
     //dang xuat
     fun logout() {
         auth.signOut()

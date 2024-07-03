@@ -1,6 +1,7 @@
 package com.example.cameraprovider
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -47,10 +48,12 @@ class SignInActivity : AppCompatActivity() {
             }
         })
 
+        authViewModel.email.observe(this){
+
 
         authViewModel.passwordHelperTextLg.observe(this, { pw ->
             binding.apply {
-                if(pw ==""){
+                if(pw =="" && it !="" && it != null){
                     btnSignin.isEnabled = true
                     btnSignin.backgroundTintList =
                         ActivityCompat.getColorStateList(baseContext, R.color.color_active)
@@ -60,13 +63,16 @@ class SignInActivity : AppCompatActivity() {
                         ActivityCompat.getColorStateList(baseContext, R.color.btndf)
                 }
             }
-        })
+        })}
 
 
         binding.btnForgotPassword.setOnClickListener {
             startActivity(Intent(this,ForgotPWActivity::class.java))
         }
-
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, StartAppActivity::class.java)
+            startActivity(intent)
+        }
 
     }
 

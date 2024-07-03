@@ -143,16 +143,56 @@
                     android:src="@drawable/ic_angry" />
 
             </FrameLayout>
-
-
-            <com.google.android.material.button.MaterialButton
+            <LinearLayout
                 android:id="@+id/btntest"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:elevation="10dp"
-                app:icon="@drawable/ic_setting"
+                android:gravity="center"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:layout_marginHorizontal="18dp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/swipeRefreshLayout" />
+                app:layout_constraintTop_toTopOf="@+id/swipeRefreshLayout" >
+
+                <ImageButton
+                    android:id="@+id/btn_bottom_sheet_profile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:background="@drawable/edittextbd10dp"
+                    android:backgroundTint="@color/colorbtnctive"
+                    android:src="@drawable/ic_account" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_newpost"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:visibility="invisible"
+                    android:backgroundTint="@color/color_active" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btn_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:background="@drawable/edittextbd10dp"
+                    android:backgroundTint="@color/colorbtnctive"
+                    android:src="@drawable/ic_chat" />
+
+            </LinearLayout>
+
 
             <HorizontalScrollView
                 android:id="@+id/scrollview_btn"

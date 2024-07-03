@@ -7,6 +7,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -14,6 +18,9 @@ import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.ItemReceiMessBinding
 import com.example.cameraprovider.databinding.ItemSendMessBinding
 import com.example.cameraprovider.model.Message
+import com.example.cameraprovider.model.MessageStatus
+import com.example.cameraprovider.viewmodel.MessageViewModel
+import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,16 +29,22 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.sql.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MessageAdapter(
     private val userId: String,
     private val image: String,
-    private var messages: List<Message>
+    private var messages: List<Message>,
+    private val messageViewModel: MessageViewModel,
+    private val lifecycle: LifecycleOwner
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         const val VIEW_TYPE_SENT = 0
         const val VIEW_TYPE_RECEIVED = 1
+        const val TIME_STEP = 40 * 60 * 1000
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -61,10 +74,25 @@ class MessageAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = messages[position]
+        val previousMessage = if (position > 0) messages[position - 1] else null
+        val showTime = shouldShowTime(message, previousMessage)
         when (holder) {
-            is SentMessageViewHolder -> holder.bind(message, image)
-            is ReceivedMessageViewHolder -> holder.bind(message, image)
+            is SentMessageViewHolder -> holder.bind(message, image, showTime)
+            is ReceivedMessageViewHolder -> holder.bind(
+                message,
+                image,
+                showTime,
+                messageViewModel,
+                lifecycle
+            )
         }
+    }
+
+    private fun shouldShowTime(currentMessage: Message, previousMessage: Message?): Boolean {
+        if (previousMessage == null) return true
+        val currentTimestamp = currentMessage.createdAt?.toLongOrNull() ?: return false
+        val previousTimestamp = previousMessage.createdAt?.toLongOrNull() ?: return true
+        return (currentTimestamp - previousTimestamp) > TIME_STEP
     }
 
     override fun getItemCount() = messages.size
@@ -75,7 +103,7 @@ class MessageAdapter(
         private var mediaPlayer = MediaPlayer()
         private val handler = Handler(Looper.getMainLooper())
         private var isplay: Boolean = false
-        fun bind(message: Message, image: String) {
+        fun bind(message: Message, image: String, showTime: Boolean) {
 
             if (message.imageUrl == "") {
                 binding.comment.visibility = View.GONE
@@ -89,7 +117,6 @@ class MessageAdapter(
             }
 
 
-
             if (message.voiceUrl == "") {
                 binding.voiceCmt.visibility = View.GONE
             } else {
@@ -101,8 +128,48 @@ class MessageAdapter(
                     binding.txtcontent.visibility = View.GONE
                 }
             }
+
+            if (showTime) {
+                binding.tvCreatedAt.text =
+                    "-" +formatTimestamp(message.createdAt.toString())+ "-"
+                binding.tvCreatedAt.visibility = View.VISIBLE
+            } else {
+                binding.tvCreatedAt.visibility = View.GONE
+            }
+
+
+
+            binding.root.setOnClickListener {
+                binding.subCreateAt.visibility = View.VISIBLE
+                binding.subCreateAt.text =  TimeAgo.using(message.createdAt?.toLong() ?: 0)
+                binding.state.visibility = View.VISIBLE
+
+                val messageStatus = when (message.status) {
+                    MessageStatus.SENDING -> "Đang gửi"
+                    MessageStatus.SENT -> "Đã gửi"
+                    MessageStatus.DELIVERED -> "Đã nhận"
+                    else -> "Đã xem"
+                }
+
+                binding.state.text = messageStatus
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.subCreateAt.visibility = View.GONE
+                    binding.state.visibility = View.GONE
+                }, 2000)
+            }
             binding.chat = message
             binding.executePendingBindings()
+        }
+
+        fun formatTimestamp(timestamp: String): String {
+            return try {
+                val timeInMillis = timestamp.toLong()
+                val date = Date(timeInMillis)
+                val format = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+                format.format(date)
+            } catch (e: Exception) {
+                "Invalid date"
+            }
         }
 
         private fun downloadAudio(url: String) {
@@ -181,7 +248,13 @@ class MessageAdapter(
         private var mediaPlayer = MediaPlayer()
         private val handler = Handler(Looper.getMainLooper())
         private var isplay: Boolean = false
-        fun bind(message: Message, image: String) {
+        fun bind(
+            message: Message,
+            image: String,
+            showTime: Boolean,
+            messageViewModel: MessageViewModel,
+            lifecycle: LifecycleOwner
+        ) {
             if (message.imageUrl == "") {
                 binding.comment.visibility = View.GONE
             } else {
@@ -206,13 +279,72 @@ class MessageAdapter(
 
             }
 
-            if( message.senderId == "Gemini"){
+            if (message.senderId == "Gemini") {
                 binding.avtRequest.setImageResource(R.drawable.ic_chatbot)
-            }else{
+
+            } else {
                 Glide.with(binding.root).load(image).into(binding.avtRequest)
             }
+            if (showTime) {
+                binding.tvCreatedAt.text =
+                    "-" + formatTimestamp(message.createdAt.toString())+ "-"
+                binding.tvCreatedAt.visibility = View.VISIBLE
+            } else {
+                binding.tvCreatedAt.visibility = View.GONE
+            }
+
+            lifecycle.lifecycleScope.launch {
+                lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    messageViewModel.isLoading.collect { isLoading ->
+                        if (isLoading) {
+                            binding.shimmerChat.visibility = View.VISIBLE
+                            binding.shimmerChat.startShimmer()
+                            binding.messageLayout.visibility = View.GONE
+                        } else {
+                            binding.shimmerChat.stopShimmer()
+                            binding.shimmerChat.visibility = View.GONE
+                            binding.messageLayout.visibility = View.VISIBLE
+                        }
+                    }
+                }
+            }
+
+            binding.root.setOnClickListener {
+                binding.subCreateAt.visibility = View.VISIBLE
+                binding.subCreateAt.text =  TimeAgo.using(message.createdAt?.toLong() ?: 0)
+                binding.state.visibility = View.VISIBLE
+
+                val messageStatus = when (message.status) {
+                    MessageStatus.SENDING -> "Đang gửi"
+                    MessageStatus.SENT -> "Đã gửi"
+                    MessageStatus.DELIVERED -> "Đã nhận"
+                    else -> "Đã xem"
+                }
+
+                binding.state.text = messageStatus
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.subCreateAt.visibility = View.GONE
+                    binding.state.visibility = View.GONE
+                }, 2000)
+
+            }
+
+
+
             binding.chat = message
+
             binding.executePendingBindings()
+        }
+
+        fun formatTimestamp(timestamp: String): String {
+            return try {
+                val timeInMillis = timestamp.toLong()
+                val date = Date(timeInMillis)
+                val format = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+                format.format(date)
+            } catch (e: Exception) {
+                "Invalid date"
+            }
         }
 
         private fun downloadAudio(url: String) {

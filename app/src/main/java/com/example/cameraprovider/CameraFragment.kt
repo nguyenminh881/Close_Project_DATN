@@ -221,7 +221,7 @@ class CameraFragment : Fragment() {
     }
 
     private fun capquyencam() {
-        val builder = AlertDialog.Builder(requireContext())
+        val builder = AlertDialog.Builder(requireContext(),R.style.AlertDialogTheme)
         builder.setTitle("Bật quyền truy cập Máy ảnh")
             .setMessage("Đến cài đặt ứng dụng cấp quyền để ứng dụng được hoạt động đúng đắn!")
             .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
@@ -421,8 +421,8 @@ class CameraFragment : Fragment() {
         return cameraProvider
     }
 
-    companion object {
 
+    companion object {
         private lateinit var cameraProvider: ProcessCameraProvider
 
         fun setCameraProvider(provider: ProcessCameraProvider) {
@@ -443,6 +443,10 @@ class CameraFragment : Fragment() {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }.toTypedArray()
+
+        fun getRequiredPermissions(): Array<String> {
+            return REQUIRED_PERMISSIONS
+        }
     }
 
 }

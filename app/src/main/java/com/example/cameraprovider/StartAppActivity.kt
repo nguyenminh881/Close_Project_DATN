@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -16,7 +15,7 @@ import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
 import com.example.cameraprovider.viewmodel.FriendViewmodel
-import androidx.lifecycle.Observer
+import com.example.cameraprovider.Admin.AdminActivity
 
 
 class StartAppActivity : AppCompatActivity() {
@@ -28,9 +27,7 @@ class StartAppActivity : AppCompatActivity() {
         )
     }
     private val frVModel: FriendViewmodel by viewModels()
-
-
-
+    private var isDynamicLinkHandled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,29 +40,18 @@ class StartAppActivity : AppCompatActivity() {
 
         handleIntent(intent)
 
-        frVModel.friendshipResult.observe(this@StartAppActivity, Observer { result ->
-
-            Log.d("StartApp", "onCreate: $result")
-            if (authViewModel.islogined() && !authViewModel.isadmin()) {
-                val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("userId", result)
-                startActivity(intent)
-            }
-        })
-
-
-        if (authViewModel.islogined()) {
-            val i = Intent(this, MainActivity::class.java)
-            i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(i)
-        }else{
-            if(authViewModel.isadmin()){
-                val intent = Intent(this, AdminActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+        frVModel.friendshipResult.observe(this@StartAppActivity) { uid ->
+            Log.d("StartAppActivity", "handleIntent: $uid")
+            if (uid != null) {
+                val sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
+                sharedPreferences.edit().putString("uid", uid).apply()
+                isDynamicLinkHandled = true
+                navigateToNextActivity()
+            } else {
+                isDynamicLinkHandled = true
+                navigateToNextActivity()
             }
         }
-
 
         binding.btnDk.setOnClickListener {
             val i = Intent(this, SignUp::class.java)
@@ -79,32 +65,41 @@ class StartAppActivity : AppCompatActivity() {
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("channel_id", "Channel name", NotificationManager.IMPORTANCE_DEFAULT)
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channel = NotificationChannel(
+                "channel_id",
+                "Channel name",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
 
     }
 
-    override fun onStart() {
-        super.onStart()
-//        if (authViewModel.islogined()) {
-//            onRegistration()
-//        }
-
-    }
-
-    //    private fun onRegistration() {
-//        val intent = Intent(this, MainActivity::class.java)
-//        intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-//        startActivity(intent)
-//    }
     private fun handleIntent(intent: Intent) {
         intent.data?.let {
             frVModel.handleDynamicLink(intent)
+        } ?: run {
+            isDynamicLinkHandled = true
+            navigateToNextActivity()
         }
     }
+    private fun navigateToNextActivity() {
+        if (!isDynamicLinkHandled) return
 
-
-
+        if (authViewModel.islogined() && !authViewModel.isadmin()) {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        } else {
+            if (authViewModel.isadmin()) {
+                val intent = Intent(this, AdminActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+        }
+    }
 }

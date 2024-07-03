@@ -1,8 +1,11 @@
 package com.example.cameraprovider
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -61,11 +64,38 @@ class LoadingActivity : AppCompatActivity() {
             }
         })
 
+        binding.btnBack.setOnClickListener {
+
+            huydki()
+        }
 
 
+        val onBackPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                huydki()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         authViewModel.handleImageResult(requestCode, resultCode, data,binding.imgvAvtUser)
     }
+
+    private fun huydki(){
+        AlertDialog.Builder(this,R.style.AlertDialogTheme)
+            .setTitle("Xác nhận")
+            .setMessage("Bạn có chắc chắn muốn hủy đăng ký không?")
+            .setPositiveButton("Đồng ý") { dialog, _ ->
+                authViewModel.deletenewAccount()
+                finish()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Hủy") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+
 }

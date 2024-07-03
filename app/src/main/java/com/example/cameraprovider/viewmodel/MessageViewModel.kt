@@ -26,11 +26,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.log
 
-class MessageViewModel(): ViewModel(), Observable {
+class MessageViewModel() : ViewModel(), Observable {
 
     val messageRepository = MessageRepository()
 
     private lateinit var generativeModel: GenerativeModel
+
     @Bindable
     var messagesend = MutableLiveData<String?>()
 
@@ -38,40 +39,74 @@ class MessageViewModel(): ViewModel(), Observable {
     val sendSuccess: LiveData<Boolean> get() = _sendSuccess
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> get() = _loading
-    fun sendMessage(postId: String,receiverId: String,imgUrl:String,VoiceUrl:String,content:String,createAt:String,avtUserPost:String) {
-        _loading.value =true
-        var message = messagesend.value?:""
+    fun sendMessage(
+        postId: String,
+        receiverId: String,
+        imgUrl: String,
+        VoiceUrl: String,
+        content: String,
+        createAt: String,
+        avtUserPost: String
+    ) {
+        _loading.value = true
+        var message = messagesend.value ?: ""
         viewModelScope.launch(Dispatchers.IO) {
-           val result = messageRepository.sendMessage(message,postId,receiverId,imgUrl,VoiceUrl,content,createAt,avtUserPost)
+            val result = messageRepository.sendMessage(
+                message,
+                postId,
+                receiverId,
+                imgUrl,
+                VoiceUrl,
+                content,
+                createAt,
+                avtUserPost
+            )
             result.onSuccess { success ->
                 if (success) {
                     withContext(Dispatchers.Main) {
-                        _loading.value=true
-                        _sendSuccess.value= true
+                        _loading.value = true
+                        _sendSuccess.value = true
                     }
 
                 }
             }.onFailure { exception ->
                 withContext(Dispatchers.Main) {
-                    _loading.value=true
-                    _sendSuccess.value= true
+                    _loading.value = true
+                    _sendSuccess.value = true
                 }
             }
         }
     }
 
+
+    fun updateMessagesToSeen(senderId: String) {
+        viewModelScope.launch {
+            messageRepository.updateMessagesToSeen(senderId)
+        }
+    }
+
+    fun updateMessagesToReadtu(senderId: String) {
+        viewModelScope.launch {
+            messageRepository.updateMessagesToRead(senderId)
+        }
+    }
+
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> get() = _isLoading
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> get() = _messages
 
     fun getMessages(userId: String, friendId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             messageRepository.getMessages(userId, friendId).collect {
                 _messages.value = it
+                _isLoading.value = false
             }
         }
     }
-
 
 
     private val _friendList = MutableLiveData<List<User>>()
@@ -80,42 +115,47 @@ class MessageViewModel(): ViewModel(), Observable {
     private val _lastMessages = MutableLiveData<Map<String, Message>>()
     val lastMessages: LiveData<Map<String, Message>> get() = _lastMessages
 
-    fun getlistchats() {
-        viewModelScope.launch {
-            try {
-                val (friends, messages) = messageRepository.getFriendsWithLastMessages()
-                _friendList.value = friends
-                _lastMessages.value = messages
-            } catch (e: Exception) {
-                Log.e("MessageViewModel", "Error getting friends and last messages", e)
+    private val _friendsWithMessages = MutableLiveData<Pair<List<User>, Map<String, Message>>>()
+    val friendsWithMessages: LiveData<Pair<List<User>, Map<String, Message>>>
+        get() = _friendsWithMessages
+
+    fun fetchFriendsWithLastMessages() {
+        messageRepository.getFriendsWithLastMessages(
+            onSuccess = { friendsAndMessages ->
+                _friendsWithMessages.postValue(friendsAndMessages)
+            },
+            onError = { exception ->
+                Log.d(
+                    "MessageViewModel",
+                    "Error fetching friends and last messages: ${exception.message}"
+                )
             }
-        }
-    }
-    private val remoteConfig = Firebase.remoteConfig
-
-    init{
-        getlistchats()
-
+        )
     }
 
     fun sendMessageToGemini() {
-        var message = messagesend.value?:""
+        var message = messagesend.value ?: ""
         viewModelScope.launch {
-            val result = messageRepository.sendMessageToGemini(message)
-            result.onSuccess { message ->
-                withContext(Dispatchers.Main) {
-                    _loading.value=true
-                    _sendSuccess.value= true
+            _isLoading.value = true
+            messageRepository.sendMessageToGemini(message,
+                onComplete = { result ->
+                    _isLoading.value = false
+                    _loading.value = false
+
+                    result.onSuccess { message ->
+                        _sendSuccess.value = true
+                    }.onFailure { exception ->
+                        _sendSuccess.value = false
+                        Log.d(
+                            "MessageViewModel",
+                            "Error sending message to Gemini: ${exception.message}"
+                        )
+                    }
                 }
-            }.onFailure { exception ->
-                withContext(Dispatchers.Main) {
-                    _loading.value=true
-                    _sendSuccess.value= true
-                }
-                Log.d("MessageViewModel", "Error sending message to Gemini: ${exception.message}")
-            }
+            )
         }
     }
+
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 
     }

@@ -22,14 +22,12 @@ import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
 import androidx.lifecycle.viewModelScope
 import com.bumptech.glide.Glide
-import com.example.cameraprovider.AdminActivity
+import com.example.cameraprovider.Admin.AdminActivity
 import com.example.cameraprovider.LoadingActivity
 import com.example.cameraprovider.MainActivity
-import com.example.cameraprovider.ProfileActivity
-import com.example.cameraprovider.R
 import com.example.cameraprovider.StartAppActivity
 import com.example.cameraprovider.model.User
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.example.cameraprovider.notification.NotificationService
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -43,7 +41,6 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.random.Random
 
 
 class AuthViewModel(private val userRepository: UserRepository, private val context: Context) :
@@ -278,6 +275,7 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
         intent.type = "image/*"
         (context as Activity).startActivityForResult(intent, REQUEST_IMAGE_GET)
     }
+
     private val _imgUriInitialized = MutableLiveData<Boolean>(false)
     val imgUriInitialized: LiveData<Boolean> = _imgUriInitialized
     fun handleImageResult(
@@ -404,26 +402,24 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
     }
 
 
-    private fun handleLoginError(exception: Throwable?): Boolean {
-        var ischeck = true
-        if (exception is FirebaseAuthInvalidCredentialsException) {
-            _pwErrorLg.postValue(exception.message)
-            ischeck = false
-        } else if (exception is FirebaseAuthInvalidUserException) {
-            _pwErrorLg.postValue(exception.message)
-            ischeck = false
-        } else if (exception is FirebaseNetworkException) {
-            _pwErrorLg.postValue(exception.message)
-            ischeck = false
-        } else if (exception is FirebaseNetworkException) {
-            _pwErrorLg.postValue(exception.message)
-            ischeck = false
-        } else {
-            _pwErrorLg.postValue(exception?.message)
+    private fun handleLoginError(exception: Throwable?) {
+        exception?.let {
+            Log.e("LoginError", "Exception: ${it.message}, Type: ${it::class.java.simpleName}")
+            val errorMessage = when (it) {
+                is FirebaseAuthInvalidCredentialsException -> {
+                    when (it.errorCode) {
+                        "ERROR_INVALID_EMAIL" -> "Địa chỉ email không hợp lệ"
+                        "ERROR_USER_NOT_FOUND" -> "Tài khoản không tồn tại"
+                        else -> "Tài khoản hoặc mật khẩu không đúng"
+                    }
+                }
+                is FirebaseNetworkException -> "Lỗi mạng khi đăng nhập"
+                else -> it.message ?: "Tài khoản không tồn tại"
+            }
+            Log.e("LoginError", errorMessage)
+            _pwErrorLg.value = errorMessage
         }
-        return ischeck
     }
-
     fun validateLogin(emailValue: String) {
 
         if (emailValue.isEmpty()) {
@@ -434,7 +430,6 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
         }
 
     }
-
 
     fun validateLoginpw(passwordValue: String) {
 
@@ -478,16 +473,19 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                     }
                 } else {
                     val exception = loginResult.exceptionOrNull()
-                    !handleLoginError(exception)
-                    _loading.postValue(false)
-                    Log.d("TAGY", "Login error: ${exception?.message}")
-                    _loginResult.postValue(false)
+                    withContext(Dispatchers.Main) {
+                        handleLoginError(exception)
+                        _loading.postValue(false)
+                        Log.d("TAGY", "Login error: ${exception?.message}")
+                        _loginResult.postValue(false)
+                    }
+
                 }
 
 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    !handleLoginError(e)
+                    handleLoginError(e)
                     _loading.value = false
                     Log.e("TAGY", "Login exception: ${e.message}")
                     _loginResult.value == false
@@ -649,14 +647,71 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
             val result = userRepository.updateAvatar(imgUri)
             if (result.isSuccess) {
                 withContext(Dispatchers.Main) {
-                _getUserResult.value?.let{
+                    _getUserResult.value?.let {
 
-                    it.avatarUser = it.avatarUser
+                        it.avatarUser = it.avatarUser
+                    }
+                    _updateResult.value = true
                 }
-                _updateResult.value = true}
             } else {
                 withContext(Dispatchers.Main) {
-                _updateResult.value = false}
+                    _updateResult.value = false
+                }
+            }
+        }
+    }
+
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            try {
+                val result = userRepository.deleteAccount()
+                if (result.isSuccess) {
+                    withContext(Dispatchers.Main) {
+                        widgetViewModel().cancelListen()
+                        messWidgetViewModel().cancelListen()
+                        context.stopService(Intent(context, NotificationService::class.java))
+                        context.startActivity(Intent(context, StartAppActivity::class.java))
+                        (context as? Activity)?.finish()
+
+                    }
+                } else {
+                    val exepction = result.exceptionOrNull()
+                    if (exepction is FirebaseAuthRecentLoginRequiredException) {
+                        Toast.makeText(context, "Vui lòng đăng nhập lại trước khi xóa tài khoản", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "Vui lòng kiểm tra kết nối mạng", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                if(e is FirebaseAuthRecentLoginRequiredException){
+                    Toast.makeText(context,"Vui lòng đăng nhập lại trước khi xóa tài khoản",Toast.LENGTH_LONG).show()
+                }else{
+                    Toast.makeText(context,"Vui lòng kiểm tra kết nối mạng",Toast.LENGTH_SHORT).show()
+                }
+
+                Log.d("DeleteAccount", "$e")
+            }
+        }
+
+    }
+
+    fun deletenewAccount() {
+        viewModelScope.launch {
+            try {
+                val result = userRepository.deletenewAccount()
+                if (result) {
+                    withContext(Dispatchers.Main) {
+                        context.startActivity(Intent(context, StartAppActivity::class.java))
+                        (context as? Activity)?.finish()
+
+                    }
+                } else {
+                    Toast.makeText(context,"Vui lòng thử lại sau",Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context,"Vui lòng thử lại sau",Toast.LENGTH_SHORT).show()
+                Log.d("DeleteAccount", "$e")
             }
         }
     }
@@ -666,8 +721,13 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
             userRepository.logout()
             withContext(Dispatchers.Main) {
                 _logoutResult.value = true
+
+                widgetViewModel().cancelListen()
+                messWidgetViewModel().cancelListen()
+                context.stopService(Intent(context, NotificationService::class.java))
                 context.startActivity(Intent(context, StartAppActivity::class.java))
                 (context as? Activity)?.finish()
+
             }
         }
     }

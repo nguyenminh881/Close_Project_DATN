@@ -16,19 +16,43 @@
         android:background="@color/dark"
         tools:context=".SignUp">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/titleSignUp"
-            android:layout_width="0dp"
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:paddingStart="24dp"
-            android:text="Email của bạn là gì?"
-            android:textColor="@color/white"
-            android:textSize="34sp"
-            android:textStyle="bold"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/edittextbd10dp"
+                android:padding="5dp"
+                android:layout_marginStart="12dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_back"
+                app:backgroundTint="@color/colorbtnctive"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="24dp"
+                android:gravity="center_vertical"
+                android:text="Email của bạn là gì?"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+
+
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/Ed_email_signup"
@@ -48,7 +72,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailCreate"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
+                android:layout_height="76dp"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
                 android:text="@={authVModel.email}"
@@ -78,7 +102,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/pwCreate"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
+                android:layout_height="76dp"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:text="@={authVModel.password}"
@@ -98,14 +122,14 @@
             android:enabled="false"
             android:gravity="center"
             android:onClick="@{() -> authVModel.signUp()}"
+            android:shadowColor="@color/subkey"
             android:text="Tiếp tục"
             android:textColor="@color/black"
-            android:shadowColor="@color/subkey"
             android:textSize="16sp"
             app:icon="@drawable/ic_next"
-            app:iconTint="@color/black"
             app:iconGravity="textEnd"
             app:iconSize="16dp"
+            app:iconTint="@color/black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/Ed_password_signup"
             app:layout_constraintStart_toStartOf="@+id/Ed_password_signup" />

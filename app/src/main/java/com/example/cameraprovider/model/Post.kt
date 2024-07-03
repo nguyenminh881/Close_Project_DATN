@@ -11,5 +11,6 @@ data class Post(
     val imageURL: String?="",
     val voiceURL: String?="",
     val createdAt: Timestamp?=null,
-    val hiddenForUsers: List<String> = emptyList()
+    val hiddenForUsers: List<String> = emptyList(),
+    val viewedBy: List<String> = emptyList()
 )

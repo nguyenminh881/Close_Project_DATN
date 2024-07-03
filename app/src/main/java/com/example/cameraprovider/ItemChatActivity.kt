@@ -1,15 +1,20 @@
 package com.example.cameraprovider
 
+import android.app.ActivityOptions
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.cameraprovider.adapter.MessageAdapter
 import com.example.cameraprovider.databinding.ActivityItemChatBinding
@@ -32,18 +37,22 @@ class ItemChatActivity : AppCompatActivity() {
         )
     }
     private val messviewModel: MessageViewModel by viewModels()
+    private lateinit var friendId: String
+    private lateinit var friendName: String
+    private lateinit var friendAvatar: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_item_chat)
 
-        val friendId = intent.getStringExtra("FRIEND_ID") ?: return
-        val friendName = intent.getStringExtra("FRIEND_NAME") ?: return
-        val friendAvatar = intent.getStringExtra("FRIEND_AVATAR") ?: return
+         friendId = intent.getStringExtra("FRIEND_ID") ?: return
+         friendName = intent.getStringExtra("FRIEND_NAME") ?: return
+         friendAvatar = intent.getStringExtra("FRIEND_AVATAR") ?: return
 
 
 
         if (friendId == "Gemini") {
-            binding.namefr.text = "Chat bot"
+            binding.namefr.text = "Close"
             binding.avtRequest.setImageResource(R.drawable.ic_chatbot)
             binding.avtRequest.scaleType = ImageView.ScaleType.CENTER_INSIDE
             binding.avtRequest.strokeWidth = 0f
@@ -54,7 +63,7 @@ class ItemChatActivity : AppCompatActivity() {
 
 
         val currentId = authViewModel.getCurrentId()
-        messageAdapter = MessageAdapter(currentId, friendAvatar, listOf())
+        messageAdapter = MessageAdapter(currentId, friendAvatar, listOf(),messviewModel, this)
         binding.rcvFromchat.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
@@ -66,11 +75,28 @@ class ItemChatActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 messviewModel.messages.collect { messages ->
+
                     messageAdapter.submitList(messages)
                     binding.rcvFromchat.layoutManager?.scrollToPosition(messageAdapter.itemCount - 1)
                 }
             }
         }
+
+
+
+        binding.rcvFromchat.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                messviewModel.updateMessagesToSeen(friendId)
+                if(friendId == "Gemini"){
+                    messviewModel.updateMessagesToReadtu(friendId)
+                }
+
+            }
+
+        })
+
 
         messviewModel.messagesend.observe(this){
             if (it?.length!! > 0 ) {
@@ -92,5 +118,28 @@ class ItemChatActivity : AppCompatActivity() {
 
         }
 
+
+
+
+
+
+
+
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
+        }
+
+
     }
+
+
+
+
+
+    override fun onResume() {
+        super.onResume()
+        messviewModel.updateMessagesToSeen(friendId)
+    }
+
 }

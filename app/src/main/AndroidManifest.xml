@@ -3,11 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.camera.any" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,6 +18,12 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+
+
+    <uses-permission android:name="android.permission.BIND_APPWIDGET"
+        tools:ignore="ProtectedPermissions" />
+
+
 
     <application
         android:name=".MyApplication"
@@ -32,6 +38,12 @@
         android:theme="@style/Theme.CameraProvider"
         tools:targetApi="34">
 
+
+        <service android:name=".notification.NotificationService"
+            android:foregroundServiceType="dataSync"
+            />
+
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_heart" />
@@ -39,18 +51,8 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/dark" />
 
-        <!-- Firebase Messaging Service -->
-        <service
-            android:name=".Notification.MyFirebaseMessagingService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
-
         <activity
-            android:name=".AdminActivity"
+            android:name=".Admin.AdminActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
@@ -82,8 +84,9 @@
         </provider>
 
         <receiver
-            android:name=".PostWidget"
-            android:exported="true">
+            android:name=".widget.PostWidget"
+            android:exported="true"
+            android:icon="@drawable/ic_heart">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 
@@ -91,6 +94,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/my_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MessageWidget"
+            android:exported="true"
+            android:icon="@drawable/ic_heart">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/message_widget_info" />
         </receiver>
 
 

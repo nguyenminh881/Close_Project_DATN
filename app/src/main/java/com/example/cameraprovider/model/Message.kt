@@ -11,6 +11,12 @@ data class Message(
     val timestamp: String? = "",
     val content: String? = "",
     val avtpost:String? = "",
-    val createdAt: String? = ""
+    val createdAt: String? = "",
+    var status: MessageStatus = MessageStatus.SENDING
 )
-
+enum class MessageStatus {
+    SENDING,
+    SENT,
+    DELIVERED,
+    READ
+}

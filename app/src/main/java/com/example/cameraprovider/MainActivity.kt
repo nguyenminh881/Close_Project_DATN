@@ -1,12 +1,12 @@
 package com.example.cameraprovider
 
 import android.app.ActivityOptions
-import android.app.AlertDialog
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.Manifest
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +16,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
@@ -26,6 +28,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.bumptech.glide.Glide
 import com.example.cameraprovider.databinding.ActivityMainBinding
 import com.example.cameraprovider.databinding.FriendRequestDialogBinding
+import com.example.cameraprovider.notification.NotificationService
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
@@ -42,7 +45,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : AppCompatActivity() {
-
+    private val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
+    private val CAMERA_PERMISSION_REQUEST_CODE = 1002
     private lateinit var viewBinding: ActivityMainBinding
     lateinit var gestureDetector: GestureDetector
     private val authViewModel: AuthViewModel by viewModels {
@@ -54,13 +58,22 @@ class MainActivity : AppCompatActivity() {
     private val frVModel: FriendViewmodel by viewModels()
     private val postVmodel: PostViewModel by viewModels()
     private val messageViewModel: MessageViewModel by viewModels()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         viewBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+
+        checkAndRequestNotificationPermission()
+
+
+
         viewBinding.lifecycleOwner = this
+
         viewBinding.authVModel = authViewModel
 
 
@@ -78,15 +91,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent,options.toBundle())
         }
 
-        //go pot
-        viewBinding.xembai.setOnClickListener {
-            val intent = Intent(this, PostList::class.java)
-            val options = ActivityOptions.makeCustomAnimation(
-                this@MainActivity,
-                R.anim.slide_in_up, R.anim.slide_out_up
-            )
-            startActivity(intent,options.toBundle())
-        }
 
 
 
@@ -97,9 +101,15 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity,
                 R.anim.slide_in_up, R.anim.slide_out_up
             )
-            messageViewModel.getlistchats()
             startActivity(intent,options.toBundle())
         }
+
+
+
+
+
+
+
 
         frVModel.listFriend.observe(this) {
             if (it == null) {
@@ -110,9 +120,7 @@ class MainActivity : AppCompatActivity() {
         }
         frVModel.getFriendAccepted()
         authViewModel.getInfo()
-//        viewBinding.btnBottomSheetFriends.text = "(${frVModel.getsize()}) Bạn bè"
 
-//        postVmodel.posts
 
         //viewpp2
         viewBinding.viewpp.adapter = object : FragmentStateAdapter(this) {
@@ -170,15 +178,20 @@ class MainActivity : AppCompatActivity() {
 
 
 //diALOGKETBAN
-        val uid = intent.getStringExtra("userId")
-        Log.d("MainActivity","$uid")
+        //  `uid`
+        val sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val uid = sharedPreferences.getString("uid", null)
+
+        Log.d("MainActivityApplink","$uid")
         if (uid != null) {
             frVModel.getinforUserSendlink(uid)
 
             frVModel.infoUserSendlink.observe(this, Observer { result ->
                 if (result.first != null && result.second != null) {
                     showFriendRequestDialog(uid, result.first, result.second)
+                    sharedPreferences.edit().clear().apply()
                 } else {
+                    sharedPreferences.edit().clear().apply()
                     Toast.makeText(this, "Lỗi, vui lòng thử lại sau!", Toast.LENGTH_SHORT).show()
                 }
             })
@@ -218,11 +231,38 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
+        //go pot
+        viewBinding.xembai.setOnClickListener {
+            viewBinding.newposttxt.visibility = View.GONE
+            postVmodel.clearNewpostsize()
+            val intent = Intent(this, PostList::class.java)
+            val options = ActivityOptions.makeCustomAnimation(
+                this@MainActivity,
+                R.anim.slide_in_up, R.anim.slide_out_up
+            )
+            startActivity(intent,options.toBundle())
+        }
+
+
+
+        postVmodel.newPostCount.observe(this){
+            if(it > 0){
+                viewBinding.newposttxt.visibility = View.VISIBLE
+                viewBinding.newposttxt.text =it.toString()
+            }else{
+                viewBinding.newposttxt.visibility = View.INVISIBLE
+            }
+        }
+
+
+
     }
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        // Chuyển sự kiện onTouchEvent đến GestureDetector để xử lý
+
         return gestureDetector.onTouchEvent(event!!)
     }
 
@@ -241,6 +281,8 @@ class MainActivity : AppCompatActivity() {
                 // Xác định hướng và tốc độ vuốt
                 if (e1.y - e2.y > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                     // Nếu có vuốt lên, mở PostListActivity
+                    viewBinding.newposttxt.visibility = View.GONE
+                    postVmodel.clearNewpostsize()
                     val intent = Intent(this@MainActivity, PostList::class.java)
                     val options = ActivityOptions.makeCustomAnimation(
                         this@MainActivity,
@@ -295,12 +337,60 @@ class MainActivity : AppCompatActivity() {
         }
         dialog.show()
     }
-//    override fun onBackPressed() {
-//
-//        if(authViewModel.islogined()){
-//            finishAffinity()
-//        }else{
-//            super.onBackPressed()
-//        }
-//    }
+
+    private fun checkAndRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST_CODE)
+            } else {
+                checkAndRequestCameraPermissions()
+            }
+        } else {
+            checkAndRequestCameraPermissions()
+        }
+    }
+
+    private fun checkAndRequestCameraPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+        CameraFragment.getRequiredPermissions().forEach { permission ->
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission)
+            }
+        }
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), CAMERA_PERMISSION_REQUEST_CODE)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    val intent = Intent(this, NotificationService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent)
+                    } else {
+                        startService(intent)
+                    }
+                    checkAndRequestCameraPermissions()
+                } else {
+                    Toast.makeText(this, "Bạn chưa cấp quyền để nhận thông báo", Toast.LENGTH_SHORT).show()
+                }
+            }
+            CAMERA_PERMISSION_REQUEST_CODE -> {
+                val cameraPermissionsGranted = CameraFragment.getRequiredPermissions().all { permission ->
+                    ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+                }
+                if (!cameraPermissionsGranted) {
+                    Toast.makeText(this, "Bạn chưa cấp quyền để sử dụng camera", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
 }

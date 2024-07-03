@@ -39,7 +39,7 @@ class RecordFragment : Fragment() {
 
     lateinit var binding: FragmentRecordBinding
     private var isRecording: Boolean = false
-   private var isPlaying: Boolean = false
+    private var isPlaying: Boolean = false
     private lateinit var fileName: String
     private lateinit var mediaRecorder: MediaRecorder
     private lateinit var postViewModel: PostViewModel
@@ -97,7 +97,7 @@ class RecordFragment : Fragment() {
             setOnClickListener {
                 toggleRecording()
             }
-            if(isRecording == true){
+            if (isRecording == true) {
                 binding.play.isEnabled = false
             }
         }
@@ -114,8 +114,10 @@ class RecordFragment : Fragment() {
                 is PostRepository.PostResult.Success -> {
                     resetVoiceRecording()
                 }
-                else-> {
-                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+
+                else -> {
+                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -123,6 +125,7 @@ class RecordFragment : Fragment() {
             resetVoiceRecording()
         }
     }
+
     private fun resetVoiceRecording() {
 
         val audioFile = File(fileName)
@@ -150,8 +153,8 @@ class RecordFragment : Fragment() {
     }
 
     private fun capquyencam() {
-        val builder = android.app.AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
-        builder.setTitle("Bật quyền truy cập Micro")
+        val dialog = AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+        dialog.setTitle("Bật quyền truy cập Micro")
             .setMessage("Đến cài đặt ứng dụng và đảm bảo Close có quyền truy cập micro của bạn")
             .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
                 dialog.dismiss()
@@ -166,8 +169,9 @@ class RecordFragment : Fragment() {
             }
             .show()
     }
+
     private fun toggleRecording() {
-        if(!allPermissionsGranted()){
+        if (!allPermissionsGranted()) {
             capquyencam()
         }
         if (!isRecording) {
@@ -225,7 +229,7 @@ class RecordFragment : Fragment() {
         isRecording = false
         mediaRecorder = MediaRecorder()
         countDownTimer.cancel()
-        binding.tvTimer.text = "00:00/$totalTimer"
+        binding.tvTimer.text = "$totalTimer"
         displayWaveform(fileName)
         Log.d("TAGY", "$fileName")
         binding.btnrecord.visibility = View.GONE
@@ -234,20 +238,20 @@ class RecordFragment : Fragment() {
     }
 
 
-
     //hien thi progress
     private val updateWaveform = object : Runnable {
         override fun run() {
             mediaPlayer?.let { player ->
                 if (isPlaying) {
-                    val progress = (player.currentPosition.toFloat() / player.duration)*100
-                    Log.d("TAGY","$progress , $player.duration")
+                    val progress = (player.currentPosition.toFloat() / player.duration) * 100
+                    Log.d("TAGY", "$progress , $player.duration")
                     binding.wave.progress = progress
                     handler.postDelayed(this, 1) // Update every 50ms for smooth animation
                 }
             }
         }
     }
+
     //play
     private fun playAudio(audioFilePath: String) {
         try {
@@ -266,6 +270,7 @@ class RecordFragment : Fragment() {
             Log.e("TAGY", "Error playing audio: ${e.message}")
         }
     }
+
     private fun stopPlaying() {
         mediaPlayer.stop()
         isPlaying = false
@@ -276,15 +281,18 @@ class RecordFragment : Fragment() {
         mediaPlayer.reset()
         mediaPlayer.release()
     }
+
     override fun onStop() {
         super.onStop()
 
     }
+
     override fun onDestroy() {
         super.onDestroy()
-            mediaPlayer?.release()
+        mediaPlayer?.release()
         handler.removeCallbacksAndMessages(null)
     }
+
     private fun setupWaveformView() {
         binding.wave.onProgressListener = object : OnProgressListener {
             override fun onProgressChanged(progress: Float, byUser: Boolean) {
@@ -294,14 +302,7 @@ class RecordFragment : Fragment() {
 //                        postRowVoiceBinding.wave.progress = progress
                     Log.d("TAGY", "Seeking to position: $seekToPosition")
                     mediaPlayer?.seekTo(seekToPosition)
-                    // Chờ đợi 100ms (có thể điều chỉnh tùy theo thiết bị)
-//                        Handler(Looper.getMainLooper()).postDelayed({
-//                            if(mediaPlayer.isPlaying){
-//                                isplay =true
-//
-//                            }
-//
-//                        }, 100) // Khởi động lại Media Player ngay sau khi tua
+
                 }
             }
 
@@ -311,9 +312,9 @@ class RecordFragment : Fragment() {
 
             override fun onStopTracking(progress: Float) {
 
-                if(isPlaying){
+                if (isPlaying) {
                     Log.d("TAGY", "Stopped tracking at $progress")
-                    val seekToPosition = (mediaPlayer!!.duration * (progress/100.0)).toInt()
+                    val seekToPosition = (mediaPlayer!!.duration * (progress / 100.0)).toInt()
                     Log.d("TAGY", "Seeking to position: $seekToPosition")
                     mediaPlayer?.seekTo(seekToPosition)
                 }
@@ -322,27 +323,28 @@ class RecordFragment : Fragment() {
         }
     }
 
-//dem xem bn s
-    private fun startTimer(){
-         countDownTimer = object : CountDownTimer(RECORDING_MEDIA_RECORDER_MAX_DURATION.toLong(),1000){
-            override fun onTick(millisUntilFinished: Long) {
-                val elapsedTime = RECORDING_MEDIA_RECORDER_MAX_DURATION - millisUntilFinished
-                val seconds = elapsedTime  / 1000
-                val minutes = seconds / 60
-                val remainingSeconds = seconds % 60
-                val sd = millisUntilFinished/1000
-                binding.tvTimer.text = String.format("%02d:%02d", minutes, sd%60)
-                totalTimer = String.format("%02d:%02d", minutes, remainingSeconds)
-            }
-
-            override fun onFinish() {
-                if (isRecording) {
-                    stopRecording()
-                    binding.play.text = "phát"
+    //dem xem bn s
+    private fun startTimer() {
+        countDownTimer =
+            object : CountDownTimer(RECORDING_MEDIA_RECORDER_MAX_DURATION.toLong(), 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    val elapsedTime = RECORDING_MEDIA_RECORDER_MAX_DURATION - millisUntilFinished
+                    val seconds = elapsedTime / 1000
+                    val minutes = seconds / 60
+                    val remainingSeconds = seconds % 60
+                    val sd = millisUntilFinished / 1000
+                    binding.tvTimer.text = String.format("%02d:%02d", minutes, sd % 60)
+                    totalTimer = String.format("%02d:%02d", minutes, remainingSeconds)
                 }
-            }
 
-        }.start()
+                override fun onFinish() {
+                    if (isRecording) {
+                        stopRecording()
+                        binding.play.text = "phát"
+                    }
+                }
+
+            }.start()
     }
 
 
@@ -363,8 +365,8 @@ class RecordFragment : Fragment() {
     private fun postAudio() {
         binding.btnPost.setOnClickListener {
             binding.btnPost.isEnabled = false
-            binding.btnLeft.visibility =View.INVISIBLE
-            binding.btnPost.visibility =View.GONE
+            binding.btnLeft.visibility = View.INVISIBLE
+            binding.btnPost.visibility = View.GONE
             binding.progressBar.visibility = View.VISIBLE
             val fileUri = FileProvider.getUriForFile(
                 requireContext(),

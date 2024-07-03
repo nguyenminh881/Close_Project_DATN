@@ -10,9 +10,10 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.AppWidgetTarget
-import com.example.cameraprovider.PostWidget
+import com.example.cameraprovider.widget.PostWidget
 import com.example.cameraprovider.R
 import com.example.cameraprovider.model.Post
+import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -119,6 +120,8 @@ class widgetViewModel : ViewModel() {
                 views.setTextViewText(R.id.tv_Name_UserPost, post.userName)
                 views.setTextViewText(R.id.tv_Caption_Post, post.content)
 
+                val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
+                views.setTextViewText(R.id.createAtpost,timeAgo )
                 // Load ảnh bài đăng
                 val postImageTarget =
                     AppWidgetTarget(context, R.id.imageView_post, views, appWidgetId)

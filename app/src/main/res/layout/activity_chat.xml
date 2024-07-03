@@ -40,11 +40,13 @@
                 android:id="@+id/btn_back"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                app:backgroundTint="@color/colorbtnctive"
                 android:background="@drawable/edittextbd10dp"
                 android:padding="5dp"
+                android:layout_marginStart="10dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_back"
-                app:backgroundTint="@color/colorbtnctive" />
+                android:src="@drawable/ic_back" />
 
             <Space
                 android:layout_width="0dp"
@@ -79,10 +81,10 @@
             android:id="@+id/chatbot"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:background="#1B1B1B"
             android:orientation="horizontal"
             android:padding="10dp"
-            android:layout_marginTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/linaer">
@@ -92,25 +94,46 @@
                 android:layout_width="65dp"
                 android:layout_height="65dp"
                 android:layout_marginEnd="10dp"
-                android:padding="3dp"
                 android:background="@color/key"
+                android:padding="3dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_chatbot"
                 app:shapeAppearanceOverlay="@style/circle"
                 app:strokeColor="#E6737373"
                 app:strokeWidth="3dp" />
-            <TextView
-                android:id="@+id/name_friend"
+
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Chat bot"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/name_friend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Close"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/last_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLength="30"
+                    android:maxLines="1"
+                    android:text="Cùng trò chuyện với tôi nào!"
+                    android:textColor="@color/white"
+                    android:textFontWeight="300"
+                    android:textSize="16sp" />
+            </LinearLayout>
 
             <Space
                 android:layout_width="0dp"

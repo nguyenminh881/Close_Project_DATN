@@ -96,7 +96,6 @@ class FriendRepository {
                     Log.d("DeepLink", "userId: $userId")
                     callback(userId)
                 } else {
-                    // Thử lấy App Link sau một khoảng thời gian ngắn
                     val appLinkAction: String? = intent.action
                     val appLinkData: Uri? = intent.data
                     if (appLinkAction == Intent.ACTION_VIEW && appLinkData != null) {

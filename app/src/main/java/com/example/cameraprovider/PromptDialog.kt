@@ -3,6 +3,8 @@ package com.example.cameraprovider
 import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup // Thay thế bằng package và tên binding class của bạn
@@ -14,7 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class PromptDialog(private val imageBitmap: Bitmap) : BottomSheetDialogFragment() {
 
-    private lateinit var binding:LayoutPromtImgBinding
+    private lateinit var binding: LayoutPromtImgBinding
     private lateinit var postViewModel: PostViewModel
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,19 +31,30 @@ class PromptDialog(private val imageBitmap: Bitmap) : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.genaAgain.apply {
-            setOnClickListener{
+            setOnClickListener {
+
+                binding.genaAgain.isEnabled = false
                 binding.tvGeneratedContent.text = "Quá trình xử lý có thể mất thời gian, vui lòng đợi!"
-                postViewModel.generateContent(imageBitmap)
-                postViewModel.contentgena.observe(viewLifecycleOwner){
-                    binding.tvGeneratedContent.text =it?:"Vui lòng thử lại"
+                postViewModel.generateContent(
+                    imageBitmap
+                )
+
+
+                postViewModel.contentgena.observe(viewLifecycleOwner) {
+
+                    binding.tvGeneratedContent.text = it ?: "Vui lòng thử lại"
                 }
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.genaAgain.isEnabled = true
+                }, 3500)
                 text = "Tạo lại"
-        }
+
+            }
 
 
         }
 
-        binding.btnOk.setOnClickListener{
+        binding.btnOk.setOnClickListener {
             dismiss()
         }
     }

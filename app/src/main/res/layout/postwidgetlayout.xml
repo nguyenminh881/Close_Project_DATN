@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+   android:id="@+id/layoutwidgetpost"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="110dp"
     android:minWidth="110dp"
-    android:padding="8dp">
+>
 
     <ImageView
         android:id="@+id/imageView_post"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:minHeight="110dp"
         android:minWidth="110dp"
         android:layout_above="@id/layout_user_info"
@@ -17,11 +18,11 @@
         android:foreground="@drawable/corner_radius_16dp"
         android:scaleType="centerInside"
         android:src="@drawable/img_widget" />
-
     <LinearLayout
         android:id="@+id/layout_user_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
         android:layout_marginStart="12dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="12dp"
@@ -58,17 +59,37 @@
                 android:textColor="@color/white"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_Caption_Post"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
-                android:layout_width="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginStart="16dp"
-                android:layout_height="wrap_content"
-                android:text="Nội dung bài đăng" />
         </LinearLayout>
+
     </LinearLayout>
+    <TextView
+        android:id="@+id/tv_Caption_Post"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_width="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:backgroundTint="#4B101010"
+        android:paddingHorizontal="10dp"
+        android:background="@drawable/corner_radius_16dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_height="wrap_content"
+        android:text="Nội dung bài đăng" />
+    <TextView
+        android:id="@+id/createAtpost"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_width="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:backgroundTint="#4B101010"
+        android:paddingHorizontal="10dp"
+        android:background="@drawable/corner_radius_16dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_height="wrap_content"
+        android:text="" />
 </FrameLayout>

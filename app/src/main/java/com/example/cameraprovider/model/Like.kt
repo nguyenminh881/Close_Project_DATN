@@ -7,5 +7,10 @@ data class Like(
     val userId: String = "",
     val ownerId: String = "",
     val reactions: List<String> = listOf(),
-    val createdAt: Timestamp?=null
+    val createdAt: Timestamp?=null,
+    var status: LikeStatus = LikeStatus.NEW
 )
+enum class LikeStatus {
+    NEW,
+    NOTIFIED
+}

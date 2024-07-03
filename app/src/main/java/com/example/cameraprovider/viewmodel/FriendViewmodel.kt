@@ -59,13 +59,15 @@ class FriendViewmodel : ViewModel(), Observable {
             }
         }
     }
-
     fun handleDynamicLink(intent: Intent) {
         friendRepository.handleDynamicLink(intent) { result ->
-            _friendshipResult.postValue(result)
-            Log.d("LInkVmodel", "${_friendshipResult.value}")
+            Log.d("LinkVmodel", "handleDynamicLink callback result: $result")
+            _friendshipResult.value = result
+            Log.d("LinkVmodel", "_friendshipResult.value after post: ${_friendshipResult.value}")
         }
     }
+
+
 
     fun getinforUserSendlink(userId: String) {
         viewModelScope.launch {
@@ -128,6 +130,7 @@ class FriendViewmodel : ViewModel(), Observable {
                     friendship.id?.let { friendRepository.updatestateFriendship("Accepted", it) }
                 if (result != null) {
                     if (result.isSuccess) {
+                        getFriendAccepted()
                         withContext(Dispatchers.Main) {
 
                             _listFriendrequest.value?.remove(friendship)
