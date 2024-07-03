@@ -275,7 +275,7 @@ class MessageRepository() {
 
     private val chatGenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyAQcbXn_9eZiTQASKCUmKeNHN1_kvmo6eQ"
+        apiKey = ""
     )
     val currentTime = LocalTime.now()
     val currentDate = LocalDate.now()
