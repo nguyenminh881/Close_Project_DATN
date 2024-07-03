@@ -228,7 +228,7 @@ class PostRepository {
 
     private val imageGenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyAQcbXn_9eZiTQASKCUmKeNHN1_kvmo6eQ",
+        apiKey = "",
         generationConfig = generationConfig {
             temperature = 0.8f
             maxOutputTokens = 80
