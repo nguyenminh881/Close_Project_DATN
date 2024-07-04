@@ -55,9 +55,9 @@ class FriendListFragment : BottomSheetDialogFragment() {
         binding.btnSenlink.setOnClickListener {
             frViewModel.createDynamicLink()
 
-
+        }
         frViewModel.dynamicLink.observe(viewLifecycleOwner, Observer { link ->
-            link?.let {
+            if (link != "") {
                 val sendIntent: Intent = Intent().apply {
                     action = Intent.ACTION_SEND
                     putExtra(Intent.EXTRA_TEXT, "$link")
@@ -65,11 +65,11 @@ class FriendListFragment : BottomSheetDialogFragment() {
                 }
                 val shareIntent = Intent.createChooser(sendIntent, null)
                 startActivity(shareIntent)
+
                 Log.d("dynamiclink", "Share intent started with link: $link")
-            } ?: run {
-                Log.d("dynamiclink", "Dynamic link is null")
             }
-        }) }
+        })
+
 
         frViewModel.errorMessage.observe(viewLifecycleOwner, Observer { error ->
             error?.let {
@@ -150,7 +150,6 @@ class FriendListFragment : BottomSheetDialogFragment() {
         (context as Activity).windowManager.defaultDisplay.getMetrics(displayMetrics)
         return displayMetrics.heightPixels
     }
-
 
 
 }

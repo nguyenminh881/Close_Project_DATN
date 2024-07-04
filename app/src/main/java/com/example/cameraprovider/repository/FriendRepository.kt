@@ -64,7 +64,7 @@ class FriendRepository {
                     .build()
             )
 
-        // Build short dynamic link
+
         return dynamicLink.buildShortDynamicLink()
     }
 

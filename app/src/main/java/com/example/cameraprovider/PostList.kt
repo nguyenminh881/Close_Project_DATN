@@ -283,9 +283,9 @@ class PostList : AppCompatActivity() {
         }
 
 
-        postViewModel.likeEvent.observe(this, Observer { postId ->
-            Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
-        })
+//        postViewModel.likeEvent.observe(this, Observer { postId ->
+//            Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
+//        })
 
         //back ve main
         binding.dangbai.setOnClickListener {

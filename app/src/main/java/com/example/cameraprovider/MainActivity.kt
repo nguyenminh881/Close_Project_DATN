@@ -173,7 +173,10 @@ class MainActivity : AppCompatActivity() {
 
         val bottomSheetDialogFragment = FriendListFragment()
         viewBinding.btnBottomSheetFriends.setOnClickListener {
-            bottomSheetDialogFragment.show(supportFragmentManager, "FriendListBottomSheet")
+            frVModel.resetDynamicLink()
+            if (!bottomSheetDialogFragment.isAdded) { // Kiểm tra xem Fragment đã được thêm chưa
+                bottomSheetDialogFragment.show(supportFragmentManager, "FriendListBottomSheet")
+            }
         }
 
 

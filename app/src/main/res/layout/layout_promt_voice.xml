@@ -28,14 +28,14 @@
         android:layout_marginTop="12dp"
         android:backgroundTint="@color/bg_input"
         android:maxLines="10"
-        android:maxLength="300"
-        android:scrollbars="vertical"
+        android:maxLength="400"
         android:paddingHorizontal="12dp"
+        android:scrollbars="vertical"
         android:text="Nội dung được hiển thị ở đây."
         android:paddingTop="20dp"
         android:background="@drawable/edittextbd10dp"
         android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
 
     <LinearLayout

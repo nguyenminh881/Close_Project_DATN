@@ -16,6 +16,7 @@ import java.util.UUID
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.example.cameraprovider.*
 import com.example.cameraprovider.model.Like
 import com.example.cameraprovider.model.LikeStatus
 import com.google.ai.client.generativeai.GenerativeModel
@@ -228,10 +229,11 @@ class PostRepository {
 
     private val imageGenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyAQcbXn_9eZiTQASKCUmKeNHN1_kvmo6eQ",
+        apiKey = BuildConfig.apiKey,
         generationConfig = generationConfig {
             temperature = 0.8f
-            maxOutputTokens = 80
+            maxOutputTokens = 120
+            topK = 40
         }
     )
 
@@ -299,21 +301,56 @@ class PostRepository {
         val inputContent = content {
             image(imageBytes)
             text(
-                "Viết một caption ngắn (dưới 100 ký tự) và sáng tạo cho bức ảnh này, tập trung vào [mô tả ngắn gọn nội dung chính của bức ảnh]. " +
-                        "Nếu bức ảnh thể hiện tâm trạng con người, hãy diễn đạt tâm trạng bằng cách sử dụng ngôn ngữ hình ảnh, ẩn dụ, hoặc so sánh. " +
-                        "Nếu là phong cảnh, hoạt động, hay món ăn, hãy mô tả và có thể thêm 1-2 biểu tượng cảm xúc phù hợp. " +
+                " Này AI bạn ơi, giúp mình viết caption thật deep cho bức ảnh này với! ✨ [Mô tả ngắn gọn nội dung chính của bức ảnh] " +
+                        "Thể hiện tâm trạng của mình trong ảnh đi, kiểu như nỗi buồn man mác, sự cô đơn, hoặc những suy tư sâu lắng... nhưng mà pha thêm chút hài hước nhẹ nhàng, châm biếm cho nó thú vị nhé! \uD83D\uDE02 " +
+                        "Viết bằng Tiếng Việt, ngôi thứ nhất, như mình đang tâm sự với bạn bè vậy." +
+                        "Sử dụng ngôn ngữ hình ảnh, ẩn dụ, và thêm emoji ở mỗi câu phù hợp để caption thêm phần sâu sắc và sinh động. \uD83D\uDE09 " +
                         "Phải phù hợp với việc chia sẻ đến mọi người" +
-                        " Không tạo ra hastag" +
-                        "Vì người chụp bức ảnh đó muốn chia sẻ đến mới mọi người nên ưu tiên ngôi kể thứ nhất" +
-                        "Nếu bức ảnh đó chứa một chân dung duy nhất thì có khả năng người chụp ảnh sẽ muốn mô tả tâm trạng bản thân, ưu tiên dùng ngôi thứ 1" +
-                        "Bắt buộc phải sử dụng Tiếng Việt" +
-                        "Có hoặc không sử dụng bối cảnh thời gian là $timeOfDay khi ảnh là chụp phong cảnh ngoài trời" +
-                        " Hôm nay là $dayOfWeek, ngày $dayOfMonth tháng $month năm $year có thể tận dụng thông tin về ngày tháng năm này để cải thiện caption tùy vào bối cảnh, nội dung của ảnh."
+                        " Đừng tạo hashtag, và chỉ dùng thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) khi thực sự cần thiết thôi nhé! \uD83D\uDC4C\n" +
+                        "  Caption dưới 80 ký tự . \uD83D\uDE0E , ưu tiên ngắn nhé !"
             )
         }
         val response = imageGenerativeModel.generateContent(inputContent)
         return response.text.toString()
     }
+
+    suspend fun generateContentFromText(prompt: String): String {
+        val adddaucau = """
+        Bạn là một trợ lý AI thông minh, có khả năng phân tích và thêm dấu câu vào đoạn văn để đảm bảo ngữ pháp chính xác và dễ đọc. Khi thêm dấu câu, hãy tuân theo các quy tắc sau:
+        1. Sử dụng dấu chấm (.) để kết thúc một câu hoàn chỉnh. 
+        2. Sử dụng dấu phẩy (,) để ngắt câu, tách các thành phần liệt kê hoặc bổ sung thông tin. 
+        3. Sử dụng dấu chấm than (!) để thể hiện sự ngạc nhiên, cảm xúc mạnh. 
+        4. Sử dụng dấu chấm hỏi (?) cho câu hỏi. 
+        5. Đảm bảo rằng mỗi câu có cấu trúc ngữ pháp hoàn chỉnh với chủ ngữ và vị ngữ
+     
+
+        Sau khi thêm dấu câu, hãy phân tích đoạn văn để xác định xem nó có phải là bài hát, câu chuyện, thơ hay drama. Đối với bài hát, hãy chú ý đến nhịp điệu và cách sử dụng từ ngữ lặp lại.
+        đây là đoạn văn $prompt
+          hãy chỉ trả về đoạn văn đã được thêm dấu câu
+          hãy chỉ trả về đoạn văn đã được thêm dấu câu. Nếu không thể phân tích được, hãy trả về nguyên văn bản gốc..
+    """
+        val analysisInputContent = content { text(adddaucau) }
+        val analysisResponse = imageGenerativeModel.generateContent(analysisInputContent)
+        val punctuatedPrompt = analysisResponse.text.toString().substringAfter("Đoạn văn đã được thêm dấu câu: ")
+
+        val inputContent = content {
+            text(
+                """
+        Viết caption cho đoạn ghi âm sau khi đã phân tích: "$punctuatedPrompt" (đã được thêm dấu câu).
+        Đây là đoạn ghi âm [mô tả ngắn gọn về nội dung ghi âm, ví dụ: tôi hát một bài hát, kể một câu chuyện drama, hoặc nói về những chuyện xàm xí].
+        Hãy phân tích nội dung ghi âm và viết caption phù hợp, cho biết đây là bài hát, câu chuyện drama, hay chuyện xàm xí.
+        Caption cần mang phong cách giật gân, giật tít để thu hút người nghe, không cần thêm bất kỳ lời dẫn nào của bản thân AI.
+        Dùng các từ ngữ xưng hô phù hợp với chia sẻ cho nhóm bạn bè tự nhiên nhất có thể
+        Viết kiểu thân mật, hài hước, dưới 200 ký tự, ưu tiên tầm khoảng 100 ký tự.
+        Thêm 1-2 emoji phù hợp vào mỗi câu và không sử dụng hashtag.
+        Có thể thêm thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) nếu phù hợp, nhưng đừng lạm dụng.
+        """
+            )
+        }
+        val response = imageGenerativeModel.generateContent(inputContent)
+        return response.text.toString()
+    }
+
 
     sealed class PostResult {
         data class Success(val postId: String) : PostResult()
@@ -447,15 +484,13 @@ class PostRepository {
     }
 
 
-
-
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     fun listenForNewPosts(onNewPostCount: (Int) -> Unit) {
-      repositoryScope.launch {
-                val currentUserId = auth.currentUser?.uid ?: return@launch
-                val friendIds = getFriendIds(currentUserId)
+        repositoryScope.launch {
+            val currentUserId = auth.currentUser?.uid ?: return@launch
+            val friendIds = getFriendIds(currentUserId)
 
-          if(friendIds.isNotEmpty()){
+            if (friendIds.isNotEmpty()) {
 
 
                 val postRef = fireStore.collection("posts")
@@ -476,11 +511,11 @@ class PostRepository {
                         onNewPostCount(newPosts.size)
                     }
                 }
-            }else{
-              onNewPostCount(0)
-              Log.d("PostRepository", "Không có bạn bè để truy vấn.")
-          }
-      }
+            } else {
+                onNewPostCount(0)
+                Log.d("PostRepository", "Không có bạn bè để truy vấn.")
+            }
+        }
     }
 
     private suspend fun getFriendIds(currentUserId: String): List<String> {

@@ -24,3 +24,4 @@
     **[] $VALUES;
     public *;
 }
+-keep class com.example.cameraprovider.BuildConfig { *; }

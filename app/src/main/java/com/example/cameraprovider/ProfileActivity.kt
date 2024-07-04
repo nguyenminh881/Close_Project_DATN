@@ -6,7 +6,9 @@ import android.content.ComponentName
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
@@ -23,13 +25,14 @@ import com.google.android.material.snackbar.Snackbar
 
 class ProfileActivity : AppCompatActivity() {
     lateinit var binding: ActivityProfileBinding
+
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(
             UserRepository(),
             this
         )
     }
-
+    private var currentEditProfileFragment: EditProfileFragment? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_profile)
@@ -42,7 +45,7 @@ class ProfileActivity : AppCompatActivity() {
                         .error(R.drawable.avt_defaut)
                         .transform(CircleCrop())
                         .override(300, 200)
-                        .into(binding.imgAvtUser)
+                        .into(binding.imgAvtUse)
                 }
             }
         })
@@ -51,6 +54,8 @@ class ProfileActivity : AppCompatActivity() {
 
         val dialog = EditProfileFragment()
         binding.btnEditName.setOnClickListener {
+            val dialog = EditProfileFragment()
+            currentEditProfileFragment = dialog
             val bundle = Bundle()
             bundle.putInt("dialogType", EditProfileFragment.DIALOG_TYPE_NAME)
             dialog.arguments = bundle
@@ -58,6 +63,8 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         binding.btnEditPw.setOnClickListener {
+            val dialog = EditProfileFragment()
+            currentEditProfileFragment = dialog
             val bundle = Bundle()
             bundle.putInt("dialogType", EditProfileFragment.DIALOG_TYPE_PASSWORD)
             dialog.arguments = bundle
@@ -65,6 +72,7 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         authViewModel.UpdateError.observe(this) {
+            currentEditProfileFragment?.let { dialog ->
             if (it == "tên") {
                 dialog.dismiss()
                 Snackbar.make(binding.root, "Đổi $it thành công", Snackbar.LENGTH_SHORT).show()
@@ -74,11 +82,12 @@ class ProfileActivity : AppCompatActivity() {
             } else {
                 dialog.dismiss()
                 Snackbar.make(binding.root, "$it", Snackbar.LENGTH_SHORT).show()
-            }
+            }}
         }
 
-        val dialog1 = TutorialBottomSheetDialogFragment()
+
         binding.chipWidgetPost.setOnClickListener {
+            val dialog1 = TutorialBottomSheetDialogFragment()
             val bundle = Bundle()
             bundle.putInt(
                 "dialogTypeWidget",
@@ -89,6 +98,7 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         binding.chipWidgetChat.setOnClickListener {
+            val dialog1 = TutorialBottomSheetDialogFragment()
             val bundle = Bundle()
             bundle.putInt(
                 "dialogTypeWidget",
@@ -111,6 +121,38 @@ class ProfileActivity : AppCompatActivity() {
             startActivity(intent,options.toBundle())
         }
 
+
+        authViewModel.updateResult.observe(this){
+            if(it){
+                Snackbar.make(binding.root, "Cập nhật đại diện thành công", Snackbar.LENGTH_SHORT).show()
+            }else{
+                Snackbar.make(binding.root, "Vui lòng thử lại sau", Snackbar.LENGTH_SHORT).show()
+            }
+        }
+
+        authViewModel.loading.observe(this){
+            if(it){
+                binding.shimmerChat.visibility = View.VISIBLE
+                binding.shimmerChat.startShimmer()
+            }else{
+                binding.shimmerChat.visibility = View.GONE
+                binding.shimmerChat.stopShimmer()
+            }
+        }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(
+                    this@ProfileActivity,
+                    MainActivity::class.java
+                )
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@ProfileActivity,
+                    R.anim.slide_in_down, R.anim.slide_out_down
+                )
+                startActivity(intent, options.toBundle())
+            }
+        })
     }
 
     override fun finish() {
@@ -126,8 +168,8 @@ class ProfileActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        authViewModel.handleImageResult(requestCode, resultCode, data, binding.imgAvtUser)
-        authViewModel.updateAvt()
+        authViewModel.handleImageResult(requestCode, resultCode, data, binding.imgAvtUse)
+
 
     }
 

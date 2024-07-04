@@ -12,6 +12,9 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,12 +26,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.bottomdialogai.PromptDialogVoice
+
 import com.example.cameraprovider.databinding.FragmentRecordBinding
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.viewmodel.PostViewModel
-import rm.com.audiowave.AudioWaveView
 import rm.com.audiowave.OnProgressListener
 import java.io.File
 import java.io.FileInputStream
@@ -49,6 +52,7 @@ class RecordFragment : Fragment() {
     private lateinit var totalTimer: String
     private val handler = Handler(Looper.getMainLooper())
 
+    private var prompt: String = ""
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             var permissionGranted = true
@@ -71,6 +75,69 @@ class RecordFragment : Fragment() {
             }
         }
 
+    private lateinit var speechRecognizer: SpeechRecognizer
+    private val recognitionListener = object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) {
+            Log.d("SpeechRecognizer", "onReadyForSpeech called")
+        }
+
+        override fun onBeginningOfSpeech() {
+            Log.d("SpeechRecognizer", "onBeginningOfSpeech called")
+        }
+
+        override fun onRmsChanged(rmsdB: Float) {
+            Log.d("SpeechRecognizer", "onRmsChanged: $rmsdB")
+        }
+
+        override fun onBufferReceived(buffer: ByteArray?) {
+            Log.d("SpeechRecognizer", "onBufferReceived")
+        }
+
+        override fun onEndOfSpeech() {
+            Log.d("SpeechRecognizer", "onEndOfSpeech called")
+        }
+
+        override fun onError(error: Int) {
+            speechRecognizer.stopListening()
+            val errorMessage = when (error) {
+                SpeechRecognizer.ERROR_AUDIO -> "Lỗi âm "
+                SpeechRecognizer.ERROR_CLIENT -> "Lỗi cliethanhnt"
+                SpeechRecognizer.ERROR_NETWORK -> "Lỗi mạng"
+                SpeechRecognizer.ERROR_NO_MATCH -> "Không tìm thấy kết quả phù hợp"
+                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "SpeechRecognizer đang bận"
+                SpeechRecognizer.ERROR_SERVER -> "Lỗi server"
+                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Hết thời gian chờ"
+                else -> "Lỗi không xác định"
+            }
+            Log.e("SpeechRecognizer", "Lỗi: $errorMessage")
+        }
+
+        override fun onResults(results: Bundle?) {
+            Log.d("SpeechRecognizer", "onResults called")
+            val recognizedText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0) ?: ""
+            prompt = recognizedText
+            if(prompt !=""){
+                binding.btnGenativeAI.visibility=View.VISIBLE
+            }
+            Log.d("SpeechRecognizer", "Văn bản được nhận diện: $recognizedText")
+            Log.d("SpeechRecognizer", "Prompt nhận đc: $prompt")
+        }
+
+        override fun onPartialResults(partialResults: Bundle?) {
+            val partialText = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0) ?: ""
+            Log.d("SpeechRecognizer", "Kết quả tạm thời: $partialText")
+        }
+
+        override fun onEvent(eventType: Int, params: Bundle?) {
+
+        }
+    }
+
+    private fun setupSpeechRecognizer() {
+
+        speechRecognizer.setRecognitionListener(recognitionListener)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -87,11 +154,14 @@ class RecordFragment : Fragment() {
         fileName = File(requireActivity().externalCacheDir, audioFileName).absolutePath
         requestPermissions()
         mediaPlayer = MediaPlayer()
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
 
-
+        //record
         binding.btnrecord.setOnClickListener {
             toggleRecording()
         }
+
+
         binding.play.apply {
             text = "Ghi âm"
             setOnClickListener {
@@ -105,7 +175,7 @@ class RecordFragment : Fragment() {
 
 
         setupWaveformView()
-        postAudio()
+
 
 
 
@@ -124,8 +194,21 @@ class RecordFragment : Fragment() {
         binding.btnLeft.setOnClickListener {
             resetVoiceRecording()
         }
+
+        ///tom tat ghi am
+        binding.btnGenativeAI.setOnClickListener {
+            val dialog = PromptDialogVoice(prompt)
+            dialog.show(childFragmentManager, "prompt_dialog")
+            Log.d("TAGYyyyyyyyyyyyyyyyyyyyy", "onViewCreated: $prompt")
+            postViewModel.contentvoice.observe(viewLifecycleOwner) { content ->
+                binding.edt1.setText(content ?: "")
+            }
+        }
+        postAudio()
     }
 
+
+    //reset ghi am
     private fun resetVoiceRecording() {
 
         val audioFile = File(fileName)
@@ -149,7 +232,10 @@ class RecordFragment : Fragment() {
         binding.btnPost.visibility = View.GONE
         binding.btnrecord.visibility = View.VISIBLE
         binding.progressBar.visibility = View.GONE
-
+        binding.btnGenativeAI.visibility=View.INVISIBLE
+        speechRecognizer.destroy()
+        postViewModel.clearContentvoice()
+        setupSpeechRecognizer()
     }
 
     private fun capquyencam() {
@@ -193,6 +279,19 @@ class RecordFragment : Fragment() {
         }
     }
 
+    //start nghe
+    private fun startSpeechRecognition(filename: String) {
+
+        val recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putStringArrayListExtra(
+                RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES,
+                arrayListOf("vi-VN", "en-US")
+            )
+            putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, Uri.fromFile(File(filename)))
+        }
+        speechRecognizer.startListening(recognizerIntent)
+    }
     private fun startRecording() {
         if (allPermissionsGranted()) {
             try {
@@ -200,14 +299,16 @@ class RecordFragment : Fragment() {
                     setAudioSource(MediaRecorder.AudioSource.MIC)
                     setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                    setAudioChannels(1)
-                    setAudioSamplingRate(16000)
-                    setAudioEncodingBitRate(64000)
+                    setAudioChannels(2)
+                    setAudioSamplingRate(48000)
+                    setAudioEncodingBitRate(96000)
                     setMaxDuration(RECORDING_MEDIA_RECORDER_MAX_DURATION)
                     setOutputFile(fileName)
                     prepare()
                     start()
+                    speechRecognizer.setRecognitionListener(recognitionListener)
                 }
+
                 isRecording = true
 
                 startTimer()
@@ -220,18 +321,22 @@ class RecordFragment : Fragment() {
         }
     }
 
-
+////
     private fun stopRecording() {
         mediaRecorder.apply {
             stop()
             release()
         }
+
+
         isRecording = false
         mediaRecorder = MediaRecorder()
+
         countDownTimer.cancel()
         binding.tvTimer.text = "$totalTimer"
         displayWaveform(fileName)
         Log.d("TAGY", "$fileName")
+
         binding.btnrecord.visibility = View.GONE
         binding.btnPost.visibility = View.VISIBLE
         binding.btnLeft.visibility = View.VISIBLE
@@ -262,9 +367,9 @@ class RecordFragment : Fragment() {
             }
             isPlaying = true
             handler.post(updateWaveform)
+            startSpeechRecognition(audioFilePath)
             mediaPlayer.setOnCompletionListener {
                 stopPlaying()
-
             }
         } catch (e: IOException) {
             Log.e("TAGY", "Error playing audio: ${e.message}")
@@ -277,7 +382,7 @@ class RecordFragment : Fragment() {
         binding.play.text = "Phát"
         handler.removeCallbacks(updateWaveform)
         binding.wave.progress = 0f
-
+        speechRecognizer.stopListening()
         mediaPlayer.reset()
         mediaPlayer.release()
     }
@@ -290,9 +395,12 @@ class RecordFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer?.release()
+        speechRecognizer?.destroy()
         handler.removeCallbacksAndMessages(null)
     }
 
+
+    //way
     private fun setupWaveformView() {
         binding.wave.onProgressListener = object : OnProgressListener {
             override fun onProgressChanged(progress: Float, byUser: Boolean) {
@@ -361,20 +469,21 @@ class RecordFragment : Fragment() {
             Log.e("TAGY", "Error reading: ${e.message}")
         }
     }
-
+///dang baiiii
     private fun postAudio() {
         binding.btnPost.setOnClickListener {
             binding.btnPost.isEnabled = false
             binding.btnLeft.visibility = View.INVISIBLE
             binding.btnPost.visibility = View.GONE
             binding.progressBar.visibility = View.VISIBLE
+
             val fileUri = FileProvider.getUriForFile(
                 requireContext(),
                 "${requireContext().packageName}.fileprovider",
                 File(fileName)
             )
-            val content = binding.edt1.text.toString()
-            postViewModel.addPost(fileUri, content, false)
+
+            postViewModel.addPost(fileUri, binding.edt1.text.toString(), false)
         }
     }
 

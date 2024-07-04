@@ -87,6 +87,7 @@ class NotificationService : Service() {
         }
 
         val intent = Intent(this, ChatActivity::class.java).apply {
+
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
@@ -95,7 +96,7 @@ class NotificationService : Service() {
         val notificationBuilder = NotificationCompat.Builder(this, "message_channel")
             .setSmallIcon(R.drawable.ic_heart) // Thay bằng icon của bạn
             .setContentTitle("Tin nhắn mới từ ${sender.nameUser}")
-            .setContentText(message.message +" 💌")
+            .setContentText(message.message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

@@ -16,23 +16,63 @@
         android:layout_height="match_parent"
         android:background="@color/dark"
         tools:context=".ProfileActivity">
-
-        <com.google.android.material.imageview.ShapeableImageView
+        <FrameLayout
             android:id="@+id/imgAvtUser"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="wrap_content"
             android:layout_marginStart="6dp"
             android:layout_marginTop="30dp"
-            android:onClick="@{() -> viewModel.chooseAvatar()}"
-            android:padding="3dp"
-            android:scaleType="centerCrop"
+
+            android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgAvtUse"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:padding="3dp"
+            android:scaleType="centerCrop"
             app:shapeAppearanceOverlay="@style/circle"
             app:strokeColor="@color/subkey"
             app:strokeWidth="3dp" />
 
+            <ImageButton
+                android:layout_width="100dp"
+                android:paddingHorizontal="6dp"
+                android:layout_height="100dp"
+                android:scaleType="center"
+                android:onClick="@{() -> viewModel.chooseAvatar()}"
+                android:layout_gravity="center"
+                android:background="@drawable/edittextbd10dp"
+                android:backgroundTint="@android:color/transparent"
+                android:src="@drawable/ic_plus" />
+
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmer_chat"
+                android:layout_width="100dp"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                app:shimmer_duration="600"
+                app:shimmer_repeat_mode="restart"
+                android:layout_height="100dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/shimeravt"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:padding="3dp"
+                    android:background="@color/shimmer"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/circle"
+                    app:strokeColor="@color/subkey"
+                    app:strokeWidth="3dp" />
+
+            </com.facebook.shimmer.ShimmerFrameLayout>
+
+        </FrameLayout>
         <TextView
             android:id="@+id/tvNameUser"
             android:layout_width="wrap_content"
@@ -267,7 +307,7 @@
             android:backgroundTint="@color/key"
             android:gravity="center"
             android:shadowColor="@color/subkey"
-            android:text="Trở về Home "
+            android:text="Quay lại"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:icon="@drawable/ic_next"

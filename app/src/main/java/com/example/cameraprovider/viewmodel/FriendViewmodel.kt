@@ -23,8 +23,8 @@ class FriendViewmodel : ViewModel(), Observable {
     private val friendRepository = FriendRepository()
 
     private val messRepository = MessageRepository()
-    private val _dynamicLink = MutableLiveData<String>()
-    val dynamicLink: LiveData<String> = _dynamicLink
+    private val _dynamicLink = MutableLiveData<String?>()
+    val dynamicLink: LiveData<String?> = _dynamicLink
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
@@ -68,6 +68,9 @@ class FriendViewmodel : ViewModel(), Observable {
     }
 
 
+    fun resetDynamicLink() {
+        _dynamicLink.value = ""
+    }
 
     fun getinforUserSendlink(userId: String) {
         viewModelScope.launch {

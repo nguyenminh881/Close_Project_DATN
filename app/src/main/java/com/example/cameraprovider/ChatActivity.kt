@@ -3,6 +3,7 @@ package com.example.cameraprovider
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -70,6 +71,22 @@ class ChatActivity : AppCompatActivity() {
             )
             startActivity(intent,options.toBundle())
         }
+
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(
+                    this@ChatActivity,
+                    MainActivity::class.java
+                )
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@ChatActivity,
+                    R.anim.slide_in_down, R.anim.slide_out_down
+                )
+                startActivity(intent, options.toBundle())
+            }
+        })
+
     }
 
     private fun openChatWithFriend(friendId: String, friendName: String, friendAvatar: String) {

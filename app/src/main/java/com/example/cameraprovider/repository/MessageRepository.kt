@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.ContextCompat.startActivity
+import com.example.cameraprovider.*
 
 import com.example.cameraprovider.model.Message
 import com.example.cameraprovider.model.MessageStatus
@@ -24,14 +25,19 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import com.google.ai.client.generativeai.Chat
+import com.google.ai.client.generativeai.type.content
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.io.FileInputStream
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Properties
 
 //import okhttp3.*
 
@@ -85,7 +91,6 @@ class MessageRepository() {
     }
 
 
-
     suspend fun updateMessagesToSeen(senderId: String) {
         try {
             val messagesRef = fireStore.collection("messages")
@@ -102,10 +107,11 @@ class MessageRepository() {
             Log.e("NotificationRepository", "Error updating message status", e)
         }
     }
+
     suspend fun updateMessagesToRead(senderId: String) {
         try {
 
-            val currentUID = auth.currentUser?.uid?: return
+            val currentUID = auth.currentUser?.uid ?: return
             val messagesRef = fireStore.collection("messages")
                 .whereEqualTo("senderId", senderId)
                 .whereEqualTo("receiverId", currentUID)
@@ -130,6 +136,7 @@ class MessageRepository() {
             Log.e("NotificationRepository", "Error updating message status", e)
         }
     }
+
     fun getMessages(userId: String, friendId: String): Flow<List<Message>> = callbackFlow {
         val listenerRegistration = fireStore.collection("messages")
             .whereIn("receiverId", listOf(userId, friendId))
@@ -145,8 +152,6 @@ class MessageRepository() {
             }
         awaitClose { listenerRegistration.remove() }
     }
-
-
 
 
     fun getFriendsWithLastMessages(
@@ -166,7 +171,7 @@ class MessageRepository() {
                 Log.d("getFriendsWithLastMessages", "Friends: $sortedFriends")
                 Log.d("getFriendsWithLastMessages", "Last Messages: $lastMessages")
                 onSuccess(Pair(sortedFriends, lastMessages))
-            }else {
+            } else {
                 val sortedFriends = friends.sortedBy { user ->
                     lastMessages[user.UserId]?.createdAt?.toLongOrNull() ?: 0L
                 }
@@ -213,7 +218,8 @@ class MessageRepository() {
                         return@addSnapshotListener
                     }
 
-                    val lastMessage = snapshot?.documents?.firstOrNull()?.toObject(Message::class.java)
+                    val lastMessage =
+                        snapshot?.documents?.firstOrNull()?.toObject(Message::class.java)
                     Log.d("fetchLastMessage", " LastMessage: $lastMessage")
                     lastMessage?.let {
                         val existingMessage = lastMessages[friendId]
@@ -222,7 +228,7 @@ class MessageRepository() {
                             Log.d("fetchLastMessage", "Updated lastMessages: ${lastMessages}")
                             checkIfComplete(friendIds.size)  // Kiểm tra điều kiện hoàn thành
                         }
-                    }?: run {
+                    } ?: run {
                         checkIfComplete(friendIds.size)
                     }
                 }
@@ -267,15 +273,46 @@ class MessageRepository() {
             }
         }
     }
+    suspend fun getCurrentUserName(): String {
+        val db = FirebaseFirestore.getInstance()
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
-
+        return if (currentUser != null) {
+            val userDocRef = db.collection("users").document(currentUser.uid)
+            val userSnapshot = userDocRef.get().await()
+            if (userSnapshot.exists()) {
+                userSnapshot.toObject(User::class.java)?.nameUser ?: ""
+            } else {
+                ""
+            }
+        } else {
+            ""
+        }
+    }
 
     //gemini
     private var chat: Chat? = null
 
+    private val username = runBlocking { getCurrentUserName() }
+
+
     private val chatGenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyAQcbXn_9eZiTQASKCUmKeNHN1_kvmo6eQ"
+        apiKey = BuildConfig.apiKey,
+        systemInstruction = content {
+            text(
+                "Bạn là Close, một chatbot thân thiện, vui vẻ và hơi tinh nghịch. " +
+                        "Hãy trò chuyện một cách tự nhiên, sử dụng biểu cảm icon và emoji để tăng thêm sự sinh động. " +
+                        "Hãy đồng cảm và tâm sự với người trò chuyện, sử dụng ngôn ngữ thân mật và gần gũi. " +
+                        "Hãy thêm các yếu tố bất ngờ và hài hước vào cuộc trò chuyện để tạo sự thú vị." +
+                        "Ưu tiên trả lời bằng tiếng Việt. " +
+                        "Khi trả lời câu hỏi, hãy ưu tiên độ chính xác cho câu hỏi thông tin và sự sáng tạo cho câu hỏi cần sáng tạo. " +
+                        "Tên của người trò chuyện là $username. Hãy ghi nhớ điều này và chỉ nhắc tên khi được hỏi. Khi đã sử dụng tên người trò chuyện, không sử dụng các đại từ khác như 'bạn', 'cậu', 'ní'..." +
+                        "Bạn biết thông tin về thời gian hiện tại ($timeOfDay), nhưng không nên nhắc đến nó quá thường xuyên, chỉ khi thật sự cần thiết. " +
+                        "Hãy tập trung vào việc tạo ra cuộc trò chuyện thú vị và sáng tạo, đặt câu hỏi cho người dùng để kéo dài cuộc trò chuyện. " +
+                        "Khi người dùng hỏi về thời gian, hãy luôn trả lời bằng '$timeOfDay'."
+            )
+        },
     )
     val currentTime = LocalTime.now()
     val currentDate = LocalDate.now()
@@ -290,10 +327,10 @@ class MessageRepository() {
     }
     val dayOfMonth = currentDate.dayOfMonth
 
-    val month = when(currentDate.monthValue){
+    val month = when (currentDate.monthValue) {
         1 -> "Tháng Một"
         2 -> "Tháng Hai"
-        3-> "Tháng Ba"
+        3 -> "Tháng Ba"
         4 -> "Tháng Tư"
         5 -> "Tháng Năm"
         6 -> "Tháng Sáu"
@@ -306,16 +343,41 @@ class MessageRepository() {
     }
     val year = currentDate.year
     val timeOfDay = when {
-        currentTime.isAfter(LocalTime.of(4, 0)) && currentTime.isBefore(LocalTime.of(11, 0)) -> "buổi sáng thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
-        currentTime.isAfter(LocalTime.of(11, 0)) && currentTime.isBefore(LocalTime.of(13, 30)) -> "buổi trưa thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
-        currentTime.isAfter(LocalTime.of(13, 30)) && currentTime.isBefore(LocalTime.of(18, 30)) -> "buổi chiều thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
-        currentTime.isAfter(LocalTime.of(18, 30)) && currentTime.isBefore(LocalTime.of(23, 59)) -> "buổi tối thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
+        currentTime.isAfter(LocalTime.of(4, 0)) && currentTime.isBefore(
+            LocalTime.of(
+                11,
+                0
+            )
+        ) -> "buổi sáng thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
+
+        currentTime.isAfter(LocalTime.of(11, 0)) && currentTime.isBefore(
+            LocalTime.of(
+                13,
+                30
+            )
+        ) -> "buổi trưa thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
+
+        currentTime.isAfter(LocalTime.of(13, 30)) && currentTime.isBefore(
+            LocalTime.of(
+                18,
+                30
+            )
+        ) -> "buổi chiều thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
+
+        currentTime.isAfter(LocalTime.of(18, 30)) && currentTime.isBefore(
+            LocalTime.of(
+                23,
+                59
+            )
+        ) -> "buổi tối thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
+
         else -> "đêm khuya thứ $dayOfWeek, ngày $dayOfMonth tháng $month năm $year"
     }
 
 
     suspend fun generateResponse(prompt: String): String {
-        val daytime = listOf("giờ", "buổi", "sáng", "trưa", "chiều", "tối", "đêm", "hôm nay", "ngày mai", "hôm qua", "thứ","ngày","tháng","năm")
+        val daytime = listOf("giờ", "buổi", "sáng", "trưa", "chiều", "tối", "đêm", "hôm nay", "ngày mai", "hôm qua", "thứ", "ngày", "tháng", "năm"
+        )
         val timeRegex = daytime.joinToString("|") { "\\b$it\\b" }.toRegex()
 
         val modifiedPrompt = if (timeRegex.containsMatchIn(prompt)) {
@@ -324,31 +386,25 @@ class MessageRepository() {
             prompt
         }
 
+
+
         val response = withContext(Dispatchers.IO) {
             if (chat == null) {
                 chat = chatGenerativeModel.startChat()
             }
-            chat!!.sendMessage("tên của bạn là Close chat bot nếu Prompt có hỏi bạn là ai hoặc tên gì" +
-                    "Trò chuyện vui vẻ, tự nhiên nhất có thể" +
-                    "Thêm các biểu cảm icon cho xinh động" +
-                    "Tâm sự, đồng cảm với người trò truyện" +
-                    "Ưu tiên trả lời bằng tiếng Việt, trả lời thân thiện" +
-                    "Ưu tiên độ chính xác nếu câu hỏi câu hỏi thông tin" +
-                    "Ưu tiên sự sáng tạo nếu là câu hỏi cần sáng tạo" +
-                    "Hãy coi như là mình biết thông tin thời gian này." +
-                    "Không được nhắc đến thông tin thời gian liên tục chỉ dùng khi thật sự cần thôi" +
-                    "Bạn cần thêm sự sáng tạo vui vẻ thay vì nhắc đến thời gian liên tục như thế" +
-                    modifiedPrompt+prompt)
+            chat!!.sendMessage(modifiedPrompt)
+
         }
         return response.text.toString()
     }
 
 
-    suspend fun sendMessageToGemini(prompt: String,
-                                    onComplete: (Result<Message>) -> Unit
+    suspend fun sendMessageToGemini(
+        prompt: String,
+        onComplete: (Result<Message>) -> Unit
 
-    ){
-         try {
+    ) {
+        try {
 
             val userMessage = Message(
                 messageId = UUID.randomUUID().toString(),
@@ -379,9 +435,9 @@ class MessageRepository() {
             geminiMessageRef.set(geminiMessage).await()
             geminiMessage.status = MessageStatus.SENT
             geminiMessageRef.update("status", geminiMessage.status.name).await()
-             onComplete(Result.success(geminiMessage))
+            onComplete(Result.success(geminiMessage))
         } catch (e: Exception) {
-             onComplete(Result.failure(e))
+            onComplete(Result.failure(e))
         }
     }
 

@@ -302,19 +302,23 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                                         .load(resizedImageUri)
                                         .into(ShapeableImageView)
                                 }
+                                updateAvt()
                             }
                         }
+
                     }
                 }
             }
         }
     }
 
-    private suspend fun getResizedImageUri(context: Context, imgUri: Uri): Uri? {
+     fun getResizedImageUri(context: Context, imgUri: Uri): Uri? {
         val resizedBitmap = Glide.with(context)
             .asBitmap()
             .load(imgUri)
-            .override(300, 200)
+            .centerCrop()
+            .circleCrop()
+            .override(300, 300)
             .submit()
             .get()
 
@@ -642,6 +646,7 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
 
     fun updateAvt() {
+        _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             _imgUriInitialized.asFlow().filter { it }.first()
             val result = userRepository.updateAvatar(imgUri)
@@ -649,13 +654,22 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                 withContext(Dispatchers.Main) {
                     _getUserResult.value?.let {
 
+                        _loading.value =true
                         it.avatarUser = it.avatarUser
+
                     }
                     _updateResult.value = true
+                    _loading.value= false
+                    Log.d("Mmmmmmmmmmmmmmmmmmmm", "update success")
                 }
-            } else {
+
+            }
+
+            else {
                 withContext(Dispatchers.Main) {
+                    _loading.value = false
                     _updateResult.value = false
+                    Log.d("Mmmmmmmmmmmmmmmmmmmm", "update false")
                 }
             }
         }

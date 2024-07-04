@@ -1,7 +1,6 @@
 package com.example.cameraprovider
 
 import android.Manifest
-import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,6 +31,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.bottomdialogai.PromptDialog
 import com.example.cameraprovider.databinding.FragmentCameraBinding
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.viewmodel.PostViewModel

@@ -21,7 +21,6 @@ android {
         val inputStream = FileInputStream(localPropertiesFile)
         localProperties.load(inputStream)
     }
-
     defaultConfig {
         applicationId = "com.example.cameraprovider"
         minSdk = 28
@@ -41,6 +40,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -55,6 +55,7 @@ android {
     buildFeatures {
         dataBinding =true
         viewBinding = true
+        buildConfig =true
     }
 
 
@@ -121,8 +122,8 @@ dependencies {
     implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
 
-//gemini
 
+//gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.8.0")
     //
     val lifecycle_version = "2.8.0"

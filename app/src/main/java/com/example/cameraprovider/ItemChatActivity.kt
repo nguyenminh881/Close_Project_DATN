@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -45,9 +46,9 @@ class ItemChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_item_chat)
 
-         friendId = intent.getStringExtra("FRIEND_ID") ?: return
-         friendName = intent.getStringExtra("FRIEND_NAME") ?: return
-         friendAvatar = intent.getStringExtra("FRIEND_AVATAR") ?: return
+        friendId = intent.getStringExtra("FRIEND_ID") ?: return
+        friendName = intent.getStringExtra("FRIEND_NAME") ?: return
+        friendAvatar = intent.getStringExtra("FRIEND_AVATAR") ?: return
 
 
 
@@ -63,7 +64,7 @@ class ItemChatActivity : AppCompatActivity() {
 
 
         val currentId = authViewModel.getCurrentId()
-        messageAdapter = MessageAdapter(currentId, friendAvatar, listOf(),messviewModel, this)
+        messageAdapter = MessageAdapter(currentId, friendAvatar, listOf(), messviewModel, this)
         binding.rcvFromchat.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
@@ -75,9 +76,9 @@ class ItemChatActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 messviewModel.messages.collect { messages ->
-
-                    messageAdapter.submitList(messages)
                     binding.rcvFromchat.layoutManager?.scrollToPosition(messageAdapter.itemCount - 1)
+                    messageAdapter.submitList(messages)
+
                 }
             }
         }
@@ -89,7 +90,7 @@ class ItemChatActivity : AppCompatActivity() {
                 super.onScrolled(recyclerView, dx, dy)
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                 messviewModel.updateMessagesToSeen(friendId)
-                if(friendId == "Gemini"){
+                if (friendId == "Gemini") {
                     messviewModel.updateMessagesToReadtu(friendId)
                 }
 
@@ -98,13 +99,15 @@ class ItemChatActivity : AppCompatActivity() {
         })
 
 
-        messviewModel.messagesend.observe(this){
-            if (it?.length!! > 0 ) {
+        messviewModel.messagesend.observe(this) {
+            if (it?.length!! > 0) {
                 binding.btnSend.isEnabled = true
-                binding.btnSend.backgroundTintList = ActivityCompat.getColorStateList(baseContext, R.color.color_active)
-            }else{
+                binding.btnSend.backgroundTintList =
+                    ActivityCompat.getColorStateList(baseContext, R.color.color_active)
+            } else {
                 binding.btnSend.isEnabled = false
-                binding.btnSend.backgroundTintList = ActivityCompat.getColorStateList(baseContext, R.color.bg_input)
+                binding.btnSend.backgroundTintList =
+                    ActivityCompat.getColorStateList(baseContext, R.color.bg_input)
             }
         }
 
@@ -131,11 +134,17 @@ class ItemChatActivity : AppCompatActivity() {
         }
 
 
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(
+                    this@ItemChatActivity,
+                    ChatActivity::class.java
+                )
+                startActivity(intent)
+            }
+        })
     }
-
-
-
-
 
     override fun onResume() {
         super.onResume()

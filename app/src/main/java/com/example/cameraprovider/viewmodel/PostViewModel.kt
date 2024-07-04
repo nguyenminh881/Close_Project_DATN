@@ -21,6 +21,7 @@ import com.google.firebase.FirebaseNetworkException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PostViewModel() : ViewModel(), Observable {
 
@@ -107,15 +108,35 @@ class PostViewModel() : ViewModel(), Observable {
         }
     }
 
+    private val _contentvoice = MutableLiveData<String>()
+    val contentvoice: LiveData<String> = _contentvoice
+    fun generateContentVoice(prompt: String) {
+        viewModelScope.launch {
+            try {
+                _contentvoice.postValue(postRepository.generateContentFromText(prompt))
+            }catch (e:Exception){
+                _contentvoice.postValue("Đã xảy ra lỗi. Vui lòng thử lại.")
+                Log.d("PostViewModel", "generateContent: ${e.message}")
+            }
+        }
+    }
     private val _newPostCount = MutableLiveData<Int>(0)
     val newPostCount: LiveData<Int> = _newPostCount
 
     init {
-        postRepository.listenForNewPosts { newCount ->
-            _newPostCount.postValue(newCount)
-        }
+        onNewpost()
+
     }
 
+    fun onNewpost(){
+        viewModelScope.launch {
+           withContext(Dispatchers.Main){
+               postRepository.listenForNewPosts { newCount ->
+                       _newPostCount.postValue(newCount)
+               }
+           }
+        }
+    }
     fun onPostViewed(postId: String) {
         postRepository.updateViewedBy(postId) { success ->
             if (success) {
@@ -134,6 +155,9 @@ class PostViewModel() : ViewModel(), Observable {
         _contentgena.value = ""
     }
 
+    fun clearContentvoice(){
+        _contentvoice.value = ""
+    }
 
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 
