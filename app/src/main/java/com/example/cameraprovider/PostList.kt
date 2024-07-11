@@ -83,7 +83,6 @@ class PostList : AppCompatActivity() {
         setupRecyclerView()
 
         binding.swipeRefreshLayout.setOnRefreshListener {
-            postViewModel.clearNewpostsize()
             binding.swipeRefreshLayout.isRefreshing = true
             binding.btnNewpost.visibility = View.INVISIBLE
             postApdapter.refresh()
@@ -345,9 +344,6 @@ class PostList : AppCompatActivity() {
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
 
-                lifecycleScope.launch {
-                    postApdapter.refresh()
-                }
                 postApdapter.notifyItemRemoved(currentPostPosition)
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
             } else {
@@ -429,7 +425,6 @@ class PostList : AppCompatActivity() {
 
 
         binding.btnNewpost.setOnClickListener {
-            postViewModel.clearNewpostsize()
             binding.swipeRefreshLayout.isRefreshing = true
             binding.btnNewpost.visibility = View.INVISIBLE
             binding.recyclerView.smoothScrollToPosition(0)

@@ -1,9 +1,15 @@
 package com.example.cameraprovider
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraControl
@@ -39,8 +46,9 @@ import java.io.File
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
-
+import androidx.camera.extensions.ExtensionMode
+import androidx.camera.extensions.ExtensionsManager
+import androidx.core.app.ActivityCompat
 class CameraFragment : Fragment() {
 
     lateinit var viewBinding: FragmentCameraBinding
@@ -54,10 +62,10 @@ class CameraFragment : Fragment() {
     private lateinit var cameraInfo: CameraInfo
 
     private var iszoom = false
-
     private var currentFlashMode = ImageCapture.FLASH_MODE_OFF
     private lateinit var postViewModel: PostViewModel
 
+    private var cameraDevice: CameraDevice? = null
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
         { permissions ->
@@ -78,12 +86,13 @@ class CameraFragment : Fragment() {
                 startCamera()
             }
         }
-
+    private val hideSeekBarRunnable = Runnable { viewBinding.brightnessSb.visibility = View.GONE }
+    private val hideSeekBarHandler = Handler(Looper.getMainLooper())
     private fun disiablebtn() {
         viewBinding.buttonSwitchCamera.isEnabled = false
         viewBinding.buttonFlash.isEnabled = false
         viewBinding.Btnnratio1x.isEnabled = false
-//        viewBinding.btnGrid.isEnabled = false
+        viewBinding.btnExposure.isEnabled = false
     }
 
     override fun onCreateView(
@@ -134,10 +143,12 @@ class CameraFragment : Fragment() {
         postViewModel.postResultLiveData.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is PostRepository.PostResult.Success -> {
-                 deleImg()
+                    deleImg()
                 }
-                else-> {
-                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+
+                else -> {
+                    Toast.makeText(requireContext(), "Vui lòng thử lại sau", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -146,22 +157,27 @@ class CameraFragment : Fragment() {
             startCamera()
             deleImg()
         }
+        viewBinding.btnExposure.setOnClickListener {
+            viewBinding.brightnessSb.visibility = View.VISIBLE
+        }
+
     }
 
 
-    private fun deleImg(){
+    private fun deleImg() {
         viewBinding.btnPost.isEnabled = true
         viewBinding.imageViewCaptured.setImageDrawable(null)
         viewBinding.edt1.text.clear()
         viewBinding.imageViewCaptured.visibility = View.GONE
         viewBinding.viewFinder.visibility = View.VISIBLE
         viewBinding.btnPost.visibility = View.GONE
-        viewBinding.edt1.visibility=View.GONE
+        viewBinding.edt1.visibility = View.GONE
         viewBinding.fncLauout.visibility = View.VISIBLE
         viewBinding.buttonCapture.visibility = View.VISIBLE
-        viewBinding.btnLeft.visibility =View.INVISIBLE
+        viewBinding.btnLeft.visibility = View.INVISIBLE
         viewBinding.btnGenativeAI.visibility = View.INVISIBLE
         viewBinding.progressBar.visibility = View.GONE
+        viewBinding.brightnessSb.visibility = View.VISIBLE
         postViewModel.clearContentgena()
     }
 
@@ -177,6 +193,7 @@ class CameraFragment : Fragment() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun tabtofocus() {
         viewBinding.viewFinder.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
@@ -193,7 +210,7 @@ class CameraFragment : Fragment() {
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     focusCircle.visibility = View.GONE
-                }, 2000)
+                }, 1000)
             }
             true
         }
@@ -221,7 +238,7 @@ class CameraFragment : Fragment() {
     }
 
     private fun capquyencam() {
-        val builder = AlertDialog.Builder(requireContext(),R.style.AlertDialogTheme)
+        val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
         builder.setTitle("Bật quyền truy cập Máy ảnh")
             .setMessage("Đến cài đặt ứng dụng cấp quyền để ứng dụng được hoạt động đúng đắn!")
             .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
@@ -250,15 +267,18 @@ class CameraFragment : Fragment() {
         //imgcaptur : xem th nay dc khoi tao chua
         val imageCapture = imageCapture ?: return
 
+        val metadata = ImageCapture.Metadata().apply {
+            isReversedHorizontal = isFrontCamera()
+        }
 
         val name = UUID.randomUUID().toString() + ".jpg"
         val file = File(requireActivity().externalCacheDir, name)
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+        val outputOptions =
+            ImageCapture.OutputFileOptions.Builder(file).setMetadata(metadata).build()
 
         Log.d("TAGY", "$outputOptions")
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
+
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(requireContext().applicationContext),
@@ -284,31 +304,43 @@ class CameraFragment : Fragment() {
                         btnPost.visibility = View.VISIBLE
                         buttonCapture.visibility = View.GONE
                         btnGenativeAI.visibility = View.VISIBLE
+                        brightnessSb.visibility = View.GONE
                     }
 
 
                     viewBinding.btnPost.setOnClickListener {
                         viewBinding.btnPost.isEnabled = false
-                        viewBinding.btnLeft.visibility =View.INVISIBLE
+                        viewBinding.btnLeft.visibility = View.INVISIBLE
                         viewBinding.btnGenativeAI.visibility = View.INVISIBLE
-                        viewBinding.btnPost.visibility =View.GONE
+                        viewBinding.btnPost.visibility = View.GONE
                         viewBinding.progressBar.visibility = View.VISIBLE
                         val content = viewBinding.edt1.text.toString()
+
+
+
                         postViewModel.addPost(savedUri, content, true)
                     }
 
-                    val imageBitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, savedUri)
+                    val imageBitmap = MediaStore.Images.Media.getBitmap(
+                        requireContext().contentResolver,
+                        savedUri
+                    )
                     viewBinding.btnGenativeAI.setOnClickListener {
-                            val dialog = PromptDialog(imageBitmap)
-                            dialog.show(childFragmentManager, "prompt_dialog")
+                        val dialog = PromptDialog(imageBitmap)
+                        dialog.show(childFragmentManager, "prompt_dialog")
 
-                            postViewModel.contentgena.observe(viewLifecycleOwner) { content ->
-                                viewBinding.edt1.setText(content ?: "")
-                            }
+                        postViewModel.contentgena.observe(viewLifecycleOwner) { content ->
+                            viewBinding.edt1.setText(content ?: "")
+                        }
                     }
                 }
             }
         )
+    }
+
+
+    private fun isFrontCamera(): Boolean {
+        return cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
     }
 
     private fun swipcam() {
@@ -333,15 +365,60 @@ class CameraFragment : Fragment() {
         }
 
         try {
-            // unbind
             cameraProvider.unbindAll()
 
             bindCameraUseCases()
 
         } catch (exc: Exception) {
-            Log.e(TAG, "Camera use case binding failed during switch", exc)
+            Log.e(TAG, "xoay loi", exc)
         }
     }
+
+    private fun brightnessSlider() {
+
+        var currentExposureIndex = 0
+        var minExposureIndex = 0
+        var maxExposureIndex = 0
+
+
+        cameraInfo?.exposureState?.let {
+            minExposureIndex = it.exposureCompensationRange.lower
+            maxExposureIndex = it.exposureCompensationRange.upper
+            currentExposureIndex = it.exposureCompensationIndex
+        }
+
+        viewBinding.brightnessSb.apply {
+            max = maxExposureIndex - minExposureIndex
+            progress = 0
+            progress = currentExposureIndex - minExposureIndex
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if (fromUser) {
+
+                        hideSeekBarHandler.removeCallbacks(hideSeekBarRunnable)
+                        hideSeekBarHandler.postDelayed(hideSeekBarRunnable, 2000)
+
+                        val newExposureIndex = progress + minExposureIndex
+                        cameraControl.setExposureCompensationIndex(newExposureIndex).addListener({
+                            currentExposureIndex = newExposureIndex
+                        }, ContextCompat.getMainExecutor(requireContext()))
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    hideSeekBarHandler.removeCallbacks(hideSeekBarRunnable)
+                }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    hideSeekBarHandler.postDelayed(hideSeekBarRunnable, 2000)
+                }
+            })
+        }
+    }
+
 
     fun startCamera() {
         val cameraProviderFuture =
@@ -366,24 +443,98 @@ class CameraFragment : Fragment() {
     }
 
     private fun bindCameraUseCases() {
+
         val targetResolution = Size(1080, 1080)
         val preview = Preview.Builder()
-            .setTargetResolution(targetResolution)
+            .setTargetResolution(Size(720, 720))
             .build()
             .also {
                 it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
             }
 
+        // Khởi tạo ImageCapture
         imageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setTargetResolution(targetResolution)
             .setFlashMode(currentFlashMode)
             .setJpegQuality(100)
             .build()
-        // Bind the preview and image capture use cases to the camera
-        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-        val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-        cameraControl = camera.cameraControl
-        cameraInfo = camera.cameraInfo
+
+
+
+
+        val extensionsManagerFuture =
+            ExtensionsManager.getInstanceAsync(requireContext(), cameraProvider)
+        extensionsManagerFuture.addListener(
+            {
+                val extensionsManager = extensionsManagerFuture.get()
+                val cameraSelectorToUse = when {
+                    extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.AUTO) -> {
+                        extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            ExtensionMode.AUTO
+
+                        )
+                    }
+
+                    extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.HDR) -> {
+                        extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            ExtensionMode.HDR
+                        )
+
+
+                    }
+
+                    extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.BOKEH) -> {
+                        extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            ExtensionMode.BOKEH
+                        )
+                    }
+
+                    extensionsManager.isExtensionAvailable(
+                        cameraSelector,
+                        ExtensionMode.FACE_RETOUCH
+                    ) -> {
+                        extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            ExtensionMode.FACE_RETOUCH
+                        )
+                    }
+
+                    extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT) -> {
+                        extensionsManager.getExtensionEnabledCameraSelector(
+                            cameraSelector,
+                            ExtensionMode.NIGHT
+                        )
+                    }
+
+                    else -> cameraSelector
+                }
+
+
+
+                cameraProvider.unbindAll()
+                val camera = cameraProvider.bindToLifecycle(
+                    viewLifecycleOwner,
+                    cameraSelectorToUse,
+                    preview,
+                    imageCapture
+                )
+
+                Log.d("CameraCheck", "HDR enabled: ${(ExtensionMode.HDR)}")
+                Log.d("CameraCheck", "Bokeh enabled: ${(ExtensionMode.BOKEH)}")
+                Log.d("CameraCheck", "Face Retouch enabled: ${(ExtensionMode.FACE_RETOUCH)}")
+                Log.d("CameraCheck", "Night enabled: ${(ExtensionMode.NIGHT)}")
+
+                cameraControl = camera.cameraControl
+                cameraInfo = camera.cameraInfo
+                brightnessSlider()
+            }, ContextCompat.getMainExecutor(requireContext())
+        )
+
+
     }
 
     private fun requestPermissions() {

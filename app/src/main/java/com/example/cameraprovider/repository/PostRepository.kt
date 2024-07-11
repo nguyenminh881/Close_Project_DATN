@@ -230,6 +230,7 @@ class PostRepository {
     private val imageGenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
         apiKey = BuildConfig.apiKey,
+
         generationConfig = generationConfig {
             temperature = 0.8f
             maxOutputTokens = 120
@@ -301,13 +302,28 @@ class PostRepository {
         val inputContent = content {
             image(imageBytes)
             text(
-                " Này AI bạn ơi, giúp mình viết caption thật deep cho bức ảnh này với! ✨ [Mô tả ngắn gọn nội dung chính của bức ảnh] " +
-                        "Thể hiện tâm trạng của mình trong ảnh đi, kiểu như nỗi buồn man mác, sự cô đơn, hoặc những suy tư sâu lắng... nhưng mà pha thêm chút hài hước nhẹ nhàng, châm biếm cho nó thú vị nhé! \uD83D\uDE02 " +
-                        "Viết bằng Tiếng Việt, ngôi thứ nhất, như mình đang tâm sự với bạn bè vậy." +
-                        "Sử dụng ngôn ngữ hình ảnh, ẩn dụ, và thêm emoji ở mỗi câu phù hợp để caption thêm phần sâu sắc và sinh động. \uD83D\uDE09 " +
-                        "Phải phù hợp với việc chia sẻ đến mọi người" +
-                        " Đừng tạo hashtag, và chỉ dùng thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) khi thực sự cần thiết thôi nhé! \uD83D\uDC4C\n" +
-                        "  Caption dưới 80 ký tự . \uD83D\uDE0E , ưu tiên ngắn nhé !"
+                """     
+           "Này AI, giúp mình viết caption để chia sẻ lên mạng xã hội nhé!
+
+           ## Nội dung:
+            - **Phân tích bức ảnh:** Mô tả ngắn gọn nội dung chính của bức ảnh, tập trung vào các yếu tố nổi bật như màu sắc chủ đạo, bố cục, chủ thể, và không khí chung của bức ảnh.
+            - **Xác định cảm xúc:** Dựa trên phân tích trên, xác định cảm xúc chủ đạo mà bức ảnh mang lại (ví dụ: vui vẻ, buồn bã, hoài niệm, phấn khích, ...)
+         
+            ## Hiệu ứng ngôn ngữ:
+            - Sử dụng ngôn ngữ hình ảnh, ẩn dụ.
+            - Thêm chút sầu đời châm biếm hài hước nhé!
+            - Thêm emoji cho sinh động phù hợp với nội dung.
+            
+            ## Ngữ cảnh:
+            - Viết bằng Tiếng Việt, ngôi thứ nhất "Mình".
+            - Sử dụng tự ngữ tự nhiên, phù hợp để chia sẻ lên mạng xã hội (Mọi người).
+          
+            ## Điều kiện bắt buộc:
+            - Caption dưới 150 ký tự.
+            - Phù hợp để chia sẻ lên mạng xã hội.
+            - Không tạo hashtag.
+            - chỉ dùng thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) khi thực sự cần thiết thôi nhé! \uD83D\uDC4C\n
+            """
             )
         }
         val response = imageGenerativeModel.generateContent(inputContent)
@@ -315,40 +331,197 @@ class PostRepository {
     }
 
     suspend fun generateContentFromText(prompt: String): String {
-        val adddaucau = """
-        Bạn là một trợ lý AI thông minh, có khả năng phân tích và thêm dấu câu vào đoạn văn để đảm bảo ngữ pháp chính xác và dễ đọc. Khi thêm dấu câu, hãy tuân theo các quy tắc sau:
-        1. Sử dụng dấu chấm (.) để kết thúc một câu hoàn chỉnh. 
-        2. Sử dụng dấu phẩy (,) để ngắt câu, tách các thành phần liệt kê hoặc bổ sung thông tin. 
-        3. Sử dụng dấu chấm than (!) để thể hiện sự ngạc nhiên, cảm xúc mạnh. 
-        4. Sử dụng dấu chấm hỏi (?) cho câu hỏi. 
-        5. Đảm bảo rằng mỗi câu có cấu trúc ngữ pháp hoàn chỉnh với chủ ngữ và vị ngữ
-     
 
-        Sau khi thêm dấu câu, hãy phân tích đoạn văn để xác định xem nó có phải là bài hát, câu chuyện, thơ hay drama. Đối với bài hát, hãy chú ý đến nhịp điệu và cách sử dụng từ ngữ lặp lại.
-        đây là đoạn văn $prompt
-          hãy chỉ trả về đoạn văn đã được thêm dấu câu
-          hãy chỉ trả về đoạn văn đã được thêm dấu câu. Nếu không thể phân tích được, hãy trả về nguyên văn bản gốc..
+        val punctuatedPrompt = addPunctuation(prompt)
+
+        val contentType = analyzeContentType(punctuatedPrompt)
+
+
+        val caption = generateCaption(punctuatedPrompt, contentType)
+
+        return caption
+    }
+
+    suspend fun addPunctuation(prompt: String): String {
+        val addPunctuationRules = """
+      You are an intelligent AI assistant capable of analyzing and adding punctuation to text to ensure grammatical accuracy and readability. When adding punctuation, please follow these rules:
+
+        1. Use periods (.) to end complete sentences.
+        2. Use commas (,) to separate phrases, list items, or add additional information.
+        3. Use exclamation marks (!) to express surprise or strong emotions.
+        4. Use question marks (?) for questions.
+        5. Ensure that each sentence has a complete grammatical structure with a subject and a predicate.
+        6. Use quotation marks ("") to enclose direct speech.
+        7. Use dashes (-) to indicate pauses or breaks in thought.
+        8. Be mindful of the context and meaning of the sentence when adding punctuation.
+        9. Be flexible and creative when adding punctuation to make the text more natural and readable.
+        
+        ## Examples:
+        
+        ### Song (Vietnamese):
+        
+        **Input:**  đường dài hun hút gió mưa giăng lối anh bước đi lẻ loi tìm em giữa đêm tối
+        **Output:** Đường dài hun hút, gió mưa giăng lối,
+        Anh bước đi lẻ loi, tìm em giữa đêm tối.
+        
+        ### Poem (Vietnamese):
+        
+        **Input:**  mưa rơi trên phố nhỏ em bước đi lặng lẽ bóng dáng ai xa mờ trong màn mưa chiều
+        **Output:** Mưa rơi trên phố nhỏ,
+        Em bước đi lặng lẽ.
+        Bóng dáng ai xa mờ
+        Trong màn mưa chiều.
+        
+        ### Song (Vietnamese):
+        
+        **Input:**  chiều nay không có em anh lang thang trên phố vắng nhớ về những kỷ niệm xưa 
+        **Output:** Chiều nay không có em, anh lang thang trên phố vắng, 
+        Nhớ về những kỷ niệm xưa.
+        
+        ### Song (English):
+        
+        **Input:**  yesterday all my troubles seemed so far away now it looks as though theyre here to stay oh i believe in yesterday
+        **Output:** Yesterday, all my troubles seemed so far away.
+        Now it looks as though they're here to stay.
+        Oh, I believe in yesterday.
+        
+        ### Drama Story (Vietnamese):
+        
+        **Input:**  cô ấy bước vào phòng với vẻ mặt đầy tức giận anh ta ngồi trên ghế sofa không nói một lời không khí căng thẳng bao trùm cả căn phòng
+        **Output:** Cô ấy bước vào phòng với vẻ mặt đầy tức giận. Anh ta ngồi trên ghế sofa, không nói một lời. Không khí căng thẳng bao trùm cả căn phòng.
+        
+        ### General Example (English and Vietnamese):
+        
+        **Input:**  i love you anh yêu em too what do you want to eat today hôm nay em muốn ăn gì
+        **Output:** "I love you." "Anh yêu em too." "What do you want to eat today?" "Hôm nay em muốn ăn gì?"
+        
+        ### Example with Slang and Emojis:
+        
+        **Input:**  omg trời ơi cái váy này xinh quá đi à tui phải mua nó thôi 👗
+        **Output:** OMG! Trời ơi, cái váy này xinh quá đi à! Tui phải mua nó thôi! 👗
+        
+        ## Text to be punctuated:
+        
+        This is the text without punctuation: "$prompt"
+        Please add punctuation to the text above.
     """
-        val analysisInputContent = content { text(adddaucau) }
-        val analysisResponse = imageGenerativeModel.generateContent(analysisInputContent)
-        val punctuatedPrompt = analysisResponse.text.toString().substringAfter("Đoạn văn đã được thêm dấu câu: ")
 
-        val inputContent = content {
-            text(
-                """
-        Viết caption cho đoạn ghi âm sau khi đã phân tích: "$punctuatedPrompt" (đã được thêm dấu câu).
-        Đây là đoạn ghi âm [mô tả ngắn gọn về nội dung ghi âm, ví dụ: tôi hát một bài hát, kể một câu chuyện drama, hoặc nói về những chuyện xàm xí].
-        Hãy phân tích nội dung ghi âm và viết caption phù hợp, cho biết đây là bài hát, câu chuyện drama, hay chuyện xàm xí.
-        Caption cần mang phong cách giật gân, giật tít để thu hút người nghe, không cần thêm bất kỳ lời dẫn nào của bản thân AI.
-        Dùng các từ ngữ xưng hô phù hợp với chia sẻ cho nhóm bạn bè tự nhiên nhất có thể
-        Viết kiểu thân mật, hài hước, dưới 200 ký tự, ưu tiên tầm khoảng 100 ký tự.
-        Thêm 1-2 emoji phù hợp vào mỗi câu và không sử dụng hashtag.
-        Có thể thêm thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) nếu phù hợp, nhưng đừng lạm dụng.
-        """
-            )
+        val analysisInputContent = content { text(addPunctuationRules) }
+        val analysisResponse = imageGenerativeModel.generateContent(analysisInputContent)
+        return analysisResponse.text.toString().substringAfter("Đoạn văn đã được thêm dấu câu: ")
+            .trim()
+    }
+
+    suspend fun analyzeContentType(punctuatedPrompt: String): String {
+        val analyzeContentRules = """
+      Bạn là một trợ lý AI thông minh, có khả năng phân tích đoạn văn đã được thêm dấu câu để xác định loại nội dung. 
+        Hãy phân tích đoạn văn sau và cho biết đó là bài hát, câu chuyện, thơ, hay drama, hay các vấn đề liên quan đến chính trị, tôn giáo, chuyện vui, chuyện buồn, chuyện nhạy cảm, chuyện kinh dị, chuyện tâm linh.
+
+     ## Quy tắc phân biệt:
+    
+        **Bài hát:**
+        * Thường có vần điệu, nhịp điệu rõ ràng.
+        * Chia thành các khổ, có thể có điệp khúc lặp lại.
+        * Thường tập trung vào cảm xúc, tình yêu, nỗi buồn, niềm vui.
+        * Sử dụng nhiều hình ảnh, ẩn dụ, so sánh.
+        *Nếu đoạn văn sử dụng nhiều hình ảnh, ẩn dụ, có nhịp điệu và vần điệu rõ ràng, và có một đoạn lặp lại nhiều lần, thì rất có thể đó là một bài hát.
+        * **Ví dụ:** "Em ơi Hà Nội phố, phố ta còn đó, nhà tôi vẫn thế..." (Nhạc sĩ Phú Quang) - Bài hát này có vần điệu (phố - đó, thế - về), nhịp điệu rõ ràng, và chia thành các khổ. Nội dung tập trung vào tình yêu quê hương và sử dụng nhiều hình ảnh đẹp.
+    
+        **Câu chuyện:**
+        * Viết dưới dạng văn xuôi, không có vần điệu hay nhịp điệu cố định.
+        * Có cốt truyện rõ ràng, bao gồm mở đầu, diễn biến, cao trào, và kết thúc.
+        * Có thể có nhiều nhân vật, bối cảnh, và tình tiết phức tạp.
+        * **Ví dụ:** "Chuyện người con gái Nam Xương" (Nguyễn Dữ) - Câu chuyện này kể về cuộc đời bi kịch của Vũ Nương, với các tình tiết phức tạp và nhiều nhân vật.
+    
+        **Thơ:**
+        * Ngắn gọn, súc tích, giàu hình ảnh.
+        * Thường có vần điệu, nhưng không nhất thiết phải có nhịp điệu rõ ràng.
+        * Thường tập trung vào cảm xúc, suy tư, hoặc miêu tả cảnh vật.
+        * **Ví dụ:** "Tình yêu như cánh chim bay xa, để lại trong lòng ta nỗi nhớ thiết tha." - Câu thơ này ngắn gọn, sử dụng hình ảnh so sánh để diễn tả tình yêu.
+    
+        **Drama:**
+        * Kể về một câu chuyện với nhiều xung đột, kịch tính.
+        * Thường có nhiều nhân vật và đối thoại.
+        * Tập trung vào các mối quan hệ, tình cảm, và sự thay đổi của nhân vật.
+        * **Ví dụ:** "Romeo và Juliet" (Shakespeare) - Vở kịch này kể về tình yêu bi kịch của hai người trẻ, với nhiều xung đột và kịch tính.
+    
+        **Chính trị, tôn giáo:**
+        * Đề cập đến các vấn đề liên quan đến chính trị, tôn giáo, hoặc các vấn đề xã hội nhạy cảm.
+        * Thường có tính chất tranh luận, phản biện, hoặc tuyên truyền.
+        * **Ví dụ:** "Tuyên ngôn Độc lập" (Hồ Chí Minh) - Văn bản này đề cập đến các vấn đề chính trị và tuyên bố độc lập của Việt Nam
+    
+        **Chuyện vui:**
+        * Có tính chất hài hước, gây cười.
+        * Thường có tình huống bất ngờ, lời nói đùa, hoặc hành động hài hước.
+        * **Ví dụ:** "Một con vịt đi vào quán bar..." - Đây là một câu chuyện cười với tình huống hài hước.
+    
+        **Chuyện buồn:**
+        * Kể về những sự kiện đau buồn, mất mát, hoặc thất bại.
+        * Thường gợi lên cảm xúc buồn bã, thương cảm, hoặc đồng cảm.
+        * **Ví dụ:** "Chiếc lá cuối cùng" (O. Henry) - Câu chuyện này kể về sự hy sinh của một nghệ sĩ để cứu sống một cô gái trẻ.
+        **
+        
+         **Chuyện nhạy cảm:**
+        * Đề cập đến các chủ đề nhạy cảm như tình dục, bạo lực, hoặc các vấn đề cá nhân.
+        * Cần cân nhắc kỹ trước khi chia sẻ hoặc thảo luận.
+        * **Ví dụ:** Đoạn văn có thể đề cập đến các trải nghiệm cá nhân đau buồn, các mối quan hệ phức tạp, hoặc các vấn đề gây tranh cãi trong xã hội. 
+        
+        **Chuyện kinh dị:**
+        *Sợ hãi, kinh hoàng: Tập trung vào các yếu tố gây sợ hãi, kinh hoàng, hoặc ghê rợn.
+        *Mục đích: Thường nhằm mục đích giải trí, kích thích cảm giác mạnh.
+        *Ngôn ngữ: Sử dụng ngôn ngữ miêu tả chi tiết, sống động, nhằm tạo ra cảm giác sợ hãi.
+        
+        **Chuyện tâm linh:**
+        *Siêu nhiên, tâm linh: Tập trung vào các khía cạnh siêu nhiên, tâm linh, tôn giáo, hoặc triết học.
+        *Mục đích: Thường mang tính chất khai sáng, tìm kiếm ý nghĩa cuộc sống.
+        *Cảm xúc: Có thể gợi lên cảm giác kinh ngạc, tò mò, hoặc bình an.
+        *Ngôn ngữ: Thường sử dụng ngôn ngữ mang tính biểu tượng, ẩn dụ, hoặc triết học.
+        
+        ## Lưu ý:
+        * Cần phân biệt giữa "chuyện vui" và "drama" dựa trên ngữ cảnh và cảm xúc của câu chuyện, không chỉ dựa vào cách diễn đạt.
+        * Ví dụ: Câu chuyện về một người bị ngã có thể là "chuyện vui" nếu được kể với giọng điệu hài hước, nhưng cũng có thể là "drama" nếu người đó bị thương nặng.
+        
+        "$punctuatedPrompt"
+         ## Trả lời:
+        Loại nội dung: [Loại nội dung bạn xác định]
+        Nếu không xác định được thể loại trả về [Tóm tắt  "$punctuatedPrompt" ]
+    """
+
+        val analysisInputContent = content { text(analyzeContentRules) }
+        val analysisResponse = imageGenerativeModel.generateContent(analysisInputContent)
+        return analysisResponse.text.toString().substringAfter("Loại nội dung: ").trim()
+    }
+
+    suspend fun generateCaption(punctuatedPrompt: String, contentType: String): String {
+        val captionStyle = when (contentType.lowercase()) {
+            "bài hát" -> "giật gân, giật tít, âm nhạc 🎵🎶"
+            "câu chuyện" -> "kể chuyện, hấp dẫn, lôi cuốn 📖📚"
+            "drama" -> "kịch tính, căng thẳng, hồi hộp 🎭🎬"
+            "thơ" -> "lãng mạn, sâu lắng, trữ tình 🖋️📝"
+            "chính trị" -> "thông tin, chính xác, khách quan 📰📢"
+            "tôn giáo" -> "tôn kính, trang nghiêm, thành kính 🙏✝️"
+            "chuyện vui" -> "hài hước, vui nhộn, cười thả ga 😂🤣"
+            "chuyện buồn" -> "cảm động, xúc động, lắng đọng 😔😢"
+            "chuyện nhạy cảm" -> "cân nhắc, tế nhị, kín đáo 🤫🤐"
+            "chuyện kinh dị" -> "rùng rợn, ám ảnh, lạnh sống lưng 😱👻"
+            "chuyện tâm linh" -> "huyền bí, sâu sắc, suy ngẫm 🤔✨"
+            else -> "thân mật, hài hước 😊😉"
         }
+        val captionRules = """
+        Viết caption cho đoạn ghi âm sau khi đã phân tích: "$punctuatedPrompt" (đã được thêm dấu câu).
+        Đây là đoạn ghi âm về [$contentType].
+        Hãy phân tích nội dung ghi âm và viết caption phù hợp.
+        Caption cần mang phong cách $captionStyle, không cần thêm bất kỳ lời dẫn nào của bản thân AI.
+        Dùng các từ ngữ xưng hô phù hợp với chia sẻ cho nhóm bạn bè tự nhiên nhất có thể.
+        Viết dưới 200 ký tự, ưu tiên tầm khoảng 100 ký tự.
+        Thêm 1-2 emoji phù hợp vào mỗi câu.
+        Thêm hashtag #$contentType vào cuối caption.
+        Có thể thêm thông tin về thời gian ($timeOfDay) hoặc ngày tháng ($dayOfWeek, ngày $dayOfMonth tháng $month năm $year) nếu phù hợp, nhưng đừng lạm dụng.
+    """
+
+        val inputContent = content { text(captionRules) }
         val response = imageGenerativeModel.generateContent(inputContent)
-        return response.text.toString()
+        return response.text.toString().trim()
     }
 
 

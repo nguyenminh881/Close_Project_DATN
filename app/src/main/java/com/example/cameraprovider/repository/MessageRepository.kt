@@ -26,21 +26,12 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.type.content
-import com.google.firebase.firestore.DocumentChange
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
-import java.io.File
-import java.io.FileInputStream
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.Properties
-
-//import okhttp3.*
-
+import android.util.Base64
 
 class MessageRepository() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -61,14 +52,14 @@ class MessageRepository() {
         return try {
             val currentUID =
                 auth.currentUser?.uid ?: return Result.failure(Exception("User not authenticated"))
-
+            val encodedMessage = Base64.encodeToString(message.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
             val newMessageRef = fireStore.collection("messages").document()
             val messageId = newMessageRef.id
             val message = Message(
                 messageId = messageId,
                 senderId = currentUID,
                 receiverId = receiverId,
-                message = message,
+                message = encodedMessage,
                 postId = postId,
                 imageUrl = imgUrl,
                 voiceUrl = VoiceUrl,
@@ -148,7 +139,18 @@ class MessageRepository() {
                     return@addSnapshotListener
                 }
                 val messages = snapshot?.toObjects(Message::class.java) ?: emptyList()
-                trySend(messages)
+
+                val decodedMessages = messages.map { message ->
+                    try {
+                        val decodedMessage = String(Base64.decode(message.message, Base64.NO_WRAP), Charsets.UTF_8)
+                        message.copy(message = decodedMessage)
+                    } catch (e: IllegalArgumentException) {
+                        Log.e("MessageDecodeError", "Failed to decode message ID: ${message.messageId}, message: ${message.message}", e)
+                        message
+                    }
+                }
+
+                trySend(decodedMessages)
             }
         awaitClose { listenerRegistration.remove() }
     }
@@ -307,7 +309,7 @@ class MessageRepository() {
                         "Hãy thêm các yếu tố bất ngờ và hài hước vào cuộc trò chuyện để tạo sự thú vị." +
                         "Ưu tiên trả lời bằng tiếng Việt. " +
                         "Khi trả lời câu hỏi, hãy ưu tiên độ chính xác cho câu hỏi thông tin và sự sáng tạo cho câu hỏi cần sáng tạo. " +
-                        "Tên của người trò chuyện là $username. Hãy ghi nhớ điều này và chỉ nhắc tên khi được hỏi. Khi đã sử dụng tên người trò chuyện, không sử dụng các đại từ khác như 'bạn', 'cậu', 'ní'..." +
+                        "Tên của người trò chuyện là $username. Hãy ghi nhớ điều này và **chỉ được phép nhắc tên khi được hỏi**. Sử dụng các đại từ khác như 'bạn', 'cậu', 'ní'..." +
                         "Bạn biết thông tin về thời gian hiện tại ($timeOfDay), nhưng không nên nhắc đến nó quá thường xuyên, chỉ khi thật sự cần thiết. " +
                         "Hãy tập trung vào việc tạo ra cuộc trò chuyện thú vị và sáng tạo, đặt câu hỏi cho người dùng để kéo dài cuộc trò chuyện. " +
                         "Khi người dùng hỏi về thời gian, hãy luôn trả lời bằng '$timeOfDay'."
@@ -405,12 +407,12 @@ class MessageRepository() {
 
     ) {
         try {
-
+            val encodedMessage = Base64.encodeToString(prompt.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
             val userMessage = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = auth.currentUser?.uid,
                 receiverId = "Gemini",
-                message = prompt,
+                message = encodedMessage,
                 createdAt = System.currentTimeMillis().toString(),
                 status = MessageStatus.SENDING
             )
@@ -421,11 +423,12 @@ class MessageRepository() {
 
 
             val responseText = generateResponse(prompt)
+            val encodedResponseText = Base64.encodeToString(responseText.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
             val geminiMessage = Message(
                 messageId = UUID.randomUUID().toString(),
                 senderId = "Gemini",
                 receiverId = auth.currentUser?.uid,
-                message = responseText,
+                message = encodedResponseText,
                 createdAt = System.currentTimeMillis().toString(),
                 status = MessageStatus.SENDING
             )

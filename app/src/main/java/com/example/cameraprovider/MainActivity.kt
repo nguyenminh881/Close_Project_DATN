@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     private val frVModel: FriendViewmodel by viewModels()
     private val postVmodel: PostViewModel by viewModels()
     private val messageViewModel: MessageViewModel by viewModels()
-
+    private var currentFragmentPosition = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,54 +122,45 @@ class MainActivity : AppCompatActivity() {
         authViewModel.getInfo()
 
 
+
         //viewpp2
         viewBinding.viewpp.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount(): Int {
-                return 2 // Số lượng Fragment
+                return 2
             }
 
             override fun createFragment(position: Int): Fragment {
                 return when (position) {
-                    0 -> CameraFragment() // Fragment camera
-                    else -> RecordFragment() // Fragment ghi âm
+                    0 -> CameraFragment()
+                    else -> RecordFragment()
                 }
             }
         }
-        TabLayoutMediator(viewBinding.tabLayout, viewBinding.viewpp) { tab, position ->
-            tab.icon = when (position) {
-                0 -> resources.getDrawable(R.drawable.ic_cam, null)
-                else -> resources.getDrawable(R.drawable.ic_mic, null)
+        viewBinding.btnCamera.setOnClickListener {
+            if (currentFragmentPosition != 0) {
+                viewBinding.viewpp.setCurrentItem(0, true)
+                currentFragmentPosition = 0
+                it.backgroundTintList= ContextCompat.getColorStateList(this, R.color.color_active)
+                viewBinding.btnRecord.backgroundTintList = ContextCompat.getColorStateList(this, R.color.colorbtnctive)
             }
-        }.attach()
+        }
+
+        viewBinding.btnRecord.setOnClickListener {
+            if (currentFragmentPosition != 1) {
+                CameraFragment().getCameraProvider()?.unbindAll() // Giải phóng camera
+                viewBinding.viewpp.setCurrentItem(1, true) // Chuyển đến RecordFragment
+                currentFragmentPosition = 1
+                it.backgroundTintList= ContextCompat.getColorStateList(this, R.color.color_active)
+                viewBinding.btnCamera.backgroundTintList = ContextCompat.getColorStateList(this, R.color.colorbtnctive)
+            }
+        }
 
         viewBinding.viewpp.isUserInputEnabled = false
 
-        viewBinding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                viewBinding.viewpp.currentItem = tab?.position ?: 0
-            }
 
-            override fun onTabUnselected(tab: TabLayout.Tab?) {
-                val cameraFragment =
-                    supportFragmentManager.findFragmentByTag("CameraFragment") as? CameraFragment
-                val cameraProvider = cameraFragment?.getCameraProvider()
-                if (tab?.position != 0) {
-                    cameraProvider?.unbindAll()
-                } else {
-
-                }
-            }
-
-            override fun onTabReselected(tab: TabLayout.Tab?) {
-
-            }
-
-        })
-        // Khởi tạo GestureDetector và thiết lập lắng nghe sự kiện vuốt
         gestureDetector = GestureDetector(this, GestureListener())
 
-        // Xử lý khi button được nhấn
-
+        // btnckc
 
         val bottomSheetDialogFragment = FriendListFragment()
         viewBinding.btnBottomSheetFriends.setOnClickListener {
@@ -238,8 +229,6 @@ class MainActivity : AppCompatActivity() {
 
         //go pot
         viewBinding.xembai.setOnClickListener {
-            viewBinding.newposttxt.visibility = View.GONE
-            postVmodel.clearNewpostsize()
             val intent = Intent(this, PostList::class.java)
             val options = ActivityOptions.makeCustomAnimation(
                 this@MainActivity,
@@ -249,13 +238,13 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
+///newpost
         postVmodel.newPostCount.observe(this){
             if(it > 0){
                 viewBinding.newposttxt.visibility = View.VISIBLE
                 viewBinding.newposttxt.text =it.toString()
             }else{
-                viewBinding.newposttxt.visibility = View.INVISIBLE
+                viewBinding.newposttxt.visibility = View.GONE
             }
         }
 
@@ -265,7 +254,6 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-
         return gestureDetector.onTouchEvent(event!!)
     }
 
@@ -283,9 +271,7 @@ class MainActivity : AppCompatActivity() {
             if (e1 != null && e2 != null) {
                 // Xác định hướng và tốc độ vuốt
                 if (e1.y - e2.y > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                    // Nếu có vuốt lên, mở PostListActivity
-                    viewBinding.newposttxt.visibility = View.GONE
-                    postVmodel.clearNewpostsize()
+//
                     val intent = Intent(this@MainActivity, PostList::class.java)
                     val options = ActivityOptions.makeCustomAnimation(
                         this@MainActivity,

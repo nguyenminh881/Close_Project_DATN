@@ -3,6 +3,13 @@
 <layout  xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.cameraprovider.viewmodel.PostViewModel" />
+    </data>
+
+
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -21,7 +28,7 @@
         android:textColor="@color/white"
         android:textSize="20sp" />
 
-    <TextView
+    <EditText
         android:id="@+id/tvGeneratedContent"
         android:layout_width="match_parent"
         android:layout_height="300dp"
@@ -29,9 +36,11 @@
         android:backgroundTint="@color/bg_input"
         android:maxLines="10"
         android:maxLength="400"
+        android:gravity="start"
+        android:inputType="textMultiLine"
         android:paddingHorizontal="12dp"
         android:scrollbars="vertical"
-        android:text="Nội dung được hiển thị ở đây."
+        android:text="@={viewModel.contentvoice}"
         android:paddingTop="20dp"
         android:background="@drawable/edittextbd10dp"
         android:textColor="@color/white"

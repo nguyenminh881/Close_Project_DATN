@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.Bindable
+import androidx.databinding.InverseMethod
 import androidx.databinding.Observable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -95,33 +96,51 @@ class PostViewModel() : ViewModel(), Observable {
     }
 
 
-    private val _contentgena = MutableLiveData<String>()
-    val contentgena: LiveData<String> = _contentgena
+    @Bindable
+     val contentgena = MutableLiveData<String>().apply {
+        value = "Nội dung được hiển thị ở đây."
+    }
     fun generateContent(imageBitmap: Bitmap) {
+        contentgena.value ="Bạn chờ xíu nhé!"
         viewModelScope.launch {
             try {
-                _contentgena.postValue(postRepository.generateContentFromImage(imageBitmap))
+                contentgena.postValue(postRepository.generateContentFromImage(imageBitmap))
             }catch (e:Exception){
-                _contentgena.postValue("Vui lòng kiểm tra kết nối mạng.")
+                contentgena.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
                 Log.d("PostViewModel", "generateContent: ${e.message}")
             }
         }
     }
 
-    private val _contentvoice = MutableLiveData<String>()
-    val contentvoice: LiveData<String> = _contentvoice
+    @Bindable
+     val contentvoice = MutableLiveData<String>()
     fun generateContentVoice(prompt: String) {
+        contentvoice.value ="Bạn chờ xíu nhé!"
         viewModelScope.launch {
             try {
-                _contentvoice.postValue(postRepository.generateContentFromText(prompt))
+                contentvoice.postValue(postRepository.generateContentFromText(prompt))
             }catch (e:Exception){
-                _contentvoice.postValue("Đã xảy ra lỗi. Vui lòng thử lại.")
+                contentvoice.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
                 Log.d("PostViewModel", "generateContent: ${e.message}")
             }
         }
     }
     private val _newPostCount = MutableLiveData<Int>(0)
     val newPostCount: LiveData<Int> = _newPostCount
+
+    private val _recognizedText = MutableLiveData<String>()
+    val recognizedText: LiveData<String> = _recognizedText
+
+    fun genarateTemp(prompt: String) {
+        viewModelScope.launch {
+            try {
+                _recognizedText.postValue(postRepository.addPunctuation(prompt))
+            }catch (e:Exception){
+                _recognizedText.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
+                Log.d("PostViewModel", "generateContent: ${e.message}")
+            }
+        }
+    }
 
     init {
         onNewpost()
@@ -140,25 +159,26 @@ class PostViewModel() : ViewModel(), Observable {
     fun onPostViewed(postId: String) {
         postRepository.updateViewedBy(postId) { success ->
             if (success) {
-                _newPostCount.value = 0
                 Log.e("PostViewModel", "Updated viewed by")
-
             } else {
                 Log.e("PostViewModel", "Failed to update viewed by")
             }
         }
     }
     fun clearNewpostsize(){
-        _newPostCount.value = 0
+        _newPostCount.postValue(0)
     }
     fun clearContentgena(){
-        _contentgena.value = ""
+        contentgena.value = ""
     }
 
     fun clearContentvoice(){
-        _contentvoice.value = ""
+        contentvoice.value = ""
     }
 
+    fun clearContentemp(){
+        _recognizedText.value = ""
+    }
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 
     }
@@ -166,4 +186,6 @@ class PostViewModel() : ViewModel(), Observable {
     override fun removeOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 
     }
+
+
 }

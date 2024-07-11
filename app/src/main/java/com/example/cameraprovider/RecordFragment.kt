@@ -119,6 +119,12 @@ class RecordFragment : Fragment() {
             if(prompt !=""){
                 binding.btnGenativeAI.visibility=View.VISIBLE
             }
+            postViewModel.genarateTemp(recognizedText)
+            postViewModel.recognizedText.observe(viewLifecycleOwner){
+                binding.edt1.setText(it)
+                Log.d("SpeechRecognizer", "Prompt nhận đc: $it")
+            }
+
             Log.d("SpeechRecognizer", "Văn bản được nhận diện: $recognizedText")
             Log.d("SpeechRecognizer", "Prompt nhận đc: $prompt")
         }
@@ -126,6 +132,8 @@ class RecordFragment : Fragment() {
         override fun onPartialResults(partialResults: Bundle?) {
             val partialText = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0) ?: ""
             Log.d("SpeechRecognizer", "Kết quả tạm thời: $partialText")
+
+
         }
 
         override fun onEvent(eventType: Int, params: Bundle?) {
@@ -235,6 +243,7 @@ class RecordFragment : Fragment() {
         binding.btnGenativeAI.visibility=View.INVISIBLE
         speechRecognizer.destroy()
         postViewModel.clearContentvoice()
+        postViewModel.clearContentemp()
         setupSpeechRecognizer()
     }
 
@@ -299,9 +308,9 @@ class RecordFragment : Fragment() {
                     setAudioSource(MediaRecorder.AudioSource.MIC)
                     setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                    setAudioChannels(2)
-                    setAudioSamplingRate(48000)
-                    setAudioEncodingBitRate(96000)
+                    setAudioChannels(1)
+                    setAudioSamplingRate(44100)
+                    setAudioEncodingBitRate(64000)
                     setMaxDuration(RECORDING_MEDIA_RECORDER_MAX_DURATION)
                     setOutputFile(fileName)
                     prepare()
@@ -366,8 +375,8 @@ class RecordFragment : Fragment() {
                 start()
             }
             isPlaying = true
-            handler.post(updateWaveform)
             startSpeechRecognition(audioFilePath)
+            handler.post(updateWaveform)
             mediaPlayer.setOnCompletionListener {
                 stopPlaying()
             }
@@ -378,11 +387,11 @@ class RecordFragment : Fragment() {
 
     private fun stopPlaying() {
         mediaPlayer.stop()
-        isPlaying = false
         binding.play.text = "Phát"
+        isPlaying = false
+        speechRecognizer.stopListening()
         handler.removeCallbacks(updateWaveform)
         binding.wave.progress = 0f
-        speechRecognizer.stopListening()
         mediaPlayer.reset()
         mediaPlayer.release()
     }

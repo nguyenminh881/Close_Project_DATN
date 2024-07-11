@@ -373,6 +373,7 @@ class UserRepository {
     }
     //dang xuat
     fun logout() {
+        fireStore.terminate()
         auth.signOut()
     }
 }

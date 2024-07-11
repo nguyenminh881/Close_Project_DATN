@@ -192,54 +192,6 @@ class FriendRepository {
         }
     }
 
-
-//    suspend fun handleFriendRequest(senderId: String?): Result<Friendship> {
-//        return try {
-//            val currentUserId = auth.currentUser?.uid
-//
-//            if (senderId != null && currentUserId != null) {
-//                // Kiểm tra xem đã tồn tại yêu cầu kết bạn hay chưa
-//                val existingFriendship = fireStore.collection("friendships")
-//                    .whereEqualTo("uid1", currentUserId)
-//                    .whereEqualTo("uid2", senderId)
-//                    .whereEqualTo("state", "Accepted")
-//                    .get()
-//                    .await()
-//                    .documents
-//                    .firstOrNull()
-//                if (existingFriendship != null) {
-//                    // Đã tồn tại yêu cầu kết bạn, trả về lỗi hoặc thông báo
-//                    Result.failure(Exception("Đã là bạn bè rồi nhé"))
-//                } else {
-//                    val getdoc = fireStore.collection("users").document(currentUserId).get().await()
-//                    // Chưa có yêu cầu kết bạn, tạo mới
-//                    val newPostRef = fireStore.collection("friendships").document()
-//                    val id = newPostRef.id
-//                    val friendship = fireStore.runTransaction { transaction ->
-//                        val friendship = Friendship(
-//                            id = id,
-//                            uid1 = currentUserId,
-//                            uid2 = senderId,
-//                            state = "pending",
-//                            userAvt = getdoc?.getString("avatarUser"),
-//                            userName = getdoc!!.getString("nameUser"),
-//                            timeStamp = Timestamp.now()
-//                        )
-//                        transaction.set(newPostRef, friendship)
-//                        friendship
-//                    }.await()
-//                    Result.success(friendship)
-//                }
-//            } else {
-//                Result.failure(Exception("Vui lòng đăng nhập!"))
-//            }
-//        } catch (e: Exception) {
-//            // Xử lý lỗi transaction
-//            Result.failure(e)
-//        }
-//    }
-
-
     fun getFriendships(callback: (Result<MutableList<Friendship>?>) -> Unit) {
         val currentUserId = auth.currentUser?.uid
             ?: return callback(Result.failure(Exception(" Vui lòng đăng nhập!")))

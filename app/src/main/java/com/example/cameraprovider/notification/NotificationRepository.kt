@@ -2,6 +2,7 @@ package com.example.cameraprovider.notification
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.example.cameraprovider.model.Like
@@ -45,8 +46,16 @@ class NotificationRepository {
                     return@addSnapshotListener
                 }
                 val messages = snapshot?.toObjects(Message::class.java) ?: emptyList()
-                Log.d("NotificationRepository", "getMessagesFromFriends: fetched ${messages.size} messages")
-                trySendBlocking(messages)
+                val decodedMessages = messages.map { message ->
+                    try {
+                        val decodedMessage = String(Base64.decode(message.message, Base64.NO_WRAP), Charsets.UTF_8)
+                        message.copy(message = decodedMessage)
+                    } catch (e: IllegalArgumentException) {
+                        Log.e("MessageDecodeError", "Failed to decode message ID: ${message.messageId}, message: ${message.message}", e)
+                        message
+                    }
+                }
+                trySend(decodedMessages)
             }
         awaitClose { listenerRegistration.remove() }
     }

@@ -71,6 +71,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity:1.9.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.2")
 
 
     testImplementation("junit:junit:4.13.2")
@@ -87,8 +88,6 @@ dependencies {
     implementation ("androidx.camera:camera-extensions:${camerax_version}")
 
 
-
-//    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 

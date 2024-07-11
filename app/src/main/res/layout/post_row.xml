@@ -64,13 +64,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
-                    android:maxLength="35"
+                    android:layout_marginTop="10dp"
+                    android:maxLength="12"
                     android:textColor="@color/dark"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
+                    android:textSize="16sp"
+                   android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/imageViewPost" />
+                    app:layout_constraintTop_toBottomOf="@id/imageViewPost"
+                    />
 
                 <TextView
                     android:id="@+id/tv_Desc_Post"
@@ -80,19 +81,19 @@
                     android:layout_marginTop="10dp"
                     android:layout_marginEnd="8dp"
                     android:maxLength="200"
-                    maxLines="3"
+                    android:maxLines="6"
                     android:text="@{postxml.content}"
                     android:textColor="@color/dark"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_Name_UserPost" />
+                    app:layout_constraintTop_toBottomOf="@id/tv_Name_UserPost" />
 
                 <TextView
                     android:id="@+id/time_stamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
+                    android:textSize="14.56sp"
                     android:textColor="@android:color/black"
                     android:layout_gravity="end|center_vertical"
                     android:layout_marginEnd="4dp"
@@ -125,7 +126,7 @@
                 android:layout_marginHorizontal="3dp"
                 android:layout_gravity="center"
                 android:gravity="center_horizontal"
-                android:textSize="16sp"
+                android:textSize="15.6sp"
                 android:text="Không có hoạt động nào 💖"
                 android:textColor="#E6A5A5A5" />
         </LinearLayout>

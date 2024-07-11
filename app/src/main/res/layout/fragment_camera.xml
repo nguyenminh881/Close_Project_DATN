@@ -130,7 +130,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-
                 <ImageView
                     android:id="@+id/focusCircle"
                     android:layout_width="80dp"
@@ -141,8 +140,6 @@
                     app:layout_constraintEnd_toEndOf="@id/viewFinder"
                     app:layout_constraintStart_toStartOf="@id/viewFinder"
                     app:layout_constraintTop_toTopOf="@id/viewFinder" />
-
-
 
 
                 <LinearLayout
@@ -201,25 +198,38 @@
                         android:src="@drawable/ic_zoom" />
 
 
-<!--                    <Space-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="1" />-->
-
-<!--                    <ImageButton-->
-<!--                        android:id="@+id/btnGrid"-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:visibility="invisible"-->
-<!--                        android:background="#00FFFFFF"-->
-<!--                        android:src="@drawable/ic_grid_off" />-->
-
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                    <ImageButton
+                        android:id="@+id/btn_exposure"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:background="#00FFFFFF"
+                        android:layout_weight="1"
+                        android:src="@drawable/ic_exposure"/>
                     <Space
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1" />
                 </LinearLayout>
+
+
+                <SeekBar
+                    android:id="@+id/brightnessSb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:progressTint="#C1C1C0"
+                    android:thumbTint="@color/key"
+                    android:max="5"
+                    android:visibility="gone"
+                    android:min="-5"
+                    app:layout_constraintTop_toBottomOf="@+id/viewFinder"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
 
                 <ImageView
                     android:id="@+id/imageViewCaptured"
@@ -247,7 +257,7 @@
                     android:singleLine="true"
                     android:textColor="@color/dark"
                     android:textColorHint="@color/dark"
-                    android:textSize="16sp"
+                    android:textSize="15.6sp"
                     android:textStyle="bold"
                     android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -271,6 +281,7 @@
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/card"
             app:layout_constraintStart_toStartOf="parent">
 
             <Space

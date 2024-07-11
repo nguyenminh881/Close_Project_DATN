@@ -1,15 +1,19 @@
 package com.example.cameraprovider.adapter
 
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.FriendlistChatItemBinding
 import com.example.cameraprovider.model.Friendship
 import com.example.cameraprovider.model.Message
+import com.example.cameraprovider.model.MessageStatus
 import com.example.cameraprovider.model.User
 import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
@@ -54,7 +58,38 @@ class friendlist_chatAdapter( private val context: Context,
 
             binding.timeStamp.text =  if(lastMessage != null) timeAgo else ""
             binding.nameLastUser.text = senderName
-            binding.lastMessage.text = lastMessage?.message ?: ""
+
+
+
+
+            val decodedMessage = lastMessage?.let { decodeMessage(it.message ?: "") }
+            binding.lastMessage.text = decodedMessage
+
+            if (lastMessage != null ){
+                if( lastMessage.status == MessageStatus.SENT || lastMessage.status == MessageStatus.SENDING && lastMessage.senderId == user.UserId) {
+                    binding.lastMessage.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
+                    binding.nameLastUser.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
+                    Log.d("MessageAdapter", "Last message color: ${binding.lastMessage.currentTextColor}")
+                    Log.d("MessageAdapter", "Name color: ${binding.nameLastUser.currentTextColor}")
+                } else {
+                    binding.lastMessage.setTextColor(ContextCompat.getColor(binding.root.context, R.color.SameWhite))
+                    binding.nameLastUser.setTextColor(ContextCompat.getColor(binding.root.context, R.color.SameWhite))
+                    Log.d("MessageAdapter", "Last message color: ${binding.lastMessage.currentTextColor}")
+                    Log.d("MessageAdapter", "Name color: ${binding.nameLastUser.currentTextColor}")
+                }
+
+            }else{
+                binding.lastMessage.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
+                binding.nameLastUser.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
+            }
+        }
+        private fun decodeMessage(message: String): String {
+            return try {
+                String(Base64.decode(message, Base64.NO_WRAP), Charsets.UTF_8)
+            } catch (e: IllegalArgumentException) {
+                Log.e("MessageDecodeError", "Failed to decode message: $message", e)
+                message
+            }
         }
     }
 
@@ -72,6 +107,7 @@ class friendlist_chatAdapter( private val context: Context,
     override fun getItemCount(): Int {
         return friends.size
     }
+
 
     fun updateFriends(newFriends: List<User>, newLastMessages: Map<String, Message>) {
         val diffCallback = object : DiffUtil.Callback() {

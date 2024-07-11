@@ -49,12 +49,12 @@
             <com.facebook.shimmer.ShimmerFrameLayout
                 android:id="@+id/shimmerLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginHorizontal="10dp"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/layout_bottom"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btntest"
                 app:shimmer_duration="600"
                 app:shimmer_repeat_mode="restart">
 
@@ -67,10 +67,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginHorizontal="10dp"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/layout_bottom"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" >
+                app:layout_constraintTop_toBottomOf="@+id/btntest" >
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
@@ -86,10 +86,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="440dp"
                 android:gravity="center"
-
                 android:orientation="horizontal"
                 android:layout_marginEnd="40dp"
-                app:layout_constraintBottom_toTopOf="@+id/scrollview_btn"
+                app:layout_constraintBottom_toTopOf="@+id/layout_bottom"
                 app:layout_constraintEnd_toEndOf="@id/swipeRefreshLayout">
 
                 <ImageView
@@ -148,17 +147,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:layout_marginHorizontal="18dp"
+                android:background="@android:color/transparent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/swipeRefreshLayout" >
+                app:layout_constraintTop_toTopOf="parent" >
 
                 <ImageButton
                     android:id="@+id/btn_bottom_sheet_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="4dp"
+                    android:padding="8dp"
                     android:background="@drawable/edittextbd10dp"
                     android:backgroundTint="@color/colorbtnctive"
                     android:src="@drawable/ic_account" />
@@ -172,7 +172,7 @@
                     android:id="@+id/btn_newpost"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
+                    android:textSize="14.56sp"
                     android:textColor="@color/white"
                     android:visibility="invisible"
                     android:backgroundTint="@color/color_active" />
@@ -186,12 +186,23 @@
                     android:id="@+id/btn_message"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
+                    android:padding="10dp"
                     android:background="@drawable/edittextbd10dp"
                     android:backgroundTint="@color/colorbtnctive"
                     android:src="@drawable/ic_chat" />
 
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
 
 
             <HorizontalScrollView
@@ -199,6 +210,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
+                android:background="@android:color/transparent"
                 app:layout_constraintBottom_toTopOf="@+id/btn_fnc"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -208,6 +220,7 @@
                     android:id="@+id/btn_group_layout"
                     android:layout_width="match_parent"
                     android:visibility="gone"
+                    android:background="@android:color/transparent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="horizontal">
@@ -284,10 +297,9 @@
                 android:gravity="center"
                 android:layout_marginHorizontal="20dp"
                 android:orientation="horizontal"
+                android:background="@android:color/transparent"
                 android:layout_marginBottom="20dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
+           >
 
                 <ImageButton
                     android:id="@+id/btn_share"
@@ -295,9 +307,9 @@
                     android:layout_height="wrap_content"
                     app:backgroundTint="@color/colorbtnctive"
                     android:background="@drawable/edittextbd10dp"
-                    android:padding="5dp"
+                    android:padding="8dp"
                     android:elevation="10dp"
-                    android:scaleType="centerCrop"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_share" />
                 <Space
                     android:layout_width="0dp"
@@ -312,8 +324,6 @@
                     app:backgroundTint="@color/colorbtnctive"
                     android:text="Đăng bài"
                     android:textFontWeight="600"
-                    app:icon="@drawable/ic_goup"
-                    app:iconGravity="textEnd"
                     app:iconPadding="0dp"
                     android:textColor="@color/white"
                     android:textSize="14dp" />
@@ -331,14 +341,14 @@
                     app:backgroundTint="@color/colorbtnctive"
                     android:background="@drawable/edittextbd10dp"
                     android:elevation="10dp"
-                    android:padding="5dp"
-                    android:scaleType="centerCrop"
+                    android:padding="8dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_delete" />
 
 
             </LinearLayout>
 
-
+        </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 

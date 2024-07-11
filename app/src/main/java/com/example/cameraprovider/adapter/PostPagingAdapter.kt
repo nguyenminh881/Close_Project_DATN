@@ -47,7 +47,8 @@ class PostPagingAdapter(
     private val lifecycleOwner: LifecycleOwner,
     private val context: Context,
     private val activity: FragmentActivity,
-    private val onPostViewed: (String) -> Unit) :
+    private val onPostViewed: (String) -> Unit
+) :
     PagingDataAdapter<Post, RecyclerView.ViewHolder>(POST_COMPARATOR) {
 
     companion object {
@@ -97,16 +98,11 @@ class PostPagingAdapter(
                     .into(binding.imageViewPost)
             } else {
                 binding.imageViewPost.setImageResource(R.drawable.error)
+
             }
             if (isCurrentUser(post)) {
                 binding.tvNameUserPost.text = "Bạn"
-            } else {
-                binding.tvNameUserPost.text = post.userName
-            }
-            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
-            binding.timeStamp.text = timeAgo
-
-            if (post.userId == viewModel.getcurrentId()) {
+                binding.btnGroupReact.visibility = View.VISIBLE
 
                 currentLikesLiveData?.removeObservers(lifecycleOwner)
                 currentLikesLiveData = viewModel.getLikes(post.postId)
@@ -115,20 +111,25 @@ class PostPagingAdapter(
                         val dialog = LikesBottomSheetDialog(post.postId, viewModel)
                         dialog.show(activity.supportFragmentManager, "LikesBottomSheetDialog")
                     }
-                    true // Trả về 'true' để báo hiệu rằng bạn đã xử lý sự kiện chạm
+                    true
                 }
                 currentLikesLiveData?.observe(lifecycleOwner) { likesData ->
                     if (likesData.isNotEmpty()) {
                         binding.nameUserLike.text = "Có ${likesData.size} hoạt động \uD83D\uDC96 \n" +
                                 "Ấn vào để xem"
-                    }
-                    else {
+                    } else {
                         binding.nameUserLike.text = "Không có hoạt động nào ✨"
                     }
                 }
             } else {
-                binding.btnGroupReact.visibility = ViewGroup.GONE
+                binding.tvNameUserPost.text = post.userName
+                binding.btnGroupReact.visibility = View.GONE
             }
+            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
+            binding.timeStamp.text = timeAgo
+
+
+
 
             binding.postxml = post
 
@@ -175,14 +176,8 @@ class PostPagingAdapter(
             }
             if (isCurrentUser(post)) {
                 binding.tvNameUserPost.text = "Bạn"
-            } else {
-                binding.tvNameUserPost.text = post.userName
-            }
-            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
-            binding.timeStamp.text = timeAgo
 
-            if (post.userId == viewModel.getcurrentId()) {
-
+                binding.btnGroupReact.visibility = View.VISIBLE
                 currentLikesLiveData?.removeObservers(lifecycleOwner)
                 currentLikesLiveData = viewModel.getLikes(post.postId)
                 binding.btnGroupReact.setOnTouchListener { v, event ->
@@ -195,15 +190,24 @@ class PostPagingAdapter(
                 }
                 currentLikesLiveData?.observe(lifecycleOwner) { likesData ->
                     if (likesData.isNotEmpty()) {
-                        binding.nameUserLike.text = "Có ${likesData.size} hoạt động \uD83D\uDC96 \nẤn vào để xem "
-                    }
-                    else {
+                        binding.nameUserLike.text =
+                            "Có ${likesData.size} hoạt động \uD83D\uDC96 \nẤn vào để xem "
+                    } else {
                         binding.nameUserLike.text = "Không có hoạt động nào ✨"
                     }
                 }
+
+
+
+
+
+
             } else {
-                binding.btnGroupReact.visibility = ViewGroup.GONE
+                binding.tvNameUserPost.text = post.userName
+                binding.btnGroupReact.visibility = View.GONE
             }
+            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
+            binding.timeStamp.text = timeAgo
 
 
             binding.postvoicexml = post
@@ -343,13 +347,15 @@ class PostPagingAdapter(
                     context,
                     activity,
 
-                )
+                    )
 
-                is VoiceViewHolder -> holder.bind(post, isCurrentUser, viewModel, lifecycleOwner,
-                    activity)
+                is VoiceViewHolder -> holder.bind(
+                    post, isCurrentUser, viewModel, lifecycleOwner,
+                    activity
+                )
             }
             onPostViewed(post.postId)
-        }else{
+        } else {
             Toast.makeText(context, "Không còn bài viết nào", Toast.LENGTH_SHORT).show()
         }
     }

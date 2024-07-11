@@ -118,16 +118,10 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
     //validate email
     private fun isBasicValidEmail(email: String): Boolean {
-        val basicEmailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z0-9-]+$"
+        val basicEmailRegex = "^[A-Za-z0-9+_.-]{2,}@[A-Za-z0-9.-]{2,}\\.[A-Za-z0-9-]{2,}\$"
         return Pattern.compile(basicEmailRegex).matcher(email).matches()
     }
 
-//    private fun isValidEmail(emailValue: String): Boolean {
-//        val emailRegex =
-//            "^[A-Za-z0-9._%+-]+@(gmail\\.com|yahoo\\.com|outlook\\.com|.*\\.edu(\\.[a-z]{2,})?)$"
-//        val pattern = Pattern.compile(emailRegex)
-//        return pattern.matcher(emailValue).matches()
-//    }
 
     //validate pw
     private fun isValidPassword(passwordValue: String): Boolean {
@@ -732,13 +726,17 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
     fun logout() {
         viewModelScope.launch {
+
+            withContext(Dispatchers.Main) {
+                context.stopService(Intent(context, NotificationService::class.java))
+            }
+
             userRepository.logout()
+
             withContext(Dispatchers.Main) {
                 _logoutResult.value = true
-
                 widgetViewModel().cancelListen()
                 messWidgetViewModel().cancelListen()
-                context.stopService(Intent(context, NotificationService::class.java))
                 context.startActivity(Intent(context, StartAppActivity::class.java))
                 (context as? Activity)?.finish()
 

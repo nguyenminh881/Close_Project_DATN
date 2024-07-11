@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="authVModel"
             type="com.example.cameraprovider.viewmodel.AuthViewModel" />
@@ -23,10 +24,10 @@
             android:id="@+id/btn_group_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
             android:layout_marginHorizontal="18dp"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -34,9 +35,10 @@
                 android:id="@+id/btn_bottom_sheet_profile"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="4dp"
+                android:scaleType="centerInside"
                 android:background="@drawable/edittextbd10dp"
                 android:backgroundTint="@color/colorbtnctive"
+                android:padding="8dp"
                 android:src="@drawable/ic_account" />
 
             <Space
@@ -48,9 +50,10 @@
                 android:id="@+id/btn_bottom_sheet_friends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text ="20 Bạn bè"
-                android:textSize="16sp"
+
                 android:backgroundTint="@color/colorbtnctive"
+                android:text="20 Bạn bè"
+                android:textSize="15.56sp"
                 app:icon="@drawable/ic_lstfr" />
 
             <Space
@@ -62,102 +65,114 @@
                 android:id="@+id/btn_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:background="@drawable/edittextbd10dp"
                 android:backgroundTint="@color/colorbtnctive"
+                android:padding="10dp"
                 android:src="@drawable/ic_chat" />
 
         </LinearLayout>
+
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewpp"
             android:layout_width="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="12dp"
             android:layout_marginBottom="10dp"
-            app:layout_constraintBottom_toTopOf="@+id/tabLayout"
+            app:layout_constraintBottom_toTopOf="@+id/btn_fnc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btn_group_layout" />
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginVertical="20dp"
-            android:background="@drawable/bg_shape"
-            app:layout_constraintBottom_toTopOf="@+id/btn_fnc"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:tabBackground="@drawable/tabs_selector"
-            app:tabGravity="center"
-            app:tabIconTintMode="@color/white"
-            app:tabIndicatorColor="@android:color/transparent"
-            app:tabIndicatorHeight="0dp"
-            app:tabMode="scrollable"
-            app:tabRippleColor="@android:color/transparent">
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:icon="@drawable/ic_cam" />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:icon="@drawable/ic_mic" />
-
-
-        </com.google.android.material.tabs.TabLayout>
 
         <LinearLayout
             android:id="@+id/btn_fnc"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="14dp"
+            android:paddingHorizontal="20dp"
             android:layout_marginBottom="20dp"
             android:gravity="center"
-            android:paddingHorizontal="10dp"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
+
+            <ImageButton
+                android:id="@+id/btnCamera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/edittextbd10dp"
+                android:backgroundTint="@color/color_active"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_cam" />
+
+
             <Space
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
-            <TextView
-                android:id="@+id/newposttxt"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:paddingHorizontal="4dp"
-                android:paddingVertical="1dp"
 
-                android:visibility="invisible"
-                android:backgroundTint="@color/key"
-                android:background="@drawable/edittextbd10dp"/>
-            <com.google.android.material.button.MaterialButton
+            <LinearLayout
                 android:id="@+id/xembai"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Xem bài"
-                android:padding="0dp"
-                android:textColor="@color/white"
-                android:textSize="16sp"
+                android:layout_height="match_parent"
+                android:background="@drawable/edittextbd10dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:backgroundTint="@color/colorbtnctive"
+                android:paddingHorizontal="20dp">
 
-                android:textStyle="bold"
-                app:backgroundTint="@color/dark"
-                app:icon="@drawable/ic_godown"
-                app:iconGravity="textEnd" />
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Bài đăng"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/white"
+                    android:textSize="14.56sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@android:color/transparent" />
+                <TextView
+                    android:id="@+id/newposttxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edittextbd10dp"
+                    android:backgroundTint="@color/color_active"
+                    android:layout_marginStart="2dp"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:layout_marginEnd="0dp"
+                    android:textColor="@color/white"
+                    android:visibility="gone" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
 
             <Space
                 android:layout_width="0dp"
-
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
+            <ImageButton
+                android:id="@+id/btnRecord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/edittextbd10dp"
+                android:backgroundTint="@color/colorbtnctive"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_mic" />
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -54,7 +55,16 @@ class messWidgetViewModel(): ViewModel()  {
                     return@addSnapshotListener
                 }
                 val messages = snapshot?.toObjects(Message::class.java) ?: emptyList()
-                trySend(messages)
+                val decodedMessages = messages.map { message ->
+                    try {
+                        val decodedMessage = String(Base64.decode(message.message, Base64.NO_WRAP), Charsets.UTF_8)
+                        message.copy(message = decodedMessage)
+                    } catch (e: IllegalArgumentException) {
+                        Log.e("MessageDecodeError", "Failed to decode message ID: ${message.messageId}, message: ${message.message}", e)
+                        message
+                    }
+                }
+                trySend(decodedMessages)
             }
         awaitClose { listenerRegistration.remove() }
     }
