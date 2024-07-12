@@ -109,11 +109,9 @@ class PostList : AppCompatActivity() {
         lifecycleScope.launch {
             postViewModel.posts
                 .collectLatest { pagingData ->
-                    if(pagingData != null){
-                        postApdapter.submitData(pagingData?: PagingData.empty())
-                    }else{
-                        postApdapter.submitData(PagingData.empty())
-                    }
+
+                        postApdapter.submitData(pagingData)
+
 
                 }
 
@@ -343,19 +341,19 @@ class PostList : AppCompatActivity() {
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
-
-                postApdapter.notifyItemRemoved(currentPostPosition)
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
+                postApdapter.refresh()
             } else {
                 Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
             }
         }
 
         binding.btnDelete.setOnClickListener {
+
             val post = postApdapter.getPost(currentPostPosition) ?: return@setOnClickListener
             val postId = post.postId
             val userPostId = post.userId
-
+            Log.d("PostListdelete", "Deleting post at position: $currentPostPosition with postId: $postId")
             if(userPostId == postViewModel.getcurrentId()){
                 MaterialAlertDialogBuilder(this@PostList,R.style.AlertDialogTheme)
                     .setTitle("Xóa bài viết")

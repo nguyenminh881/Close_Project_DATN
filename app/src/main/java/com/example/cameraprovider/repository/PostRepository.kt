@@ -575,7 +575,7 @@ class PostRepository {
                     if (post != null) {
                         if (post.userId == currentId) {
                             val decodedImageUrl = URLDecoder.decode(post.imageURL, "UTF-8")
-                            val decodedVoiceUrl = URLDecoder.decode(post.imageURL, "UTF-8")
+                            val decodedVoiceUrl = URLDecoder.decode(post.voiceURL, "UTF-8")
                             when {
                                 post.imageURL == "" && post.voiceURL != "" -> {
                                     val voiceRef = storage.getReferenceFromUrl(decodedVoiceUrl)
