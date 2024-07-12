@@ -167,26 +167,31 @@ class PostList : AppCompatActivity() {
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                currentPostPosition = layoutManager.findFirstVisibleItemPosition()
-                if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.iscurrentId()) {
-                    binding.btnGroupLayout.visibility = View.GONE
 
-                } else {
-                    binding.btnGroupLayout.visibility = View.VISIBLE
-                }
+                postApdapter.addOnPagesUpdatedListener {   //dki lang nghe thay doi du lieu.
 
-                binding.btnShare.setOnClickListener {
-                    val url = postApdapter.getContentFile(currentPostPosition)
-                    if (url != null) {
-                        if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
-                            shareImage(this@PostList, url)
+                    val layoutManager = binding.recyclerView.layoutManager as LinearLayoutManager
+                    currentPostPosition = layoutManager.findFirstVisibleItemPosition()
+
+                    if (postApdapter.itemCount > 0 && currentPostPosition in 0 until postApdapter.itemCount) {
+                        if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.iscurrentId()) {
+                            binding.btnGroupLayout.visibility = View.GONE
                         } else {
-                            shareAudio(this@PostList, url)
+                            binding.btnGroupLayout.visibility = View.VISIBLE
+                        }
+                    }
+
+                    binding.btnShare.setOnClickListener {
+                        val url = postApdapter.getContentFile(currentPostPosition)
+                        if (url != null) {
+                            if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
+                                shareImage(this@PostList, url)
+                            } else {
+                                shareAudio(this@PostList, url)
+                            }
                         }
                     }
                 }
-
             }
 
         })
@@ -503,10 +508,7 @@ class PostList : AppCompatActivity() {
         overridePendingTransition(R.anim.slide_in_down, R.anim.slide_out_down)
     }
 
-    //    override fun onResume() {
-//        super.onResume()
-//        postViewModel.checknewlike(this)
-//    }
+
     private fun shareImage(context: Context, imageUrl: String) {
         Glide.with(context)
             .asBitmap()
