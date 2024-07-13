@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.ocpsoft.prettytime.PrettyTime
 import java.io.File
 import java.io.IOException
 import java.sql.Date
@@ -141,7 +142,13 @@ class MessageAdapter(
 
             binding.root.setOnClickListener {
                 binding.subCreateAt.visibility = View.VISIBLE
-                binding.subCreateAt.text =  TimeAgo.using(message.createdAt?.toLong() ?: 0)
+                val prettyTime = PrettyTime(Locale("vi"))
+                val formattedTime = prettyTime.format(Date(message.createdAt?.toLong() ?: 0))
+
+
+                binding.subCreateAt.text =  formattedTime.replace(" trước", "").replace("cách đây ", "")
+                    .replace("giây", "vừa xong")
+
                 binding.state.visibility = View.VISIBLE
 
                 val messageStatus = when (message.status) {
@@ -311,7 +318,16 @@ class MessageAdapter(
 
             binding.root.setOnClickListener {
                 binding.subCreateAt.visibility = View.VISIBLE
-                binding.subCreateAt.text =  TimeAgo.using(message.createdAt?.toLong() ?: 0)
+                val prettyTime = PrettyTime(Locale("vi"))
+                val formattedTime = prettyTime.format(Date(message.createdAt?.toLong() ?: 0))
+
+
+                binding.subCreateAt.text =  formattedTime.replace(" trước", "").replace("cách đây ", "")
+                    .replace("giây", "vừa xong")
+
+
+
+
                 binding.state.visibility = View.VISIBLE
 
                 val messageStatus = when (message.status) {

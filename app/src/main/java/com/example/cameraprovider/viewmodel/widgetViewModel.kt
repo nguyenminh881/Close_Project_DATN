@@ -24,6 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.ocpsoft.prettytime.PrettyTime
+import java.sql.Date
+import java.util.Locale
 
 class widgetViewModel : ViewModel() {
     private val fireStore = FirebaseFirestore.getInstance()
@@ -119,9 +122,15 @@ class widgetViewModel : ViewModel() {
             if (post != null) {
                 views.setTextViewText(R.id.tv_Name_UserPost, post.userName)
                 views.setTextViewText(R.id.tv_Caption_Post, post.content)
+                val prettyTime = PrettyTime(Locale("vi"))
+                val formattedTime = prettyTime.format(post.createdAt!!.toDate())
 
-                val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
-                views.setTextViewText(R.id.createAtpost,timeAgo )
+
+
+
+
+                views.setTextViewText(R.id.createAtpost, formattedTime.replace(" trước", "").replace("cách đây ", "")
+                    .replace("giây", "vừa xong") )
                 // Load ảnh bài đăng
                 val postImageTarget =
                     AppWidgetTarget(context, R.id.imageView_post, views, appWidgetId)

@@ -106,6 +106,7 @@ dependencies {
 
 
     //
+    implementation ("org.ocpsoft.prettytime:prettytime:5.0.2.Final")
     implementation("com.github.marlonlom:timeago:4.0.3")
     // GLide
     implementation ("com.github.bumptech.glide:glide:4.16.0")

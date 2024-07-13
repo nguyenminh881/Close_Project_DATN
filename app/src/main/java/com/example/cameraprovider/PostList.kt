@@ -110,7 +110,7 @@ class PostList : AppCompatActivity() {
             postViewModel.posts
                 .collectLatest { pagingData ->
 
-                        postApdapter.submitData(pagingData)
+                    postApdapter.submitData(pagingData)
 
 
                 }
@@ -163,40 +163,43 @@ class PostList : AppCompatActivity() {
             }
 
         }
+//xu ly loi indexbounds
+        postApdapter.addOnPagesUpdatedListener {
+            if (postApdapter.itemCount == 0) {
+                currentPostPosition = -1
+            }
+        }
 //lang nghe cuon
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val newPosition = layoutManager.findFirstVisibleItemPosition()
 
-                postApdapter.addOnPagesUpdatedListener {   //dki lang nghe thay doi du lieu.
+                if (newPosition != currentPostPosition) {
+                    currentPostPosition = newPosition
 
-                    val layoutManager = binding.recyclerView.layoutManager as LinearLayoutManager
-                    currentPostPosition = layoutManager.findFirstVisibleItemPosition()
-
-                    if (postApdapter.itemCount > 0 && currentPostPosition in 0 until postApdapter.itemCount) {
+                    if (currentPostPosition in 0 until postApdapter.itemCount) {
                         if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.iscurrentId()) {
                             binding.btnGroupLayout.visibility = View.GONE
                         } else {
                             binding.btnGroupLayout.visibility = View.VISIBLE
                         }
-                    }
 
-                    binding.btnShare.setOnClickListener {
-                        val url = postApdapter.getContentFile(currentPostPosition)
-                        if (url != null) {
-                            if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
-                                shareImage(this@PostList, url)
-                            } else {
-                                shareAudio(this@PostList, url)
+                        binding.btnShare.setOnClickListener {
+                            val url = postApdapter.getContentFile(currentPostPosition)
+                            if (url != null) {
+                                if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
+                                    shareImage(this@PostList, url)
+                                } else {
+                                    shareAudio(this@PostList, url)
+                                }
                             }
                         }
                     }
                 }
             }
-
         })
-
-
         //tạo animation
         val likeAnimation = listOf(
             AnimationUtils.loadAnimation(this, R.anim.heartflyy),
@@ -313,29 +316,37 @@ class PostList : AppCompatActivity() {
         binding.mVmodel = messViewModel
 
 //cmt
-        messViewModel.messagesend.observe(this){
-            if(messViewModel.messagesend.value != null){
+        messViewModel.messagesend.observe(this) {
+            if (messViewModel.messagesend.value != null) {
                 binding.btnSend.isEnabled = true
-            }
-            else{
+            } else {
                 binding.btnSend.isEnabled = false
             }
         }
-            // Xử lý khi click vào button gửi để ẩn bàn phím
+        // Xử lý khi click vào button gửi để ẩn bàn phím
         binding.btnSend.setOnClickListener {
-            val content = postApdapter.getPost(currentPostPosition)!!.content?:""
-            val userAvt = postApdapter.getPost(currentPostPosition)!!.userAvatar?:""
+            val content = postApdapter.getPost(currentPostPosition)!!.content ?: ""
+            val userAvt = postApdapter.getPost(currentPostPosition)!!.userAvatar ?: ""
             val imgUrl = postApdapter.getPost(currentPostPosition)!!.imageURL
-            val VoiceUrl= postApdapter.getPost(currentPostPosition)!!.voiceURL
-            val receiverId=postApdapter.getPost(currentPostPosition)!!.userId
-            val postId =postApdapter.getPost(currentPostPosition)!!.postId
-            val timeAgo = TimeAgo.using(postApdapter.getPost(currentPostPosition)!!.createdAt!!.toDate().time)
+            val VoiceUrl = postApdapter.getPost(currentPostPosition)!!.voiceURL
+            val receiverId = postApdapter.getPost(currentPostPosition)!!.userId
+            val postId = postApdapter.getPost(currentPostPosition)!!.postId
+            val timeAgo =
+                TimeAgo.using(postApdapter.getPost(currentPostPosition)!!.createdAt!!.toDate().time)
             val createAt = timeAgo
 
 
-            messViewModel.sendMessage(postId,receiverId,imgUrl.toString(),VoiceUrl.toString(),content ,createAt,userAvt)
+            messViewModel.sendMessage(
+                postId,
+                receiverId,
+                imgUrl.toString(),
+                VoiceUrl.toString(),
+                content,
+                createAt,
+                userAvt
+            )
 
-            messViewModel.sendSuccess.observe(this){
+            messViewModel.sendSuccess.observe(this) {
                 hideKeyboard()
                 binding.realedittextLayout.visibility = View.GONE
                 binding.realedittext.setText("")
@@ -347,7 +358,7 @@ class PostList : AppCompatActivity() {
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
-                postApdapter.refresh()
+                postApdapter.notifyItemRemoved(currentPostPosition)
             } else {
                 Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
             }
@@ -358,9 +369,12 @@ class PostList : AppCompatActivity() {
             val post = postApdapter.getPost(currentPostPosition) ?: return@setOnClickListener
             val postId = post.postId
             val userPostId = post.userId
-            Log.d("PostListdelete", "Deleting post at position: $currentPostPosition with postId: $postId")
-            if(userPostId == postViewModel.getcurrentId()){
-                MaterialAlertDialogBuilder(this@PostList,R.style.AlertDialogTheme)
+            Log.d(
+                "PostListdelete",
+                "Deleting post at position: $currentPostPosition with postId: $postId"
+            )
+            if (userPostId == postViewModel.getcurrentId()) {
+                MaterialAlertDialogBuilder(this@PostList, R.style.AlertDialogTheme)
                     .setTitle("Xóa bài viết")
                     .setMessage("Bạn có chắc chắn muốn xóa bài đăng này?")
                     .setPositiveButton("Xóa") { dialog, _ ->
@@ -371,8 +385,8 @@ class PostList : AppCompatActivity() {
                     .setNegativeButton("Hủy", null)
                     .show()
 
-            }else{
-                MaterialAlertDialogBuilder(this@PostList,R.style.AlertDialogTheme)
+            } else {
+                MaterialAlertDialogBuilder(this@PostList, R.style.AlertDialogTheme)
                     .setTitle("Xóa bài viết")
                     .setMessage("Bài đăng sẽ không hiển thị cho bạn nhưng vẫn có thể hiển thị ở một nơi khác!")
                     .setPositiveButton("Ẩn") { dialog, _ ->
@@ -386,10 +400,6 @@ class PostList : AppCompatActivity() {
 //
 
 
-
-
-
-
         //profile
         binding.btnBottomSheetProfile.setOnClickListener {
             // Đóng activity hiện tại
@@ -400,9 +410,8 @@ class PostList : AppCompatActivity() {
                 this,
                 R.anim.slide_in_up, R.anim.slide_out_up
             )
-            startActivity(intent,options.toBundle())
+            startActivity(intent, options.toBundle())
         }
-
 
 
 //messs
@@ -413,15 +422,18 @@ class PostList : AppCompatActivity() {
                 this,
                 R.anim.slide_in_up, R.anim.slide_out_up
             )
-            startActivity(intent,options.toBundle())
+            startActivity(intent, options.toBundle())
         }
 
 
-        postViewModel.newPostCount.observe(this){
-            if(it > 0){
+        //newpost
+
+
+        postViewModel.newPostCount.observe(this) {
+            if (it > 0) {
                 binding.btnNewpost.visibility = View.VISIBLE
                 binding.btnNewpost.text = "Mới(${it})"
-            }else{
+            } else {
                 binding.btnNewpost.visibility = View.INVISIBLE
             }
         }
@@ -430,16 +442,16 @@ class PostList : AppCompatActivity() {
         binding.btnNewpost.setOnClickListener {
             binding.swipeRefreshLayout.isRefreshing = true
             binding.btnNewpost.visibility = View.INVISIBLE
+            postViewModel.clearNewpostsize()
             binding.recyclerView.smoothScrollToPosition(0)
             postApdapter.refresh()
             binding.shimmerLayout.startShimmer()
             binding.shimmerLayout.visibility = View.VISIBLE
 
 
-            //  trạng thái tải dữ liệu
+
             lifecycleScope.launch {
                 postApdapter.loadStateFlow.collectLatest { loadStates ->
-                    // Kiểm tra xem dữ liệu đã được tải xong chưa
                     if (loadStates.refresh is LoadState.NotLoading) {
                         binding.swipeRefreshLayout.isRefreshing = false
                         binding.shimmerLayout.stopShimmer()
@@ -455,7 +467,8 @@ class PostList : AppCompatActivity() {
     private fun toggleEditTextVisibility() {
         if (!isKeyboardVisible) {
             binding.realedittextLayout.visibility = View.VISIBLE
-            binding.realedittext.hint = "Trả lời ${postApdapter.getPost(currentPostPosition)?.userName}..."
+            binding.realedittext.hint =
+                "Trả lời ${postApdapter.getPost(currentPostPosition)?.userName}..."
 
             binding.realedittext.requestFocus()
             showKeyboard()
@@ -498,7 +511,7 @@ class PostList : AppCompatActivity() {
             this,
             this,
             activity = this@PostList,
-            onPostViewed = {postId-> postViewModel.onPostViewed(postId)}
+            onPostViewed = { postId -> postViewModel.onPostViewed(postId) }
         )
         binding.recyclerView.adapter = postApdapter
     }

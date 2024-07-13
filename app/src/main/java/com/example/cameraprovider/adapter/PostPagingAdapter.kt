@@ -36,9 +36,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.ocpsoft.prettytime.PrettyTime
 import rm.com.audiowave.OnProgressListener
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 
 
 class PostPagingAdapter(
@@ -125,8 +127,10 @@ class PostPagingAdapter(
                 binding.tvNameUserPost.text = post.userName
                 binding.btnGroupReact.visibility = View.GONE
             }
-            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
-            binding.timeStamp.text = timeAgo
+            val prettyTime = PrettyTime(Locale("vi"))
+            val formattedTime = prettyTime.format(post.createdAt!!.toDate())
+            binding.timeStamp.text = formattedTime.replace("cách đây ", "")
+                .replace("giây", "vừa xong")
 
 
 
@@ -206,8 +210,10 @@ class PostPagingAdapter(
                 binding.tvNameUserPost.text = post.userName
                 binding.btnGroupReact.visibility = View.GONE
             }
-            val timeAgo = TimeAgo.using(post.createdAt!!.toDate().time)
-            binding.timeStamp.text = timeAgo
+            val prettyTime = PrettyTime(Locale("vi"))
+            val formattedTime = prettyTime.format(post.createdAt!!.toDate())
+            binding.timeStamp.text = formattedTime.replace(" trước", "").replace("cách đây ", "")
+                .replace("giây", "vừa xong")
 
 
             binding.postvoicexml = post

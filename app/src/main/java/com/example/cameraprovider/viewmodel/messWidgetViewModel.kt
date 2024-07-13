@@ -33,6 +33,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.ocpsoft.prettytime.PrettyTime
+import java.util.Date
+import java.util.Locale
 
 class messWidgetViewModel(): ViewModel()  {
     private val fireStore = FirebaseFirestore.getInstance()
@@ -108,10 +111,12 @@ class messWidgetViewModel(): ViewModel()  {
                 views.setTextViewText(R.id.tv_Name_UserPost, sender.nameUser)
                 views.setTextViewText(R.id.tv_message, message.message.toString())
 
+                val prettyTime = PrettyTime(Locale("vi"))
+                val formattedTime = prettyTime.format(Date(message.createdAt?.toLongOrNull() ?: 0L))
 
+                views.setTextViewText(R.id.createAt,formattedTime.replace(" trước", "").replace("cách đây ", "")
+                    .replace("giây", "vừa xong"))
 
-                val timeAgo = TimeAgo.using(message.createdAt?.toLongOrNull() ?: 0L)
-                views.setTextViewText(R.id.createAt,timeAgo)
                 val avatarImageTarget =
                     AppWidgetTarget(context, R.id.imageView_avatar, views, appWidgetId)
                 Glide.with(context)

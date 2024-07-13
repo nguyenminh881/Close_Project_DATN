@@ -147,15 +147,7 @@ class PostViewModel() : ViewModel(), Observable {
 
     }
 
-    fun onNewpost(){
-        viewModelScope.launch {
-           withContext(Dispatchers.Main){
-               postRepository.listenForNewPosts { newCount ->
-                       _newPostCount.postValue(newCount)
-               }
-           }
-        }
-    }
+
     fun onPostViewed(postId: String) {
         postRepository.updateViewedBy(postId) { success ->
             if (success) {
@@ -165,6 +157,16 @@ class PostViewModel() : ViewModel(), Observable {
             }
         }
     }
+    fun onNewpost(){
+        viewModelScope.launch {
+            withContext(Dispatchers.Main){
+                postRepository.listenForNewPosts { newCount ->
+                    _newPostCount.postValue(newCount)
+                }
+            }
+        }
+    }
+
     fun clearNewpostsize(){
         _newPostCount.postValue(0)
     }

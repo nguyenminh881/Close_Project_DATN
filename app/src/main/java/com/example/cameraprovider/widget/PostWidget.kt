@@ -21,6 +21,8 @@ import com.example.cameraprovider.viewmodel.widgetViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.ocpsoft.prettytime.PrettyTime
+import java.util.Locale
 
 class PostWidget() : AppWidgetProvider(), LifecycleOwner {
     private val viewModel = widgetViewModel()
@@ -61,7 +63,11 @@ class PostWidget() : AppWidgetProvider(), LifecycleOwner {
             if (post != null) {
                 views.setTextViewText(R.id.tv_Name_UserPost, post.userName)
                 views.setTextViewText(R.id.tv_Caption_Post, post.content)
+                val prettyTime = PrettyTime(Locale("vi"))
+                val formattedTime = prettyTime.format(post.createdAt!!.toDate())
 
+                views.setTextViewText(R.id.createAtpost, formattedTime.replace(" trước", "").replace("cách đây ", "")
+                    .replace("giây", "vừa xong") )
                 // Load ảnh bài đăng
                 val postImageTarget = AppWidgetTarget(context,
                     R.id.imageView_post, views, appWidgetId)

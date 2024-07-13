@@ -20,6 +20,9 @@ import com.github.marlonlom.utilities.timeago.TimeAgo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.ocpsoft.prettytime.PrettyTime
+import java.util.Date
+import java.util.Locale
 
 class MessageWidget() : AppWidgetProvider(), LifecycleOwner {
     private val viewModel = messWidgetViewModel()
@@ -63,8 +66,11 @@ class MessageWidget() : AppWidgetProvider(), LifecycleOwner {
                     if (sender != null) {
                         views.setTextViewText(R.id.tv_Name_UserPost, sender.nameUser)
                         views.setTextViewText(R.id.tv_message, latestMessage.message)
-                        val timeAgo = TimeAgo.using(latestMessage.createdAt?.toLongOrNull() ?: 0L)
-                        views.setTextViewText(R.id.createAt,timeAgo)
+                        val prettyTime = PrettyTime(Locale("vi"))
+                        val formattedTime = prettyTime.format(Date(latestMessage.createdAt?.toLongOrNull() ?: 0L))
+
+                        views.setTextViewText(R.id.createAt,formattedTime.replace(" trước", "").replace("cách đây ", "")
+                            .replace("giây", "vừa xong"))
                         // Load ảnh đại diện
                         val avatarImageTarget = AppWidgetTarget(context, R.id.imageView_avatar, views, appWidgetId)
                         Glide.with(context)

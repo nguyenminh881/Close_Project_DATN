@@ -19,6 +19,9 @@ import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
 import com.github.marlonlom.utilities.timeago.TimeAgo
 import kotlinx.coroutines.flow.last
+import org.ocpsoft.prettytime.PrettyTime
+import java.util.Date
+import java.util.Locale
 
 
 class friendlist_chatAdapter( private val context: Context,
@@ -53,12 +56,12 @@ class friendlist_chatAdapter( private val context: Context,
                 else ->"Hãy bắt gửi tới ${user.nameUser}"
             }
             val createdAtTimestamp = lastMessage?.createdAt?.toLongOrNull() ?: 0L
-            val timeAgo = TimeAgo.using(createdAtTimestamp)
+            val prettyTime = PrettyTime(Locale("vi"))
+            val formattedTime = prettyTime.format(Date(createdAtTimestamp))
 
-
-            binding.timeStamp.text =  if(lastMessage != null) timeAgo else ""
+            binding.timeStamp.text =  if(lastMessage != null) formattedTime.replace(" trước", "").replace("cách đây ", "")
+                .replace("giây", "vừa xong") else ""
             binding.nameLastUser.text = senderName
-
 
 
 
@@ -69,13 +72,11 @@ class friendlist_chatAdapter( private val context: Context,
                 if( lastMessage.status == MessageStatus.SENT || lastMessage.status == MessageStatus.SENDING && lastMessage.senderId == user.UserId) {
                     binding.lastMessage.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
                     binding.nameLastUser.setTextColor(ContextCompat.getColor(binding.root.context, R.color.white))
-                    Log.d("MessageAdapter", "Last message color: ${binding.lastMessage.currentTextColor}")
-                    Log.d("MessageAdapter", "Name color: ${binding.nameLastUser.currentTextColor}")
+
                 } else {
                     binding.lastMessage.setTextColor(ContextCompat.getColor(binding.root.context, R.color.SameWhite))
                     binding.nameLastUser.setTextColor(ContextCompat.getColor(binding.root.context, R.color.SameWhite))
-                    Log.d("MessageAdapter", "Last message color: ${binding.lastMessage.currentTextColor}")
-                    Log.d("MessageAdapter", "Name color: ${binding.nameLastUser.currentTextColor}")
+
                 }
 
             }else{
