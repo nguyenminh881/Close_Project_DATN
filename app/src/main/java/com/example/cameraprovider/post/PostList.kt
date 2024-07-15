@@ -344,9 +344,12 @@ class PostList : AppCompatActivity() {
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
+                if(currentPostPosition == 0 ){
+                    postApdapter.refresh()
+                }else{
 
                     postApdapter.notifyItemRemoved(currentPostPosition)
-
+                }
                 postViewModel.invalidatePagingSource()
 
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
