@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/dark"
-        tools:context=".ProfileActivity">
+        tools:context=".profile.ProfileActivity">
         <FrameLayout
             android:id="@+id/imgAvtUser"
             android:layout_width="wrap_content"

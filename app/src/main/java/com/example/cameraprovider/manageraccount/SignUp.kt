@@ -1,24 +1,17 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.manageraccount
 
-import android.app.ActivityOptions
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
-import android.view.animation.AnimationUtils
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.R
+import com.example.cameraprovider.StartAppActivity
 import com.example.cameraprovider.databinding.ActivitySignUpBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class SignUp : AppCompatActivity() {
     lateinit var binding: ActivitySignUpBinding

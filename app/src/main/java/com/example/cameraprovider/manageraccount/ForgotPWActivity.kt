@@ -1,9 +1,10 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.manageraccount
 
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.ActivityForgotPwactivityBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel

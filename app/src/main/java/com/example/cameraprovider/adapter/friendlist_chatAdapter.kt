@@ -60,10 +60,9 @@ class friendlist_chatAdapter( private val context: Context,
             val formattedTime = prettyTime.format(Date(createdAtTimestamp))
 
             binding.timeStamp.text =  if(lastMessage != null) formattedTime.replace(" trước", "").replace("cách đây ", "")
-                .replace("giây", "vừa xong") else ""
+                .replace("giây", "vừa xong").replace("vài", "") else ""
             binding.nameLastUser.text = senderName
-
-
+            
 
             val decodedMessage = lastMessage?.let { decodeMessage(it.message ?: "") }
             binding.lastMessage.text = decodedMessage

@@ -9,8 +9,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.example.cameraprovider.ChatActivity
-import com.example.cameraprovider.MainActivity
+import com.example.cameraprovider.chat.ChatActivity
+import com.example.cameraprovider.home.MainActivity
 import com.example.cameraprovider.R
 import com.example.cameraprovider.model.Like
 import com.example.cameraprovider.model.Message

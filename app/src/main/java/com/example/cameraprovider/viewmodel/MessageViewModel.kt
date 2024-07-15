@@ -1,6 +1,7 @@
 package com.example.cameraprovider.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.databinding.Bindable
@@ -78,6 +79,18 @@ class MessageViewModel() : ViewModel(), Observable {
         }
     }
 
+    fun uploadAndSendMessage(
+        contentUri: Uri?,
+        receiverId: String,
+        content: String,
+        isImage: Boolean
+    ) {
+        var message = messagesend.value ?: ""
+        viewModelScope.launch {
+            val result = messageRepository.uploadImageAndSendMessage(contentUri, message, receiverId, content, isImage)
+            _sendSuccess.value = result.isNotEmpty()
+        }
+    }
 
     fun updateMessagesToSeen(senderId: String) {
         viewModelScope.launch {

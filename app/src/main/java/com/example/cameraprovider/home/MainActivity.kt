@@ -1,8 +1,7 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.home
 
 import android.app.ActivityOptions
 import android.Manifest
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -18,16 +17,19 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.bumptech.glide.Glide
+import com.example.cameraprovider.chat.ChatActivity
+import com.example.cameraprovider.post.PostList
+import com.example.cameraprovider.profile.ProfileActivity
+import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.ActivityMainBinding
 import com.example.cameraprovider.databinding.FriendRequestDialogBinding
+import com.example.cameraprovider.friend.FriendListFragment
 import com.example.cameraprovider.notification.NotificationService
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.repository.UserRepository
@@ -37,11 +39,6 @@ import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
 import com.example.cameraprovider.viewmodel.PostViewModel
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : AppCompatActivity() {
@@ -141,7 +138,9 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.viewpp.setCurrentItem(0, true)
                 currentFragmentPosition = 0
                 it.backgroundTintList= ContextCompat.getColorStateList(this, R.color.color_active)
-                viewBinding.btnRecord.backgroundTintList = ContextCompat.getColorStateList(this, R.color.colorbtnctive)
+                viewBinding.btnRecord.backgroundTintList = ContextCompat.getColorStateList(this,
+                    R.color.colorbtnctive
+                )
             }
         }
 
@@ -151,7 +150,9 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.viewpp.setCurrentItem(1, true) // Chuyển đến RecordFragment
                 currentFragmentPosition = 1
                 it.backgroundTintList= ContextCompat.getColorStateList(this, R.color.color_active)
-                viewBinding.btnCamera.backgroundTintList = ContextCompat.getColorStateList(this, R.color.colorbtnctive)
+                viewBinding.btnCamera.backgroundTintList = ContextCompat.getColorStateList(this,
+                    R.color.colorbtnctive
+                )
             }
         }
 
@@ -229,12 +230,8 @@ class MainActivity : AppCompatActivity() {
 
         //go pot
         viewBinding.xembai.setOnClickListener {
-            val intent = Intent(this, PostList::class.java)
-            val options = ActivityOptions.makeCustomAnimation(
-                this@MainActivity,
-                R.anim.slide_in_up, R.anim.slide_out_up
-            )
-            startActivity(intent,options.toBundle())
+
+            gotoposts()
         }
 
 
@@ -242,7 +239,8 @@ class MainActivity : AppCompatActivity() {
         postVmodel.newPostCount.observe(this){
             if(it > 0){
                 viewBinding.newposttxt.visibility = View.VISIBLE
-                viewBinding.newposttxt.text =it.toString()
+                val count = if (it > 9) "9+" else it.toString()
+                viewBinding.newposttxt.text =count
             }else{
                 viewBinding.newposttxt.visibility = View.GONE
             }
@@ -251,7 +249,22 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+    override fun onPause() {
+        super.onPause()
+        postVmodel.stopListeningForNewPosts()
 
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putLong("last_listen_time", System.currentTimeMillis()).apply()
+    }
+    private fun gotoposts(){
+
+        val intent = Intent(this@MainActivity, PostList::class.java)
+        val options = ActivityOptions.makeCustomAnimation(
+            this@MainActivity,
+            R.anim.slide_in_up, R.anim.slide_out_up
+        )
+        startActivity(intent,options.toBundle())
+    }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         return gestureDetector.onTouchEvent(event!!)
@@ -271,13 +284,7 @@ class MainActivity : AppCompatActivity() {
             if (e1 != null && e2 != null) {
                 // Xác định hướng và tốc độ vuốt
                 if (e1.y - e2.y > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-//
-                    val intent = Intent(this@MainActivity, PostList::class.java)
-                    val options = ActivityOptions.makeCustomAnimation(
-                        this@MainActivity,
-                        R.anim.slide_in_up, R.anim.slide_out_up
-                    )
-                    startActivity(intent, options.toBundle())
+                    gotoposts()
                     return true
                 }
             }

@@ -1,9 +1,7 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.chat
 
-import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
@@ -11,20 +9,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.cameraprovider.R
 import com.example.cameraprovider.adapter.MessageAdapter
 import com.example.cameraprovider.databinding.ActivityItemChatBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
 import com.example.cameraprovider.viewmodel.MessageViewModel
-import com.google.ai.client.generativeai.GenerativeModel
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 class ItemChatActivity : AppCompatActivity() {
@@ -100,7 +96,8 @@ class ItemChatActivity : AppCompatActivity() {
 
 
         messviewModel.messagesend.observe(this) {
-            if (it?.length!! > 0) {
+            val trimmedMessage = it?.trim()
+            if (trimmedMessage?.isNotEmpty() == true) {
                 binding.btnSend.isEnabled = true
                 binding.btnSend.backgroundTintList =
                     ActivityCompat.getColorStateList(baseContext, R.color.color_active)

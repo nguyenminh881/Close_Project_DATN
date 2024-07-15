@@ -1,4 +1,4 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.chat
 
 import android.app.ActivityOptions
 import android.content.Intent
@@ -7,19 +7,16 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cameraprovider.R
 import com.example.cameraprovider.adapter.friendlist_chatAdapter
 import com.example.cameraprovider.databinding.ActivityChatBinding
+import com.example.cameraprovider.home.MainActivity
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
-import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
-import kotlinx.coroutines.launch
 
 class ChatActivity : AppCompatActivity() {
 
@@ -90,6 +87,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun openChatWithFriend(friendId: String, friendName: String, friendAvatar: String) {
+
         val intent = Intent(this, ItemChatActivity::class.java).apply {
             putExtra("FRIEND_ID", friendId)
             putExtra("FRIEND_NAME", friendName)

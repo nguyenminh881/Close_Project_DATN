@@ -43,7 +43,6 @@ class messWidgetViewModel(): ViewModel()  {
     private val userId = auth.currentUser?.uid
 
     private var listenJob: Job? = null
-    private var notificationId = 1
 
 
 

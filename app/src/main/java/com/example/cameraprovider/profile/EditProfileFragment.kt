@@ -1,18 +1,17 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.profile
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.EditProfileBottomdialogBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
-import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class EditProfileFragment : BottomSheetDialogFragment() {

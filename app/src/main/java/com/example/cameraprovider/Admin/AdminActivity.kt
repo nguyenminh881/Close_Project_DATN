@@ -8,9 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.example.cameraprovider.CameraFragment
 import com.example.cameraprovider.R
-import com.example.cameraprovider.RecordFragment
 import com.example.cameraprovider.databinding.ActivityAdminBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel

@@ -16,6 +16,9 @@ import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
 import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.Admin.AdminActivity
+import com.example.cameraprovider.home.MainActivity
+import com.example.cameraprovider.manageraccount.SignInActivity
+import com.example.cameraprovider.manageraccount.SignUp
 
 
 class StartAppActivity : AppCompatActivity() {

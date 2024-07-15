@@ -1,14 +1,13 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.manageraccount
 
-import android.app.Activity
-import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.R
+import com.example.cameraprovider.StartAppActivity
 import com.example.cameraprovider.databinding.ActivitySignInBinding
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
@@ -21,7 +20,7 @@ class SignInActivity : AppCompatActivity() {
     private val authViewModel:AuthViewModel by viewModels { AuthViewModelFactory(UserRepository(),this)}
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding =DataBindingUtil.setContentView(this,R.layout.activity_sign_in)
+        binding =DataBindingUtil.setContentView(this, R.layout.activity_sign_in)
 
         binding.lifecycleOwner = this
         binding.authVModel = authViewModel
@@ -67,7 +66,7 @@ class SignInActivity : AppCompatActivity() {
 
 
         binding.btnForgotPassword.setOnClickListener {
-            startActivity(Intent(this,ForgotPWActivity::class.java))
+            startActivity(Intent(this, ForgotPWActivity::class.java))
         }
         binding.btnBack.setOnClickListener {
             val intent = Intent(this, StartAppActivity::class.java)

@@ -1,13 +1,10 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.profile
 
 import android.app.ActivityOptions
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.RemoteViews
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -15,11 +12,12 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.ActivityProfileBinding
+import com.example.cameraprovider.home.MainActivity
 import com.example.cameraprovider.repository.UserRepository
 import com.example.cameraprovider.viewmodel.AuthViewModel
 import com.example.cameraprovider.viewmodel.AuthViewModelFactory
-import com.example.cameraprovider.widget.PostWidget
 import com.example.cameraprovider.widget.TutorialBottomSheetDialogFragment
 import com.google.android.material.snackbar.Snackbar
 

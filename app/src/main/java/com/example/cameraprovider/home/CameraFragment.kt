@@ -1,20 +1,17 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.home
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Vibrator
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -48,7 +45,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import androidx.camera.extensions.ExtensionMode
 import androidx.camera.extensions.ExtensionsManager
-import androidx.core.app.ActivityCompat
+import com.example.cameraprovider.chat.FriendListprivateBottomSheet
+import com.example.cameraprovider.R
+
 class CameraFragment : Fragment() {
 
     lateinit var viewBinding: FragmentCameraBinding
@@ -321,6 +320,20 @@ class CameraFragment : Fragment() {
                         postViewModel.addPost(savedUri, content, true)
                     }
 
+
+                    viewBinding.btnPost.setOnLongClickListener {
+
+                        val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+                        vibrator?.vibrate(50)
+
+                        val content = viewBinding.edt1.text.toString()
+
+
+                        val bottomSheet = FriendListprivateBottomSheet(savedUri, null, content)
+                        bottomSheet.show(childFragmentManager, bottomSheet.tag)
+                        true
+                    }
+
                     val imageBitmap = MediaStore.Images.Media.getBitmap(
                         requireContext().contentResolver,
                         savedUri
@@ -581,7 +594,7 @@ class CameraFragment : Fragment() {
         }
 
         fun getCameraProvider(): ProcessCameraProvider? {
-            return if (::cameraProvider.isInitialized) cameraProvider else null
+            return if (Companion::cameraProvider.isInitialized) cameraProvider else null
         }
 
         private const val TAG = "CameraXApp"

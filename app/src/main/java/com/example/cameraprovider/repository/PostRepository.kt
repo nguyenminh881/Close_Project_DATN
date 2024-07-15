@@ -24,6 +24,8 @@ import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.ListenerRegistration
 
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
@@ -34,6 +36,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +55,9 @@ class PostRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val fireStore: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    private var postPagingSource: PostPagingSource? = null
+
+
 
     //add pót
     suspend fun addPost(contentUri: Uri, content: String, isImage: Boolean): PostResult {
@@ -110,7 +121,9 @@ class PostRepository {
             pagingSourceFactory = { PostPagingSource(fireStore, auth) }
         ).flow
     }
-
+    fun invalidatePagingSource() {
+        postPagingSource?.invalidate()
+    }
 
     private val likeMutex = Mutex()
 
@@ -640,57 +653,139 @@ class PostRepository {
             false
         }
     }
-
-
-    fun updateViewedBy(postId: String, onResult: (Boolean) -> Unit) {
+    suspend fun updateViewedBy(postId: String): Boolean {
         val postRef = fireStore.collection("posts").document(postId)
-        val currentId = auth.currentUser?.uid
-        postRef.update("viewedBy", FieldValue.arrayUnion(currentId))
-            .addOnSuccessListener {
-                Log.d("PostRepository", "Post $postId viewed by $currentId")
-                onResult(true)
-            }
-            .addOnFailureListener { e ->
-                Log.e("PostRepository", "Error $postId add viewed", e)
-                onResult(false)
-            }
-    }
+        val currentId = auth.currentUser?.uid ?: return false // Handle no user logged in
 
-
-    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    fun listenForNewPosts(onNewPostCount: (Int) -> Unit) {
-        repositoryScope.launch {
-            val currentUserId = auth.currentUser?.uid ?: return@launch
-            val friendIds = getFriendIds(currentUserId)
-
-            if (friendIds.isNotEmpty()) {
-
-
-                val postRef = fireStore.collection("posts")
-                    .whereIn("userId", friendIds)
-                    .orderBy("createdAt", Query.Direction.DESCENDING)
-
-                postRef.addSnapshotListener { snapshot, error ->
-                    if (error != null) {
-                        Log.e("PostRepository", "Listen failed: ${error.message}")
-                        return@addSnapshotListener
-                    }
-
-
-                    if (snapshot != null) {
-                        val posts = snapshot.toObjects(Post::class.java)
-
-                        val newPosts = posts.filter { !it.viewedBy.contains(currentUserId) }
-                        onNewPostCount(newPosts.size)
-                    }
-                }
+        return try {
+            postRef.update("viewedBy", FieldValue.arrayUnion(currentId)).await()
+            Log.d("PostRepository", "Post $postId viewed by $currentId")
+            true
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) {
+                Log.e("PostRepository", "Document $postId not found", e)
             } else {
-                onNewPostCount(0)
-                Log.d("PostRepository", "Không có bạn bè để truy vấn.")
+                Log.e("PostRepository", "Error updating viewedBy for $postId", e)
             }
+            false
         }
     }
 
+//    fun updateViewedBy(postId: String, onResult: (Boolean) -> Unit) {
+//        val postRef = fireStore.collection("posts").document(postId)
+//        val currentId = auth.currentUser?.uid
+//        postRef.update("viewedBy", FieldValue.arrayUnion(currentId))
+//            .addOnSuccessListener {
+//                Log.d("PostRepository", "Post $postId viewed by $currentId")
+//                onResult(true)
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e("PostRepository", "Error $postId add viewed", e)
+//                onResult(false)
+//            }
+//    }
+
+
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+//    fun listenForNewPosts(onNewPostCount: (Int) -> Unit) {
+//        repositoryScope.launch {
+//            val currentUserId = auth.currentUser?.uid ?: return@launch
+//            val friendIds = getFriendIds(currentUserId)
+//
+//            if (friendIds.isNotEmpty()) {
+//                val postRef = fireStore.collection("posts")
+//                    .whereIn("userId", friendIds)
+//                    .orderBy("createdAt", Query.Direction.DESCENDING)
+//
+//                postRef.addSnapshotListener { snapshot, error ->
+//                    if (error != null) {
+//                        Log.e("PostRepository", "Listen failed: ${error.message}")
+//                        return@addSnapshotListener
+//                    }
+//
+//
+//                    if (snapshot != null) {
+//                        val posts = snapshot.toObjects(Post::class.java)
+//
+//                        val newPosts = posts.filter { !it.viewedBy.contains(currentUserId) }
+//                        onNewPostCount(newPosts.size)
+//                    }
+//                }
+//            } else {
+//                onNewPostCount(0)
+//                Log.d("PostRepository", "Không có bạn bè để truy vấn.")
+//            }
+//        }
+//    }
+//    fun listenForNewPosts(onNewPostCount: (Int) -> Unit): ListenerRegistration {
+//        val currentUserId = auth.currentUser?.uid ?: return ListenerRegistration {  }
+//
+//        val postRef = fireStore.collection("posts")
+//            .orderBy("createdAt", Query.Direction.DESCENDING)
+//
+//        return postRef.addSnapshotListener { snapshot, error ->
+//            repositoryScope.launch {
+//                if (error != null) {
+//                    Log.e("PostRepository", "Listen failed: ${error.message}")
+//                    return@launch
+//                }
+//
+//                val friendIds = getFriendIds(currentUserId)
+//
+//                if (snapshot != null) {
+//                    val posts = snapshot.toObjects(Post::class.java)
+//                    val newPosts = posts.filter { post ->
+//                        friendIds.contains(post.userId) && !post.viewedBy.contains(currentUserId)
+//                    }
+//                    onNewPostCount(newPosts.size)
+//                }
+//            }
+//        }
+//    }
+
+    private var postListenerRegistration: ListenerRegistration? = null
+
+    fun listenForNewPosts(onNewPostCount: (Int) -> Unit): ListenerRegistration? {
+        val currentUserId = auth.currentUser?.uid ?: return null
+
+        // Launch a coroutine to fetch friend IDs
+        repositoryScope.launch {
+            val friendIds = getFriendIds(currentUserId)
+
+            if (friendIds.isEmpty()) {
+                onNewPostCount(0)
+                return@launch
+            }
+
+            // Perform the query only on posts from friends
+            val postRef = fireStore.collection("posts")
+                .whereIn("userId", friendIds)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+
+            // Add snapshot listener to the query
+            postListenerRegistration = postRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("PostRepository", "Listen failed: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val posts = snapshot.toObjects(Post::class.java)
+                    // Filter posts that have not been viewed by the current user
+                    val newPosts = posts.filter { post ->
+                        !post.viewedBy.contains(currentUserId)
+                    }
+                    onNewPostCount(newPosts.size)
+                }
+            }
+        }
+        return postListenerRegistration
+    }
+
+    fun stopListeningForNewPosts() {
+        postListenerRegistration?.remove()
+        postListenerRegistration = null
+    }
     private suspend fun getFriendIds(currentUserId: String): List<String> {
         return try {
             val query1 = fireStore.collection("friendships")

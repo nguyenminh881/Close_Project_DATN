@@ -99,6 +99,41 @@ class MessageRepository() {
         }
     }
 
+
+
+
+    suspend fun uploadImageAndSendMessage(
+        contentUri: Uri?,
+        message: String,
+        receiverId: String,
+        content: String,
+        isImage: Boolean
+    ): String {
+        return if (contentUri != null) {
+            val uniqueID = UUID.randomUUID().toString()
+            val fileName = "post_${auth.currentUser!!.uid}$uniqueID"
+
+            val storageReference = if (isImage) {
+                storage.reference.child("${auth.currentUser!!.uid}/post_image/$fileName.jpeg")
+            } else {
+                storage.reference.child("${auth.currentUser!!.uid}/post_voice/$fileName.aac")
+            }
+            val uploadTask = storageReference.putFile(contentUri).await()
+            val downloadUrl = storageReference.downloadUrl.await()
+
+            val imageUrl = if (isImage) downloadUrl.toString() else ""
+            val voiceUrl = if (!isImage) downloadUrl.toString() else ""
+
+            sendMessage(message, "", receiverId, imageUrl, voiceUrl, content, "", "")
+            if (isImage) imageUrl else voiceUrl
+        } else {
+            ""
+        }
+    }
+
+
+
+
     suspend fun updateMessagesToRead(senderId: String) {
         try {
 

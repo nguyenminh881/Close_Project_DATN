@@ -1,4 +1,4 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.post
 
 import PostPagingAdapter
 import PostPagingAdapter.Companion.VIEW_TYPE_IMAGE
@@ -6,7 +6,6 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -14,29 +13,19 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.provider.DocumentsContract
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewTreeObserver
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.FileProvider
-import androidx.core.net.toFile
-import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -45,7 +34,11 @@ import androidx.recyclerview.widget.SnapHelper
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.example.cameraprovider.R
+import com.example.cameraprovider.chat.ChatActivity
 import com.example.cameraprovider.databinding.ActivityPostListBinding
+import com.example.cameraprovider.home.MainActivity
+import com.example.cameraprovider.profile.ProfileActivity
 import com.example.cameraprovider.viewmodel.FriendViewmodel
 import com.example.cameraprovider.viewmodel.MessageViewModel
 
@@ -53,8 +46,6 @@ import com.example.cameraprovider.viewmodel.PostViewModel
 import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.flow.collectLatest
 
@@ -76,6 +67,7 @@ class PostList : AppCompatActivity() {
     private var isedtVisible = false
     private val frVModel: FriendViewmodel by viewModels()
     private lateinit var imm: InputMethodManager
+    private var isCurrentUserPost: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_post_list)
@@ -85,6 +77,7 @@ class PostList : AppCompatActivity() {
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.isRefreshing = true
             binding.btnNewpost.visibility = View.INVISIBLE
+            postViewModel.stopListeningForNewPosts()
             postApdapter.refresh()
             binding.shimmerLayout.startShimmer()
             binding.shimmerLayout.visibility = View.VISIBLE
@@ -93,7 +86,6 @@ class PostList : AppCompatActivity() {
             //  trạng thái tải dữ liệu
             lifecycleScope.launch {
                 postApdapter.loadStateFlow.collectLatest { loadStates ->
-                    // Kiểm tra xem dữ liệu đã được tải xong chưa
                     if (loadStates.refresh is LoadState.NotLoading) {
                         binding.swipeRefreshLayout.isRefreshing = false
                         binding.shimmerLayout.stopShimmer()
@@ -109,10 +101,7 @@ class PostList : AppCompatActivity() {
         lifecycleScope.launch {
             postViewModel.posts
                 .collectLatest { pagingData ->
-
                     postApdapter.submitData(pagingData)
-
-
                 }
 
         }
@@ -178,9 +167,10 @@ class PostList : AppCompatActivity() {
 
                 if (newPosition != currentPostPosition) {
                     currentPostPosition = newPosition
-
+                    Log.d("PostListposition", "Current post position: $currentPostPosition")
+                    Log.d("PostListposition", "new post position: $newPosition")
                     if (currentPostPosition in 0 until postApdapter.itemCount) {
-                        if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.iscurrentId()) {
+                        if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.getcurrentId()) {
                             binding.btnGroupLayout.visibility = View.GONE
                         } else {
                             binding.btnGroupLayout.visibility = View.VISIBLE
@@ -288,9 +278,6 @@ class PostList : AppCompatActivity() {
         }
 
 
-//        postViewModel.likeEvent.observe(this, Observer { postId ->
-//            Toast.makeText(this, "Liked post with ID: $postId", Toast.LENGTH_SHORT).show()
-//        })
 
         //back ve main
         binding.dangbai.setOnClickListener {
@@ -357,8 +344,12 @@ class PostList : AppCompatActivity() {
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
+
+                    postApdapter.notifyItemRemoved(currentPostPosition)
+
+                postViewModel.invalidatePagingSource()
+
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
-                postApdapter.notifyItemRemoved(currentPostPosition)
             } else {
                 Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
             }
@@ -371,7 +362,7 @@ class PostList : AppCompatActivity() {
             val userPostId = post.userId
             Log.d(
                 "PostListdelete",
-                "Deleting post at position: $currentPostPosition with postId: $postId"
+                "Deleting post at position: $currentPostPosition with postId: $userPostId"
             )
             if (userPostId == postViewModel.getcurrentId()) {
                 MaterialAlertDialogBuilder(this@PostList, R.style.AlertDialogTheme)
@@ -432,17 +423,17 @@ class PostList : AppCompatActivity() {
         postViewModel.newPostCount.observe(this) {
             if (it > 0) {
                 binding.btnNewpost.visibility = View.VISIBLE
-                binding.btnNewpost.text = "Mới(${it})"
+                val count = if (it > 9) "9+" else it.toString()
+                binding.btnNewpost.text = "Mới(${count})"
             } else {
                 binding.btnNewpost.visibility = View.INVISIBLE
             }
         }
 
-
         binding.btnNewpost.setOnClickListener {
             binding.swipeRefreshLayout.isRefreshing = true
+            postViewModel.stopListeningForNewPosts()
             binding.btnNewpost.visibility = View.INVISIBLE
-            postViewModel.clearNewpostsize()
             binding.recyclerView.smoothScrollToPosition(0)
             postApdapter.refresh()
             binding.shimmerLayout.startShimmer()

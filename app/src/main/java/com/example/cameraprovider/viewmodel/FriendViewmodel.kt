@@ -1,20 +1,16 @@
 package com.example.cameraprovider.viewmodel
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.databinding.Observable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cameraprovider.MainActivity
 import com.example.cameraprovider.model.Friendship
 import com.example.cameraprovider.model.User
 import com.example.cameraprovider.repository.FriendRepository
 import com.example.cameraprovider.repository.MessageRepository
-import com.google.firebase.dynamiclinks.ShortDynamicLink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

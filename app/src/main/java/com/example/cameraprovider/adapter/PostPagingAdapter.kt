@@ -1,8 +1,5 @@
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.media.MediaPlayer
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -11,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
@@ -19,17 +15,15 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.signature.ObjectKey
-import com.example.cameraprovider.LikesBottomSheetDialog
+import com.example.cameraprovider.post.LikesBottomSheetDialog
 import com.example.cameraprovider.R
 import com.example.cameraprovider.databinding.PostRowBinding
 import com.example.cameraprovider.databinding.PostRowVoiceBinding
 import com.example.cameraprovider.model.Post
 import com.example.cameraprovider.viewmodel.PostViewModel
-import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +64,7 @@ class PostPagingAdapter(
 
     class ImageViewHolder(val binding: PostRowBinding) : RecyclerView.ViewHolder(binding.root) {
         private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
+
         fun bind(
             post: Post, isCurrentUser: (Post) -> Boolean, viewModel: PostViewModel,
             lifecycleOwner: LifecycleOwner, context: Context, activity: FragmentActivity
@@ -102,7 +97,11 @@ class PostPagingAdapter(
                 binding.imageViewPost.setImageResource(R.drawable.error)
 
             }
+
+            Log.d("checkiscurrentposst", "iscurrent update in item: ${isCurrentUser(post)}")
+
             if (isCurrentUser(post)) {
+
                 binding.tvNameUserPost.text = "Bạn"
                 binding.btnGroupReact.visibility = View.VISIBLE
 
@@ -122,7 +121,9 @@ class PostPagingAdapter(
                     } else {
                         binding.nameUserLike.text = "Không có hoạt động nào ✨"
                     }
+
                 }
+                Log.d("checkiscurrentposst", "After update: isCurrentUserPost = ${isCurrentUser(post)}")
             } else {
                 binding.tvNameUserPost.text = post.userName
                 binding.btnGroupReact.visibility = View.GONE
@@ -134,11 +135,11 @@ class PostPagingAdapter(
 
 
 
-
             binding.postxml = post
 
 
         }
+
     }
 
     class VoiceViewHolder(val binding: PostRowVoiceBinding) :
@@ -215,7 +216,7 @@ class PostPagingAdapter(
             binding.timeStamp.text = formattedTime.replace(" trước", "").replace("cách đây ", "")
                 .replace("giây", "vừa xong")
 
-
+//            onCurrentUserPostChanged(isCurrentUser(post))
             binding.postvoicexml = post
         }
 
@@ -351,8 +352,7 @@ class PostPagingAdapter(
                     viewModel,
                     lifecycleOwner,
                     context,
-                    activity,
-
+                    activity
                     )
 
                 is VoiceViewHolder -> holder.bind(

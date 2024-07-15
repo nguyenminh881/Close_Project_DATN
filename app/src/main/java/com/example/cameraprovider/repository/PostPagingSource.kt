@@ -50,7 +50,7 @@ class PostPagingSource(
                     .await()
 
                 val posts = currentPage!!.documents.mapNotNull { it.toObject(Post::class.java) }
-                allPosts.addAll(posts.filter { !it.hiddenForUsers.contains(userId) })
+                allPosts.addAll(posts.filter {  !it.hiddenForUsers.contains(userId) })
             }
 
             Log.d("PostPagingSource", "Loaded ${allPosts.size} posts for page: ${params.key}")

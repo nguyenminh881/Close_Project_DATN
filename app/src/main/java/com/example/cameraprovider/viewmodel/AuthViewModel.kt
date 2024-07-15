@@ -23,15 +23,14 @@ import java.util.regex.Pattern
 import androidx.lifecycle.viewModelScope
 import com.bumptech.glide.Glide
 import com.example.cameraprovider.Admin.AdminActivity
-import com.example.cameraprovider.LoadingActivity
-import com.example.cameraprovider.MainActivity
+import com.example.cameraprovider.manageraccount.LoadingActivity
+import com.example.cameraprovider.home.MainActivity
 import com.example.cameraprovider.StartAppActivity
 import com.example.cameraprovider.model.User
 import com.example.cameraprovider.notification.NotificationService
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import kotlinx.coroutines.flow.filter

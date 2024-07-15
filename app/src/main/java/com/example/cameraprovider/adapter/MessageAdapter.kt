@@ -115,8 +115,14 @@ class MessageAdapter(
                 if (message.content == "") {
                     binding.tvDescPost.visibility = View.GONE
                 }
-            }
+                if (message.avtpost == "") {
+                    binding.avtpost.visibility = View.GONE
+                }
+                if(message.timestamp ==""){
+                    binding.timeImg.visibility = View.GONE
+                }
 
+            }
 
             if (message.voiceUrl == "") {
                 binding.voiceCmt.visibility = View.GONE
@@ -128,7 +134,20 @@ class MessageAdapter(
                 if (message.content == "") {
                     binding.txtcontent.visibility = View.GONE
                 }
+                if (message.avtpost == "") {
+                    binding.avtuser.visibility = View.GONE
+                }
+                if(message.timestamp ==""){
+                    binding.txttime.visibility = View.GONE
+                }
             }
+
+            if (message.message?.trim()?.isNotEmpty() == true) {
+                binding.messagetxt.visibility = View.VISIBLE
+            } else {
+                binding.messagetxt.visibility = View.GONE
+            }
+
 
             if (showTime) {
                 binding.tvCreatedAt.text =
@@ -271,6 +290,12 @@ class MessageAdapter(
                 if (message.content == "") {
                     binding.tvDescPost.visibility = View.GONE
                 }
+                if (message.avtpost == "") {
+                    binding.avtpost.visibility = View.GONE
+                }
+                if(message.timestamp ==""){
+                    binding.timeImg.visibility = View.GONE
+                }
             }
 
 
@@ -283,7 +308,19 @@ class MessageAdapter(
                 if (message.content == "") {
                     binding.txtcontent.visibility = View.GONE
                 }
+                if (message.avtpost == "") {
+                    binding.avtuser.visibility = View.GONE
+                }
+                if(message.timestamp ==""){
+                    binding.txttime.visibility = View.GONE
+                }
 
+            }
+
+            if (message.message?.trim()?.isNotEmpty() == true) {
+                binding.messagetxt.visibility = View.VISIBLE
+            } else {
+                binding.messagetxt.visibility = View.GONE
             }
 
             if (message.senderId == "Gemini") {

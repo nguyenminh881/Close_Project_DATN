@@ -14,7 +14,7 @@ class MyAppGlideModule : AppGlideModule() {
     override fun applyOptions(context: Context, builder: GlideBuilder) {
 
         val executor = Executors.newFixedThreadPool(10)
-        // Thêm các tùy chọn cấu hình Glide toàn cầu tại đây
+
         builder.setDiskCache(InternalCacheDiskCacheFactory(context, 50 * 1024 * 1024)) // 50 MB disk cache
         builder.setMemoryCache(LruResourceCache(10 * 1024 * 1024)) // 10 MB memory cache
     }

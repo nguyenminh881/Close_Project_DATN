@@ -14,8 +14,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.AppWidgetTarget
-import com.example.cameraprovider.MainActivity
-import com.example.cameraprovider.PostList
+import com.example.cameraprovider.post.PostList
 import com.example.cameraprovider.R
 import com.example.cameraprovider.viewmodel.widgetViewModel
 import kotlinx.coroutines.CoroutineScope

@@ -1,4 +1,4 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.home
 
 import android.Manifest
 import android.content.Intent
@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.os.Vibrator
 import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -27,6 +28,8 @@ import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.cameraprovider.chat.FriendListprivateBottomSheet
+import com.example.cameraprovider.R
 import com.example.cameraprovider.bottomdialogai.PromptDialogVoice
 
 import com.example.cameraprovider.databinding.FragmentRecordBinding
@@ -493,6 +496,21 @@ class RecordFragment : Fragment() {
             )
 
             postViewModel.addPost(fileUri, binding.edt1.text.toString(), false)
+        }
+        binding.btnPost.setOnLongClickListener {
+            val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+            vibrator?.vibrate(50)
+
+            val content = binding.edt1.text.toString()
+
+            val fileUri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                File(fileName)
+            )
+            val bottomSheet = FriendListprivateBottomSheet(null,fileUri , content)
+            bottomSheet.show(childFragmentManager, bottomSheet.tag)
+            true
         }
     }
 

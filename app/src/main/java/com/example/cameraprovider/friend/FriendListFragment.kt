@@ -1,4 +1,4 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.friend
 
 import android.app.Activity
 import android.app.Dialog
@@ -14,6 +14,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cameraprovider.R
 import com.example.cameraprovider.adapter.FriendsAdapter
 import com.example.cameraprovider.adapter.RequestFriendAdapter
 import com.example.cameraprovider.databinding.FragmentFriendListBinding

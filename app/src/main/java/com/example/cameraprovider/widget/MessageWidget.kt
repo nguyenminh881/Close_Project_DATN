@@ -12,11 +12,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.AppWidgetTarget
-import com.example.cameraprovider.ItemChatActivity
-import com.example.cameraprovider.PostList
+import com.example.cameraprovider.chat.ItemChatActivity
 import com.example.cameraprovider.R
 import com.example.cameraprovider.viewmodel.messWidgetViewModel
-import com.github.marlonlom.utilities.timeago.TimeAgo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

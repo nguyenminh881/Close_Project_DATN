@@ -19,6 +19,7 @@ import com.example.cameraprovider.model.Post
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.repository.UserRepository
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -43,7 +44,9 @@ class PostViewModel() : ViewModel(), Observable {
     fun addPost(contentUri: Uri, content: String, isImage: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = postRepository.addPost(contentUri, content, isImage)
+
             _postResultLiveData.postValue(result)
+
         }
     }
 
@@ -52,6 +55,11 @@ class PostViewModel() : ViewModel(), Observable {
     }
 
     val posts: Flow<PagingData<Post>> = postRepository.getPosts().cachedIn(viewModelScope)
+
+    fun invalidatePagingSource() {
+        postRepository.invalidatePagingSource()
+    }
+
     fun likePost(postId: String, icon: String) {
         _likeEvent.value = postId
         viewModelScope.launch(Dispatchers.IO) {
@@ -97,15 +105,16 @@ class PostViewModel() : ViewModel(), Observable {
 
 
     @Bindable
-     val contentgena = MutableLiveData<String>().apply {
+    val contentgena = MutableLiveData<String>().apply {
         value = "Nội dung được hiển thị ở đây."
     }
+
     fun generateContent(imageBitmap: Bitmap) {
-        contentgena.value ="Bạn chờ xíu nhé!"
+        contentgena.value = "Bạn chờ xíu nhé!"
         viewModelScope.launch {
             try {
                 contentgena.postValue(postRepository.generateContentFromImage(imageBitmap))
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 contentgena.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
                 Log.d("PostViewModel", "generateContent: ${e.message}")
             }
@@ -113,18 +122,19 @@ class PostViewModel() : ViewModel(), Observable {
     }
 
     @Bindable
-     val contentvoice = MutableLiveData<String>()
+    val contentvoice = MutableLiveData<String>()
     fun generateContentVoice(prompt: String) {
-        contentvoice.value ="Bạn chờ xíu nhé!"
+        contentvoice.value = "Bạn chờ xíu nhé!"
         viewModelScope.launch {
             try {
                 contentvoice.postValue(postRepository.generateContentFromText(prompt))
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 contentvoice.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
                 Log.d("PostViewModel", "generateContent: ${e.message}")
             }
         }
     }
+
     private val _newPostCount = MutableLiveData<Int>(0)
     val newPostCount: LiveData<Int> = _newPostCount
 
@@ -135,52 +145,75 @@ class PostViewModel() : ViewModel(), Observable {
         viewModelScope.launch {
             try {
                 _recognizedText.postValue(postRepository.addPunctuation(prompt))
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 _recognizedText.postValue("Không thể phân tích được nội dung, vui lòng thử lại!.")
                 Log.d("PostViewModel", "generateContent: ${e.message}")
             }
         }
     }
 
-    init {
-        onNewpost()
 
-    }
+//    fun onPostViewed(postId: String) {
+//        postRepository.updateViewedBy(postId) { success ->
+//            if (success) {
+//                Log.e("PostViewModel", "Updated viewed by")
+//            } else {
+//                Log.e("PostViewModel", "Failed to update viewed by")
+//            }
+//        }
+//    }
+fun onPostViewed(postId: String) {
+    viewModelScope.launch {
+        val success = postRepository.updateViewedBy(postId)
+        if (success) {
+            Log.e("PostViewModel", "Updated viewed by for post: $postId")
 
+        } else {
+            Log.e("PostViewModel", "Failed to update viewed by for post: $postId")
 
-    fun onPostViewed(postId: String) {
-        postRepository.updateViewedBy(postId) { success ->
-            if (success) {
-                Log.e("PostViewModel", "Updated viewed by")
-            } else {
-                Log.e("PostViewModel", "Failed to update viewed by")
-            }
         }
     }
-    fun onNewpost(){
+}
+    init {
+        onNewpost()
+    }
+
+    private val _isCurrentUserPost = MutableLiveData<Boolean>()
+    val isCurrentUserPost: LiveData<Boolean> get() = _isCurrentUserPost
+
+    fun updateIsCurrentUserPost(isCurrentUser: Boolean) {
+        _isCurrentUserPost.value = isCurrentUser
+    }
+    fun onNewpost() {
         viewModelScope.launch {
-            withContext(Dispatchers.Main){
-                postRepository.listenForNewPosts { newCount ->
+            withContext(Dispatchers.Main) {
+                postRepository.listenForNewPosts() { newCount ->
                     _newPostCount.postValue(newCount)
                 }
             }
         }
     }
 
-    fun clearNewpostsize(){
+    fun stopListeningForNewPosts() {
+        postRepository.stopListeningForNewPosts()
+    }
+
+    fun clearNewpostsize() {
         _newPostCount.postValue(0)
     }
-    fun clearContentgena(){
+
+    fun clearContentgena() {
         contentgena.value = ""
     }
 
-    fun clearContentvoice(){
+    fun clearContentvoice() {
         contentvoice.value = ""
     }
 
-    fun clearContentemp(){
+    fun clearContentemp() {
         _recognizedText.value = ""
     }
+
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
 
     }

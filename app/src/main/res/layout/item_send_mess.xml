@@ -33,11 +33,12 @@
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginHorizontal="20dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="4dp"
             android:paddingBottom="10dp"
             android:backgroundTint="@color/white"
             android:background="@drawable/edittextbd10dp"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvCreatedAt">
 
             <LinearLayout
@@ -104,7 +105,7 @@
             <TextView
                 android:id="@+id/txtcontent"
                 android:layout_width="0dp"
-                android:backgroundTint="#CE101010"
+                android:backgroundTint="#4B101010"
                 android:background="@drawable/corner_radius_16dp"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="6dp"
@@ -115,7 +116,7 @@
                 android:maxLines="3"
                 android:text="@{chat.content}"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="14.56sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/wave"/>
@@ -143,8 +144,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="4dp"
             app:layout_constraintDimensionRatio="H,1:1"
-            android:layout_marginHorizontal="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/voice_cmt">
@@ -176,6 +178,7 @@
                 app:strokeWidth="3dp" />
 
             <TextView
+                android:id="@+id/time_img"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -194,13 +197,13 @@
                 android:layout_marginTop="14dp"
                 android:layout_marginBottom="4dp"
                 android:background="@drawable/corner_radius_16dp"
-                android:backgroundTint="#CE101010"
+                android:backgroundTint="#4B101010"
                 android:maxLength="100"
                 android:maxLines="3"
-                android:paddingStart="6dp"
+                android:paddingHorizontal="20dp"
                 android:text="@{chat.content}"
                 android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textSize="14.56sp"
                 app:layout_constraintBottom_toBottomOf="@+id/imageViewPost"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -216,6 +219,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline">
         <TextView
+            android:id="@+id/messagetxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"

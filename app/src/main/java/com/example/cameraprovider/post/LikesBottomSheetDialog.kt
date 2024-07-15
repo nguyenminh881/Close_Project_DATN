@@ -1,4 +1,4 @@
-package com.example.cameraprovider
+package com.example.cameraprovider.post
 
 import android.os.Bundle
 import android.view.LayoutInflater
