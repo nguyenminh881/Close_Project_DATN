@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cameraprovider.model.Message
 import com.example.cameraprovider.model.User
+import com.example.cameraprovider.notification.NotificationRepository
 import com.example.cameraprovider.repository.MessageRepository
 import com.google.ai.client.generativeai.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
@@ -121,12 +122,29 @@ class MessageViewModel() : ViewModel(), Observable {
         }
     }
 
+    private val _unreadMessageCount = MutableLiveData<Int>(0)
+    val unreadMessageCount: LiveData<Int> get() = _unreadMessageCount
 
-    private val _friendList = MutableLiveData<List<User>>()
-    val friendList: LiveData<List<User>> get() = _friendList
+    private val _hasNewMessages = MutableLiveData<Boolean>(false)
+    val hasNewMessages: LiveData<Boolean> get() = _hasNewMessages
 
-    private val _lastMessages = MutableLiveData<Map<String, Message>>()
-    val lastMessages: LiveData<Map<String, Message>> get() = _lastMessages
+    private val notificationRepository= NotificationRepository()
+    init {
+        notificationRepository.listenForLatestMessage { latestMessage, sender ->
+            if (latestMessage != null && sender != null) {
+                _hasNewMessages.value = true
+                incrementUnreadMessageCount()
+            }
+        }
+    }
+
+
+    fun incrementUnreadMessageCount() {
+        _unreadMessageCount.value = (_unreadMessageCount.value ?: 0) + 1
+    }
+
+
+
 
     private val _friendsWithMessages = MutableLiveData<Pair<List<User>, Map<String, Message>>>()
     val friendsWithMessages: LiveData<Pair<List<User>, Map<String, Message>>>

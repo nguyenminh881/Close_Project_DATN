@@ -28,11 +28,12 @@ class friendlist_chatAdapter( private val context: Context,
                               private var friends: List<User>,
                               private var lastMessages: Map<String, Message>,
                               private val onGetIdfriend: (String, String, String) -> Unit,
-                              private val updatestate: (String) -> Unit) :
+                              private val updatestate: (String) -> Unit,
+    private val viewModel: MessageViewModel) :
     RecyclerView.Adapter<friendlist_chatAdapter.MyViewHolder>() {
     class MyViewHolder(private val binding: FriendlistChatItemBinding)
         : RecyclerView.ViewHolder(binding.root) {
-        fun bind(user: User, lastMessage: Message?, onGetIdfriend: (String, String, String) -> Unit,updatestate: (String) -> Unit) {
+        fun bind(user: User, lastMessage: Message?, onGetIdfriend: (String, String, String) -> Unit,updatestate: (String) -> Unit,viewModel: MessageViewModel) {
             Glide.with(binding.root)
                 .load(user.avatarUser)
                 .into(binding.avtRequest)
@@ -66,6 +67,13 @@ class friendlist_chatAdapter( private val context: Context,
 
             val decodedMessage = lastMessage?.let { decodeMessage(it.message ?: "") }
             binding.lastMessage.text = decodedMessage
+
+
+
+            if (lastMessage != null && lastMessage.status != MessageStatus.READ && lastMessage.senderId == user.UserId) {
+                viewModel.incrementUnreadMessageCount()
+            }
+
 
             if (lastMessage != null ){
                 if( lastMessage.status == MessageStatus.SENT || lastMessage.status == MessageStatus.SENDING && lastMessage.senderId == user.UserId) {
@@ -101,7 +109,7 @@ class friendlist_chatAdapter( private val context: Context,
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val user = friends[position]
         val lastMessage = lastMessages[user.UserId]
-        holder.bind(user, lastMessage, onGetIdfriend,updatestate)
+        holder.bind(user, lastMessage, onGetIdfriend,updatestate,viewModel)
     }
 
     override fun getItemCount(): Int {

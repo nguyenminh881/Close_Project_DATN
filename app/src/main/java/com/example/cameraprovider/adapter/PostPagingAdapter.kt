@@ -66,7 +66,7 @@ class PostPagingAdapter(
         private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
 
         fun bind(
-            post: Post, isCurrentUser: (Post) -> Boolean, viewModel: PostViewModel,
+            post: Post, isCurrentUserForPost:Boolean, viewModel: PostViewModel,
             lifecycleOwner: LifecycleOwner, context: Context, activity: FragmentActivity
         ) {
             if (post.userAvatar != null) {
@@ -98,13 +98,11 @@ class PostPagingAdapter(
 
             }
 
-            Log.d("checkiscurrentposst", "iscurrent update in item: ${isCurrentUser(post)}")
-
-            if (isCurrentUser(post)) {
+Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
+            if (isCurrentUserForPost) {
 
                 binding.tvNameUserPost.text = "Bạn"
                 binding.btnGroupReact.visibility = View.VISIBLE
-
                 currentLikesLiveData?.removeObservers(lifecycleOwner)
                 currentLikesLiveData = viewModel.getLikes(post.postId)
                 binding.btnGroupReact.setOnTouchListener { v, event ->
@@ -123,7 +121,7 @@ class PostPagingAdapter(
                     }
 
                 }
-                Log.d("checkiscurrentposst", "After update: isCurrentUserPost = ${isCurrentUser(post)}")
+
             } else {
                 binding.tvNameUserPost.text = post.userName
                 binding.btnGroupReact.visibility = View.GONE
@@ -156,7 +154,7 @@ class PostPagingAdapter(
         private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
         fun bind(
             post: Post,
-            isCurrentUser: (Post) -> Boolean,
+            isCurrentUserForPost:Boolean,
             viewModel: PostViewModel,
             lifecycleOwner: LifecycleOwner,
             activity: FragmentActivity
@@ -179,7 +177,9 @@ class PostPagingAdapter(
             } ?: run {
                 Log.e("VoiceViewHolder", "Voice URL is null")
             }
-            if (isCurrentUser(post)) {
+
+            Log.e("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
+            if (isCurrentUserForPost) {
                 binding.tvNameUserPost.text = "Bạn"
 
                 binding.btnGroupReact.visibility = View.VISIBLE
@@ -345,10 +345,13 @@ class PostPagingAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val post = getItem(position)
         if (post != null) {
+            Log.d("checkiscurrentposst", "in position: ${position}")
+            val isCurrentUserForPost = isCurrentUser(post)
             when (holder) {
+
                 is ImageViewHolder -> holder.bind(
                     post,
-                    isCurrentUser,
+                    isCurrentUserForPost,
                     viewModel,
                     lifecycleOwner,
                     context,
@@ -356,7 +359,7 @@ class PostPagingAdapter(
                     )
 
                 is VoiceViewHolder -> holder.bind(
-                    post, isCurrentUser, viewModel, lifecycleOwner,
+                    post, isCurrentUserForPost, viewModel, lifecycleOwner,
                     activity
                 )
             }

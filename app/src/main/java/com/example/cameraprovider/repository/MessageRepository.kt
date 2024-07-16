@@ -194,7 +194,7 @@ class MessageRepository() {
     fun getFriendsWithLastMessages(
         onSuccess: (Pair<List<User>, Map<String, Message>>) -> Unit,
         onError: (Exception) -> Unit
-    ) {
+    ){
         val friends = mutableListOf<User>()
         val lastMessages = mutableMapOf<String, Message>()
         val friendsAndMessages = Pair(friends, lastMessages)

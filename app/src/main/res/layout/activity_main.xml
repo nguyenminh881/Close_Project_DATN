@@ -61,15 +61,33 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <ImageButton
-                android:id="@+id/btn_message"
+            <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:scaleType="centerInside"
-                android:background="@drawable/edittextbd10dp"
-                android:backgroundTint="@color/colorbtnctive"
-                android:padding="10dp"
-                android:src="@drawable/ic_chat" />
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/btn_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scaleType="centerInside"
+                    android:background="@drawable/edittextbd10dp"
+                    android:backgroundTint="@color/colorbtnctive"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_chat" />
+                <TextView
+                    android:id="@+id/countmessage"
+                    android:paddingHorizontal="2dp"
+                    android:visibility="gone"
+                    android:layout_width="wrap_content"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/key"
+                    android:background="@drawable/edittextbd10dp"
+                    android:layout_gravity="top|end"
+                    android:layout_height="wrap_content"
+                    android:text="0"/>
+            </FrameLayout>
+
+
 
         </LinearLayout>
 

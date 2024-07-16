@@ -40,9 +40,7 @@ class FriendListFragment : BottomSheetDialogFragment() {
         frViewModel = ViewModelProvider(requireActivity()).get(FriendViewmodel::class.java)
         binding.lifecycleOwner = this
        binding.vmodel = frViewModel
-//        arguments?.getParcelable<Intent>("intent")?.let {
-//            frViewModel.handleFriendRequest(it)
-//        }
+
 
         return binding.root
 
@@ -114,7 +112,7 @@ class FriendListFragment : BottomSheetDialogFragment() {
         frViewModel.listFriend.observe(viewLifecycleOwner) { friends ->
             if (friends != null) {
                 friendsAdapter.updateFriends(friends)
-                binding.totalFriends.text = "Bạn bè (${friends.size})/15"
+                binding.totalFriends.text = "Bạn bè (${friends.size}/15)"
             } else {
                 binding.totalFriends.text = "Bạn bè (0)"
             }

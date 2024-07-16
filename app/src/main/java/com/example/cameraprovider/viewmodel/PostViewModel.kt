@@ -178,12 +178,7 @@ fun onPostViewed(postId: String) {
         onNewpost()
     }
 
-    private val _isCurrentUserPost = MutableLiveData<Boolean>()
-    val isCurrentUserPost: LiveData<Boolean> get() = _isCurrentUserPost
 
-    fun updateIsCurrentUserPost(isCurrentUser: Boolean) {
-        _isCurrentUserPost.value = isCurrentUser
-    }
     fun onNewpost() {
         viewModelScope.launch {
             withContext(Dispatchers.Main) {

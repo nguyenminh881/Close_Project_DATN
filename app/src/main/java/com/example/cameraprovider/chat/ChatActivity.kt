@@ -39,7 +39,8 @@ class ChatActivity : AppCompatActivity() {
 
         friendsAdapter = friendlist_chatAdapter(this, listOf(), mapOf(), onGetIdfriend = { userId, nameUser, avatarUser ->
             openChatWithFriend(userId, nameUser, avatarUser)
-        }, updatestate = {userId -> messageViewModel.updateMessagesToSeen(userId)})
+        }, updatestate = {userId -> messageViewModel.updateMessagesToSeen(userId)},
+            messageViewModel)
         binding.recyclerView.adapter = friendsAdapter
 
 

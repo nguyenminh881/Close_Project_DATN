@@ -67,7 +67,7 @@ class PostList : AppCompatActivity() {
     private var isedtVisible = false
     private val frVModel: FriendViewmodel by viewModels()
     private lateinit var imm: InputMethodManager
-    private var isCurrentUserPost: Boolean = false
+    private var previousUserId: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_post_list)
@@ -102,6 +102,8 @@ class PostList : AppCompatActivity() {
             postViewModel.posts
                 .collectLatest { pagingData ->
                     postApdapter.submitData(pagingData)
+
+                    Log.d("PostListActivity", "Submitted data, ItemCount: ${postApdapter.itemCount}")
                 }
 
         }
@@ -117,7 +119,7 @@ class PostList : AppCompatActivity() {
                 binding.shimmerLayout.stopShimmer()
 
                 binding.shimmerLayout.visibility = View.GONE
-            }
+
 
             //kiem tra xem co bai dang nao k
 
@@ -151,7 +153,7 @@ class PostList : AppCompatActivity() {
                 }
             }
 
-        }
+        }}
 //xu ly loi indexbounds
         postApdapter.addOnPagesUpdatedListener {
             if (postApdapter.itemCount == 0) {
@@ -170,10 +172,14 @@ class PostList : AppCompatActivity() {
                     Log.d("PostListposition", "Current post position: $currentPostPosition")
                     Log.d("PostListposition", "new post position: $newPosition")
                     if (currentPostPosition in 0 until postApdapter.itemCount) {
-                        if (postApdapter.getPostUserId(currentPostPosition) == postViewModel.getcurrentId()) {
-                            binding.btnGroupLayout.visibility = View.GONE
-                        } else {
-                            binding.btnGroupLayout.visibility = View.VISIBLE
+                        val currentUserId = postApdapter.getPostUserId(currentPostPosition)
+                        if (currentUserId != previousUserId) {
+                            previousUserId = currentUserId
+                            binding.btnGroupLayout.visibility = if (currentUserId == postViewModel.getcurrentId()) {
+                                View.GONE
+                            } else {
+                                View.VISIBLE
+                            }
                         }
 
                         binding.btnShare.setOnClickListener {
@@ -344,12 +350,11 @@ class PostList : AppCompatActivity() {
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
-                if(currentPostPosition == 0 ){
-                    postApdapter.refresh()
-                }else{
-
-                    postApdapter.notifyItemRemoved(currentPostPosition)
-                }
+                postApdapter.notifyItemRemoved(currentPostPosition)
+                Log.d(
+                    "PostListdelete",
+                    "New post thay thế  : $currentPostPosition with UserId: ${postApdapter.getPost(currentPostPosition)!!.postId},${postApdapter.getPost(currentPostPosition)!!.userId}"
+                )
                 postViewModel.invalidatePagingSource()
 
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()

@@ -102,10 +102,16 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
-
-
+        messageViewModel.unreadMessageCount.observe(this) { count ->
+            if (count > 0) {
+                viewBinding.countmessage.text = if (count > 9) "+9" else count.toString()
+                viewBinding.countmessage.visibility = View.VISIBLE
+            } else {
+                viewBinding.countmessage.text = ""
+                viewBinding.countmessage.visibility = View.GONE
+            }
+           Log.d("MainActivity_tinnhanmoi","$count")
+        }
 
 
         frVModel.listFriend.observe(this) {
