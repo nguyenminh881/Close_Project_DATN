@@ -181,7 +181,7 @@
                         android:layout_weight="1"
                         android:background="#00FFFFFF"
                         android:contentDescription="Chuyển cam"
-                        android:src="@drawable/ic_frontcam" />
+                        android:src="@drawable/ic_flipcam" />
 
                     <Space
                         android:layout_width="0dp"

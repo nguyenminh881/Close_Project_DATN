@@ -3,21 +3,21 @@
    android:id="@+id/layoutwidgetpost"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/corner_radius_16dp"
     android:minHeight="110dp"
-    android:minWidth="110dp"
->
+    android:minWidth="110dp">
 
     <ImageView
+        android:adjustViewBounds="true"
         android:id="@+id/imageView_post"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:minHeight="110dp"
         android:minWidth="110dp"
-        android:layout_above="@id/layout_user_info"
-        android:adjustViewBounds="true"
         android:foreground="@drawable/corner_radius_16dp"
-        android:scaleType="centerInside"
+        android:scaleType="fitXY"
         android:src="@drawable/img_widget" />
+
     <LinearLayout
         android:id="@+id/layout_user_info"
         android:layout_width="match_parent"

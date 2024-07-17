@@ -672,35 +672,40 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
     fun deleteAccount() {
         viewModelScope.launch {
             try {
+                withContext(Dispatchers.Main) {
+                    context.stopService(Intent(context, NotificationService::class.java))
+                }
                 val result = userRepository.deleteAccount()
-                if (result.isSuccess) {
-                    withContext(Dispatchers.Main) {
-                        widgetViewModel().cancelListen()
-                        messWidgetViewModel().cancelListen()
-                        context.stopService(Intent(context, NotificationService::class.java))
-                        context.startActivity(Intent(context, StartAppActivity::class.java))
-                        (context as? Activity)?.finish()
 
-                    }
-                } else {
-                    val exepction = result.exceptionOrNull()
-                    if (exepction is FirebaseAuthRecentLoginRequiredException) {
-                        Toast.makeText(context, "Vui lòng đăng nhập lại trước khi xóa tài khoản", Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(context, "Vui lòng kiểm tra kết nối mạng", Toast.LENGTH_SHORT).show()
+
+                withContext(Dispatchers.Main) {
+                    when {
+                        result.isSuccess -> {
+                            Toast.makeText(context, "Xóa tài khoản thành công", Toast.LENGTH_LONG).show()
+                            widgetViewModel().cancelListen()
+                            messWidgetViewModel().cancelListen()
+                            context.startActivity(Intent(context, StartAppActivity::class.java))
+                            (context as? Activity)?.finish()
+
+                        }
+                        result.exceptionOrNull() is FirebaseAuthRecentLoginRequiredException -> {
+                            Toast.makeText(context, "Vui lòng đăng nhập lại trước khi xóa tài khoản", Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            Toast.makeText(context, "Vui lòng kiểm tra kết nối mạng", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             } catch (e: Exception) {
-                if(e is FirebaseAuthRecentLoginRequiredException){
-                    Toast.makeText(context,"Vui lòng đăng nhập lại trước khi xóa tài khoản",Toast.LENGTH_LONG).show()
-                }else{
-                    Toast.makeText(context,"Vui lòng kiểm tra kết nối mạng",Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    when (e) {
+                        is FirebaseAuthRecentLoginRequiredException -> Toast.makeText(context, "Vui lòng đăng nhập lại trước khi xóa tài khoản", Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(context, "Vui lòng kiểm tra kết nối mạng", Toast.LENGTH_SHORT).show()
+                    }
                 }
-
                 Log.d("DeleteAccount", "$e")
             }
         }
-
     }
 
     fun deletenewAccount() {
@@ -711,13 +716,17 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
                     withContext(Dispatchers.Main) {
                         context.startActivity(Intent(context, StartAppActivity::class.java))
                         (context as? Activity)?.finish()
-
+                        Toast.makeText(context, "Đã Hủy", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(context,"Vui lòng thử lại sau",Toast.LENGTH_SHORT).show()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(context,"Vui lòng thử lại sau",Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
+                }
                 Log.d("DeleteAccount", "$e")
             }
         }

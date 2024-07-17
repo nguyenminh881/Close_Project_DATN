@@ -1,8 +1,14 @@
 package com.example.cameraprovider.home
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
@@ -11,6 +17,7 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
 import android.speech.RecognitionListener
@@ -20,6 +27,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -169,17 +177,48 @@ class RecordFragment : Fragment() {
 
         //record
         binding.btnrecord.setOnClickListener {
+            val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+            if (vibrator?.hasAmplitudeControl() == true) {
+                val vibrationEffect = VibrationEffect.createOneShot(
+                    30,
+                    VibrationEffect.EFFECT_TICK
+                )
+                vibrator.vibrate(vibrationEffect)
+            } else {
+
+                vibrator?.vibrate(30)
+            }
             toggleRecording()
         }
 
 
         binding.play.apply {
             text = "Ghi âm"
-            setOnClickListener {
-                toggleRecording()
+
+            if(isEnabled == false){
+                backgroundTintList = ContextCompat.getColorStateList(requireContext(), R.color.dark)
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
             }
-            if (isRecording == true) {
-                binding.play.isEnabled = false
+
+            binding.play.setOnClickListener {
+                val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+                if (vibrator?.hasAmplitudeControl() == true) {
+                    val vibrationEffect = VibrationEffect.createOneShot(
+                        40,
+                        VibrationEffect.EFFECT_TICK
+                    )
+                    vibrator.vibrate(vibrationEffect)
+                } else {
+
+                    vibrator?.vibrate(40)
+                }
+                if (!isPlaying) {
+                    playAudio(fileName)
+                    binding.play.text = "Dừng"
+                } else {
+                    stopPlaying()
+                    binding.play.text = "Phát"
+                }
             }
         }
 
@@ -231,9 +270,7 @@ class RecordFragment : Fragment() {
         isPlaying = false
         binding.play.apply {
             text = "Ghi âm"
-            setOnClickListener {
-                toggleRecording()
-            }
+            isEnabled = false
         }
         mediaPlayer.release()
         binding.wave.progress = 0f
@@ -269,25 +306,41 @@ class RecordFragment : Fragment() {
     }
 
     private fun toggleRecording() {
+
         if (!allPermissionsGranted()) {
             capquyencam()
         }
         if (!isRecording) {
             startRecording()
+            val scaleDownAnimator = ValueAnimator.ofFloat(0.92f, 1f).apply { // Giả sử icon ban đầu là 80dp
+                duration = 200
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { valueAnimator ->
+                    val scale = valueAnimator.animatedValue as Float
+                    binding.btnrecord.scaleX = scale
+                    binding.btnrecord.scaleY = scale
+                }
+            }
+
+            scaleDownAnimator.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    binding.btnrecord.setImageResource(R.drawable.ic_squre)
+                    binding.btnrecord.setBackgroundResource(R.drawable.whitering)
+                }
+            })
+
+
+            scaleDownAnimator.start()
+
             binding.play.text = "Đang ghi âm"
+            binding.play.isEnabled=false
         } else {
             stopRecording()
-            binding.play.text = "phát"
-        }
-
-        binding.play.setOnClickListener {
-            if (!isPlaying) {
-                playAudio(fileName)
-                binding.play.text = "dừng"
-            } else {
-                stopPlaying()
-                binding.play.text = "phát"
-            }
+            binding.btnrecord.scaleX = 1f
+            binding.btnrecord.scaleY = 1f
+            binding.btnrecord.setImageResource(R.drawable.ic_circle)
+            binding.btnrecord.setBackgroundResource(R.drawable.cornerradius)
+            binding.play.text = "Phát"
         }
     }
 
@@ -336,10 +389,12 @@ class RecordFragment : Fragment() {
 ////
     private fun stopRecording() {
         mediaRecorder.apply {
-            stop()
-            release()
-        }
 
+            Handler(Looper.getMainLooper()).postDelayed({
+                stop()
+                release()
+            }, 100)
+        }
 
         isRecording = false
         mediaRecorder = MediaRecorder()
@@ -352,6 +407,11 @@ class RecordFragment : Fragment() {
         binding.btnrecord.visibility = View.GONE
         binding.btnPost.visibility = View.VISIBLE
         binding.btnLeft.visibility = View.VISIBLE
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            binding.play.isEnabled = true
+        }, 100)
+
     }
 
 

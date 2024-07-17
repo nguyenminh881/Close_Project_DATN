@@ -153,15 +153,6 @@ class PostViewModel() : ViewModel(), Observable {
     }
 
 
-//    fun onPostViewed(postId: String) {
-//        postRepository.updateViewedBy(postId) { success ->
-//            if (success) {
-//                Log.e("PostViewModel", "Updated viewed by")
-//            } else {
-//                Log.e("PostViewModel", "Failed to update viewed by")
-//            }
-//        }
-//    }
 fun onPostViewed(postId: String) {
     viewModelScope.launch {
         val success = postRepository.updateViewedBy(postId)
@@ -174,8 +165,13 @@ fun onPostViewed(postId: String) {
         }
     }
 }
+
+    private val _isListeningForNewPosts = MutableLiveData(true)
+    val isListeningForNewPosts: LiveData<Boolean> = _isListeningForNewPosts
     init {
-        onNewpost()
+        if (_isListeningForNewPosts.value == true) {
+            onNewpost()
+        }
     }
 
 
@@ -190,12 +186,11 @@ fun onPostViewed(postId: String) {
     }
 
     fun stopListeningForNewPosts() {
+        _isListeningForNewPosts.value = false
         postRepository.stopListeningForNewPosts()
-    }
-
-    fun clearNewpostsize() {
         _newPostCount.postValue(0)
     }
+
 
     fun clearContentgena() {
         contentgena.value = ""

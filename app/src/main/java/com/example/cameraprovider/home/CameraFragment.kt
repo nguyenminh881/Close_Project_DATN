@@ -1,6 +1,9 @@
 package com.example.cameraprovider.home
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
@@ -11,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.MediaStore
 import android.provider.Settings
@@ -21,6 +25,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,8 +68,7 @@ class CameraFragment : Fragment() {
     private var iszoom = false
     private var currentFlashMode = ImageCapture.FLASH_MODE_OFF
     private lateinit var postViewModel: PostViewModel
-
-    private var cameraDevice: CameraDevice? = null
+    private lateinit var cameraProvider: ProcessCameraProvider
     private val activityResultLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
         { permissions ->
@@ -113,8 +117,37 @@ class CameraFragment : Fragment() {
         } else {
             requestPermissions()
         }
-
+        cameraExecutor = Executors.newSingleThreadExecutor()
         viewBinding.buttonCapture.setOnClickListener {
+            val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+            if (vibrator?.hasAmplitudeControl() == true) {
+                val vibrationEffect = VibrationEffect.createOneShot(
+                    40,
+                    VibrationEffect.EFFECT_TICK
+                )
+                vibrator.vibrate(vibrationEffect)
+            } else {
+
+                vibrator?.vibrate(40)
+            }
+            val scaleDownAnimator = ValueAnimator.ofFloat(0.92f, 1f).apply { // Giả sử icon ban đầu là 80dp
+                duration = 200
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { valueAnimator ->
+                    val scale = valueAnimator.animatedValue as Float
+                    viewBinding.buttonCapture.scaleX = scale
+                    viewBinding.buttonCapture.scaleY = scale
+                }
+            }
+
+            scaleDownAnimator.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+
+                }
+            })
+            scaleDownAnimator.start()
+
+
             takePhoto()
         }
 
@@ -127,7 +160,7 @@ class CameraFragment : Fragment() {
             flash()
         }
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
+
 
 
         viewBinding.Btnnratio1x.setOnClickListener {
@@ -157,6 +190,18 @@ class CameraFragment : Fragment() {
             deleImg()
         }
         viewBinding.btnExposure.setOnClickListener {
+            val vibrator =  requireContext().getSystemService(Vibrator::class.java)
+            if (vibrator?.hasAmplitudeControl() == true) {
+                val vibrationEffect = VibrationEffect.createOneShot(
+                    40,
+                    VibrationEffect.EFFECT_TICK
+                )
+                vibrator.vibrate(vibrationEffect)
+            } else {
+
+                vibrator?.vibrate(40)
+            }
+
             viewBinding.brightnessSb.visibility = View.VISIBLE
         }
 
@@ -257,7 +302,6 @@ class CameraFragment : Fragment() {
     }
 
     private fun takePhoto() {
-
 
         if (!allPermissionsGranted()) {
             capquyencam()
@@ -364,13 +408,13 @@ class CameraFragment : Fragment() {
 
         cameraSelector = when (cameraSelector) {
             CameraSelector.DEFAULT_BACK_CAMERA -> {
-                viewBinding.buttonSwitchCamera.setImageResource(R.drawable.ic_backcam)
+                viewBinding.buttonSwitchCamera.animate().rotationBy(-180f).start()
                 CameraSelector.DEFAULT_FRONT_CAMERA
 
             }
 
             CameraSelector.DEFAULT_FRONT_CAMERA -> {
-                viewBinding.buttonSwitchCamera.setImageResource(R.drawable.ic_frontcam)
+                viewBinding.buttonSwitchCamera.animate().rotationBy(180f).start()
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
 
@@ -587,18 +631,10 @@ class CameraFragment : Fragment() {
 
 
     companion object {
-        private lateinit var cameraProvider: ProcessCameraProvider
 
-        fun setCameraProvider(provider: ProcessCameraProvider) {
-            cameraProvider = provider
-        }
-
-        fun getCameraProvider(): ProcessCameraProvider? {
-            return if (Companion::cameraProvider.isInitialized) cameraProvider else null
-        }
 
         private const val TAG = "CameraXApp"
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+
         private val REQUIRED_PERMISSIONS =
             mutableListOf(
                 Manifest.permission.CAMERA

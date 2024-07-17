@@ -633,6 +633,7 @@ class PostRepository {
 
 
                             postRef.delete().await()
+
                             true
                         } else {
                             postRef.update("hiddenForUsers", FieldValue.arrayUnion(currentId))
@@ -687,61 +688,7 @@ class PostRepository {
 
 
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-//    fun listenForNewPosts(onNewPostCount: (Int) -> Unit) {
-//        repositoryScope.launch {
-//            val currentUserId = auth.currentUser?.uid ?: return@launch
-//            val friendIds = getFriendIds(currentUserId)
-//
-//            if (friendIds.isNotEmpty()) {
-//                val postRef = fireStore.collection("posts")
-//                    .whereIn("userId", friendIds)
-//                    .orderBy("createdAt", Query.Direction.DESCENDING)
-//
-//                postRef.addSnapshotListener { snapshot, error ->
-//                    if (error != null) {
-//                        Log.e("PostRepository", "Listen failed: ${error.message}")
-//                        return@addSnapshotListener
-//                    }
-//
-//
-//                    if (snapshot != null) {
-//                        val posts = snapshot.toObjects(Post::class.java)
-//
-//                        val newPosts = posts.filter { !it.viewedBy.contains(currentUserId) }
-//                        onNewPostCount(newPosts.size)
-//                    }
-//                }
-//            } else {
-//                onNewPostCount(0)
-//                Log.d("PostRepository", "Không có bạn bè để truy vấn.")
-//            }
-//        }
-//    }
-//    fun listenForNewPosts(onNewPostCount: (Int) -> Unit): ListenerRegistration {
-//        val currentUserId = auth.currentUser?.uid ?: return ListenerRegistration {  }
-//
-//        val postRef = fireStore.collection("posts")
-//            .orderBy("createdAt", Query.Direction.DESCENDING)
-//
-//        return postRef.addSnapshotListener { snapshot, error ->
-//            repositoryScope.launch {
-//                if (error != null) {
-//                    Log.e("PostRepository", "Listen failed: ${error.message}")
-//                    return@launch
-//                }
-//
-//                val friendIds = getFriendIds(currentUserId)
-//
-//                if (snapshot != null) {
-//                    val posts = snapshot.toObjects(Post::class.java)
-//                    val newPosts = posts.filter { post ->
-//                        friendIds.contains(post.userId) && !post.viewedBy.contains(currentUserId)
-//                    }
-//                    onNewPostCount(newPosts.size)
-//                }
-//            }
-//        }
-//    }
+
 
     private var postListenerRegistration: ListenerRegistration? = null
 

@@ -87,7 +87,7 @@ xmlns:tools="http://schemas.android.com/tools">
                     android:layout_height="40dp"
                     android:backgroundTint="@color/black"
                     android:gravity="center"
-                    android:text="phát"
+                    android:text="Phát"
                     android:focusable="true"
                     android:textColor="@color/white" />
                 <Space

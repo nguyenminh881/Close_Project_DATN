@@ -152,8 +152,7 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.btnRecord.setOnClickListener {
             if (currentFragmentPosition != 1) {
-                CameraFragment().getCameraProvider()?.unbindAll() // Giải phóng camera
-                viewBinding.viewpp.setCurrentItem(1, true) // Chuyển đến RecordFragment
+                viewBinding.viewpp.setCurrentItem(1, true)
                 currentFragmentPosition = 1
                 it.backgroundTintList= ContextCompat.getColorStateList(this, R.color.color_active)
                 viewBinding.btnCamera.backgroundTintList = ContextCompat.getColorStateList(this,
@@ -236,34 +235,31 @@ class MainActivity : AppCompatActivity() {
 
         //go pot
         viewBinding.xembai.setOnClickListener {
-
             gotoposts()
         }
 
 
 ///newpost
-        postVmodel.newPostCount.observe(this){
-            if(it > 0){
-                viewBinding.newposttxt.visibility = View.VISIBLE
-                val count = if (it > 9) "9+" else it.toString()
-                viewBinding.newposttxt.text =count
-            }else{
+
+        postVmodel.isListeningForNewPosts.observe(this) { isListening ->
+            if (isListening) {
+                postVmodel.newPostCount.observe(this) {
+                    if (it > 0) {
+                        viewBinding.newposttxt.visibility = View.VISIBLE
+                        val count = if (it > 9) "9+" else it.toString()
+                        viewBinding.newposttxt.text = count
+                    } else {
+                        viewBinding.newposttxt.visibility = View.GONE
+                    }
+                }
+            } else {
                 viewBinding.newposttxt.visibility = View.GONE
             }
         }
-
-
-
     }
-    override fun onPause() {
-        super.onPause()
-        postVmodel.stopListeningForNewPosts()
 
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putLong("last_listen_time", System.currentTimeMillis()).apply()
-    }
     private fun gotoposts(){
-
+        postVmodel.stopListeningForNewPosts()
         val intent = Intent(this@MainActivity, PostList::class.java)
         val options = ActivityOptions.makeCustomAnimation(
             this@MainActivity,

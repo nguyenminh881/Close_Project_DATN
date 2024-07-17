@@ -80,7 +80,6 @@
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginEnd="8dp"
-                    android:maxLength="200"
                     android:maxLines="6"
                     android:text="@{postxml.content}"
                     android:textColor="@color/dark"

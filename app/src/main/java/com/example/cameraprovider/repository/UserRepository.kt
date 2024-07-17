@@ -303,7 +303,7 @@ class UserRepository {
                 for (document in messagesSnapshot.documents) {
                     document.reference.delete().await()
                 }
-
+                Log.d("UserRepository", "Deleted ${messagesSnapshot.documents.size} messages.")
                 // xoa like
                 val likesSnapshot = fireStore.collection("likes")
                     .whereEqualTo("userId", userId)
@@ -313,7 +313,7 @@ class UserRepository {
                 for (document in likesSnapshot.documents) {
                     document.reference.delete().await()
                 }
-
+                Log.d("UserRepository", "Deleted ${likesSnapshot.documents.size} likes.")
                 // xoa khoi ban be
                 val friendshipsSnapshot = fireStore.collection("friendships")
                     .whereEqualTo("uid1", userId)
@@ -323,7 +323,7 @@ class UserRepository {
                 for (document in friendshipsSnapshot.documents) {
                     document.reference.delete().await()
                 }
-
+                Log.d("UserRepository", "Deleted ${friendshipsSnapshot.documents.size} friendships (uid1).")
                 val friendshipsSnapshot2 = fireStore.collection("friendships")
                     .whereEqualTo("uid2", userId)
                     .get()
@@ -332,16 +332,31 @@ class UserRepository {
                 for (document in friendshipsSnapshot2.documents) {
                     document.reference.delete().await()
                 }
+                Log.d("UserRepository", "Deleted ${friendshipsSnapshot2.documents.size} friendships (uid2).")
+
 
                 val storageRef = storage.reference.child(userId)
                 storageRef.child("avatar").listAll().await().items.forEach { it.delete().await() }
                 storageRef.child("post_voice").listAll().await().items.forEach { it.delete().await() }
                 storageRef.child("post_image").listAll().await().items.forEach { it.delete().await() }
 
+                val postsSnapshot = fireStore.collection("posts")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .await()
+
+                for (document in postsSnapshot.documents) {
+                    document.reference.delete().await()
+                }
+                Log.d("UserRepository", "Deleted ${postsSnapshot.documents.size} posts.")
+
+
                 // xoa users
                 fireStore.collection("users").document(userId).delete().await()
 
                 user.delete().await()
+
+                fireStore.terminate()
                 Log.d("UserRepository", "User account deleted.")
                 Result.success(true)
             } catch (e: Exception) {

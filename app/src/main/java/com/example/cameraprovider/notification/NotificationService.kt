@@ -81,7 +81,7 @@ class NotificationService : Service() {
             val channel = NotificationChannel(
                 "message_channel",
                 "Tin nhắn",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
         }
@@ -97,7 +97,7 @@ class NotificationService : Service() {
             .setSmallIcon(R.drawable.ic_heart) // Thay bằng icon của bạn
             .setContentTitle("Tin nhắn mới từ ${sender.nameUser}")
             .setContentText(message.message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
@@ -116,7 +116,7 @@ class NotificationService : Service() {
             val channel = NotificationChannel(
                 "like_channel",
                 "Like mới",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
         }
@@ -132,7 +132,7 @@ class NotificationService : Service() {
             .setSmallIcon(R.drawable.ic_heart)
             .setContentTitle("${user.nameUser}")
             .setContentText("Đã thêm một hoạt động vào bài viết của bạn 💖")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 

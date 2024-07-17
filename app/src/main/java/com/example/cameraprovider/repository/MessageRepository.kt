@@ -201,7 +201,6 @@ class MessageRepository() {
 
         fun checkIfComplete(totalFriends: Int) {
             if (friends.size == totalFriends && lastMessages.size == totalFriends) {
-                // sap ds theo tn cuoi
                 val sortedFriends = friends.sortedByDescending { user ->
                     lastMessages[user.UserId]?.createdAt?.toLongOrNull() ?: 0L
                 }
@@ -219,7 +218,11 @@ class MessageRepository() {
         }
 
         val friendIds = mutableSetOf<String>()
-        val currentUserId = auth.currentUser?.uid ?: throw Exception("Vui lòng đăng nhập!")
+        val currentUserId = auth.currentUser?.uid
+        if (currentUserId == null) {
+            onError(Exception("Vui lòng đăng nhập!"))
+            return
+        }
 
         fun fetchFriendDetails(friendId: String) {
             fireStore.collection("users").document(friendId).get()
@@ -476,6 +479,7 @@ class MessageRepository() {
             onComplete(Result.success(geminiMessage))
         } catch (e: Exception) {
             onComplete(Result.failure(e))
+            Log.e("MessageRepository", "Error sending message to Gemini", e)
         }
     }
 

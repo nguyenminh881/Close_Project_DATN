@@ -21,6 +21,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 
@@ -82,79 +83,79 @@ class PostList : AppCompatActivity() {
             binding.shimmerLayout.startShimmer()
             binding.shimmerLayout.visibility = View.VISIBLE
 
-
             //  trạng thái tải dữ liệu
             lifecycleScope.launch {
                 postApdapter.loadStateFlow.collectLatest { loadStates ->
                     if (loadStates.refresh is LoadState.NotLoading) {
+                        binding.recyclerView.scrollToPosition(0)
                         binding.swipeRefreshLayout.isRefreshing = false
                         binding.shimmerLayout.stopShimmer()
                         binding.shimmerLayout.visibility = View.GONE
-                        binding.recyclerView.scrollToPosition(0)
+                    }
+                }
+            }
+        }
+///gan dl vao paging
+        lifecycleScope.launch {
+            postViewModel.posts
+                .collectLatest { pagingData ->
+                    postApdapter.submitData(pagingData)
+                }
+        }
+
+
+        lifecycleScope.launch {
+            postApdapter.loadStateFlow.collectLatest { loadStates ->
+                if (loadStates.refresh is LoadState.Loading) {
+                    binding.shimmerLayout.startShimmer()
+                    binding.shimmerLayout.visibility = View.VISIBLE
+                } else {
+                    binding.shimmerLayout.stopShimmer()
+                    binding.shimmerLayout.visibility = View.GONE
+
+                    val errorState = when {
+                        loadStates.refresh is LoadState.Error -> loadStates.refresh as LoadState.Error
+                        loadStates.prepend is LoadState.Error -> loadStates.prepend as LoadState.Error
+                        loadStates.append is LoadState.Error -> loadStates.append as LoadState.Error
+                        else -> null
+                    }
+
+                    if (errorState != null) {
+                        binding.shimmerLayout.stopShimmer()
+                        AlertDialog.Builder(this@PostList, R.style.AlertDialogTheme)
+                            .setTitle("Lỗi kết nối")
+                            .setMessage("Không thể kết nối, vui lòng kiểm tra kết nối mạng của bạn.")
+                            .setPositiveButton("Thử lại") { it, _ ->
+                                postApdapter.retry()
+                                it.dismiss()
+                            }
+                            .setCancelable(true)
+                            .show()
+                    } else {
+                        postApdapter.registerAdapterDataObserver(object :
+                            RecyclerView.AdapterDataObserver() {
+                            override fun onChanged() {
+                                super.onChanged()
+                                updateUIBasedOnItemCount()
+                            }
+
+                            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                                super.onItemRangeInserted(positionStart, itemCount)
+                                updateUIBasedOnItemCount()
+                            }
+
+                            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                                super.onItemRangeRemoved(positionStart, itemCount)
+                                updateUIBasedOnItemCount()
+                            }
+                        })
+                        updateUIBasedOnItemCount()
                     }
                 }
             }
         }
 
 
-///gan dl vao paging
-        lifecycleScope.launch {
-            postViewModel.posts
-                .collectLatest { pagingData ->
-                    postApdapter.submitData(pagingData)
-
-                    Log.d("PostListActivity", "Submitted data, ItemCount: ${postApdapter.itemCount}")
-                }
-
-        }
-
-
-
-        postApdapter.addLoadStateListener { loadState ->
-
-            if (loadState.refresh is LoadState.Loading) {
-                binding.shimmerLayout.startShimmer()
-
-            } else {
-                binding.shimmerLayout.stopShimmer()
-
-                binding.shimmerLayout.visibility = View.GONE
-
-
-            //kiem tra xem co bai dang nao k
-
-            val isListEmpty = postApdapter.itemCount == 0
-
-            if (isListEmpty) {
-                binding.postsContainer.visibility = View.INVISIBLE
-                binding.emptyListPost.visibility = View.VISIBLE
-            } else {
-                binding.postsContainer.visibility = View.VISIBLE
-                binding.emptyListPost.visibility = View.GONE
-                val errorState = when {//k load đc thì thì là lòad lỗi
-                    loadState.refresh is LoadState.Error -> loadState.refresh as LoadState.Error ///khi du lieu dc lam moi
-                    loadState.prepend is LoadState.Error -> loadState.prepend as LoadState.Error //khi du lieu dc keo len
-                    loadState.append is LoadState.Error -> loadState.append as LoadState.Error //khi keo xuong load them dl
-                    else -> null
-                }
-
-                errorState?.let {
-                    // Hiển thị dialog thông báo lỗi
-                    val dialog = AlertDialog.Builder(this)
-                        .setTitle("Lỗi kết nối")
-                        .setMessage("Không thể kết nối, vui lòng kiểm tra kết nối mạng của bạn.")
-                        .setCancelable(true)
-                        .show()
-
-                    // Đóng dialog sau 3 giây
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        dialog.dismiss()
-                    }, 2000) // 3000 milliseconds = 3 giây
-                }
-            }
-
-        }}
-//xu ly loi indexbounds
         postApdapter.addOnPagesUpdatedListener {
             if (postApdapter.itemCount == 0) {
                 currentPostPosition = -1
@@ -175,14 +176,17 @@ class PostList : AppCompatActivity() {
                         val currentUserId = postApdapter.getPostUserId(currentPostPosition)
                         if (currentUserId != previousUserId) {
                             previousUserId = currentUserId
-                            binding.btnGroupLayout.visibility = if (currentUserId == postViewModel.getcurrentId()) {
-                                View.GONE
-                            } else {
-                                View.VISIBLE
-                            }
+                            binding.btnGroupLayout.visibility =
+                                if (currentUserId == postViewModel.getcurrentId()) {
+                                    View.GONE
+                                } else {
+                                    View.VISIBLE
+                                }
                         }
 
                         binding.btnShare.setOnClickListener {
+                            binding.progressBar.visibility = View.VISIBLE
+                            binding.btnShare.visibility = View.INVISIBLE
                             val url = postApdapter.getContentFile(currentPostPosition)
                             if (url != null) {
                                 if (postApdapter.getItemViewType(currentPostPosition) == VIEW_TYPE_IMAGE) {
@@ -284,7 +288,6 @@ class PostList : AppCompatActivity() {
         }
 
 
-
         //back ve main
         binding.dangbai.setOnClickListener {
             this.onStop()
@@ -310,13 +313,18 @@ class PostList : AppCompatActivity() {
 
 //cmt
         messViewModel.messagesend.observe(this) {
-            if (messViewModel.messagesend.value != null) {
+            if (it != null && it!!.length > 0) {
                 binding.btnSend.isEnabled = true
+                binding.btnSend.backgroundTintList =
+                    ContextCompat.getColorStateList(this, R.color.color_active)
             } else {
                 binding.btnSend.isEnabled = false
+                binding.btnSend.backgroundTintList =
+                    ContextCompat.getColorStateList(this, R.color.bg_input)
             }
         }
-        // Xử lý khi click vào button gửi để ẩn bàn phím
+
+        //gui di
         binding.btnSend.setOnClickListener {
             val content = postApdapter.getPost(currentPostPosition)!!.content ?: ""
             val userAvt = postApdapter.getPost(currentPostPosition)!!.userAvatar ?: ""
@@ -346,22 +354,75 @@ class PostList : AppCompatActivity() {
                 Snackbar.make(binding.root, "Gửi thành công!", Snackbar.LENGTH_SHORT).show()
             }
         }
-
+        var isObservingAdapterChanges = true
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
             if (isDeleted == true) {
-                postApdapter.notifyItemRemoved(currentPostPosition)
-                Log.d(
-                    "PostListdelete",
-                    "New post thay thế  : $currentPostPosition with UserId: ${postApdapter.getPost(currentPostPosition)!!.postId},${postApdapter.getPost(currentPostPosition)!!.userId}"
-                )
                 postViewModel.invalidatePagingSource()
+                postApdapter.refresh()
+                Handler(Looper.getMainLooper()).postDelayed({
+                    Log.d(
+                        "PostListdelete",
+                        "new post at position: $currentPostPosition with new id: ${
+                            postApdapter.getPostUserId(
+                                currentPostPosition
+                            )
+                        }"
+                    )
+                    isObservingAdapterChanges = false
+
+                }, 1000)
+
 
                 Snackbar.make(binding.root, "Xóa thành công!", Snackbar.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "Vui lòng thử lại sau", Toast.LENGTH_SHORT).show()
             }
         }
+
+
+
+        val adapterDataObserver = object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+
+                if (isObservingAdapterChanges) {
+                    super.onItemRangeRemoved(positionStart, itemCount)
+
+                    val layoutManager = binding.recyclerView.layoutManager as LinearLayoutManager
+                    val newPosition = layoutManager.findFirstVisibleItemPosition()
+
+                    currentPostPosition = newPosition
+
+                    if (currentPostPosition in 0 until postApdapter.itemCount) {
+                        val currentUserId = postApdapter.getPostUserId(currentPostPosition)
+                        if (currentUserId != previousUserId) {
+                            previousUserId = currentUserId
+                            binding.btnGroupLayout.visibility =
+                                if (currentUserId == postViewModel.getcurrentId()) {
+                                    View.GONE
+                                } else {
+                                    View.VISIBLE
+                                }
+                        }
+                    }
+                    Log.d(
+                        "PostListdelete",
+                        "new post at position: $currentPostPosition with new id: ${
+                            postApdapter.getPostUserId(
+                                currentPostPosition
+                            )
+                        }"
+                    )
+
+                }
+            }
+        }
+
+        postApdapter.registerAdapterDataObserver(adapterDataObserver)
+
+
+
+
 
         binding.btnDelete.setOnClickListener {
 
@@ -427,12 +488,17 @@ class PostList : AppCompatActivity() {
 
         //newpost
 
-
-        postViewModel.newPostCount.observe(this) {
-            if (it > 0) {
-                binding.btnNewpost.visibility = View.VISIBLE
-                val count = if (it > 9) "9+" else it.toString()
-                binding.btnNewpost.text = "Mới(${count})"
+        postViewModel.isListeningForNewPosts.observe(this) { isListening ->
+            if (isListening) {
+                postViewModel.newPostCount.observe(this) {
+                    if (it > 0) {
+                        binding.btnNewpost.visibility = View.VISIBLE
+                        val count = if (it > 9) "9+" else it.toString()
+                        binding.btnNewpost.text = "Mới(${count})"
+                    } else {
+                        binding.btnNewpost.visibility = View.INVISIBLE
+                    }
+                }
             } else {
                 binding.btnNewpost.visibility = View.INVISIBLE
             }
@@ -453,14 +519,24 @@ class PostList : AppCompatActivity() {
                 postApdapter.loadStateFlow.collectLatest { loadStates ->
                     if (loadStates.refresh is LoadState.NotLoading) {
                         binding.swipeRefreshLayout.isRefreshing = false
+                        binding.recyclerView.scrollToPosition(0)
                         binding.shimmerLayout.stopShimmer()
                         binding.shimmerLayout.visibility = View.GONE
-                        binding.recyclerView.scrollToPosition(0)
                     }
                 }
             }
         }
 
+    }
+
+    private fun updateUIBasedOnItemCount() {
+        if (postApdapter.itemCount > 0) {
+            binding.postsContainer.visibility = View.VISIBLE
+            binding.emptyListPost.visibility = View.GONE
+        } else {
+            binding.postsContainer.visibility = View.GONE
+            binding.emptyListPost.visibility = View.VISIBLE
+        }
     }
 
     private fun toggleEditTextVisibility() {
@@ -471,9 +547,6 @@ class PostList : AppCompatActivity() {
 
             binding.realedittext.requestFocus()
             showKeyboard()
-
-
-
 
             isKeyboardVisible = true
         } else {
@@ -548,6 +621,11 @@ class PostList : AppCompatActivity() {
                         shareUri(context, uri, "image/*")
                     } catch (e: IOException) {
                         Log.e("ShareImage", "không thể lưu ảnh", e)
+                    } finally {
+                        runOnUiThread {
+                            binding.progressBar.visibility = View.GONE
+                            binding.btnShare.visibility = View.VISIBLE
+                        }
                     }
                 }
 
@@ -591,6 +669,11 @@ class PostList : AppCompatActivity() {
                 }
             } catch (e: IOException) {
                 Log.e("ShareAudio", "không thể lưu voice", e)
+            } finally {
+                runOnUiThread {
+                    binding.progressBar.visibility = View.GONE
+                    binding.btnShare.visibility = View.VISIBLE
+                }
             }
         }.start()
     }

@@ -301,16 +301,43 @@
                 android:layout_marginBottom="20dp"
            >
 
-                <ImageButton
-                    android:id="@+id/btn_share"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:backgroundTint="@color/colorbtnctive"
-                    android:background="@drawable/edittextbd10dp"
-                    android:padding="8dp"
-                    android:elevation="10dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_share" />
+                    android:layout_height="wrap_content">
+
+                    <ImageButton
+                        android:id="@+id/btn_share"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:backgroundTint="@color/colorbtnctive"
+                        android:background="@drawable/edittextbd10dp"
+                        android:padding="8dp"
+                        android:elevation="10dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_share"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        android:layout_width="0dp"
+                        app:layout_constraintWidth_percent="1.0"
+                        app:layout_constraintHeight_percent="1.0"
+                        app:backgroundTint="@color/colorbtnctive"
+                        android:indeterminateTint="@android:color/white"
+                        android:layout_height="0dp"
+                        android:background="@drawable/edittextbd10dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                        app:layout_constraintStart_toStartOf="@id/btn_share"
+                        app:layout_constraintTop_toTopOf="@id/btn_share"
+                        app:layout_constraintEnd_toEndOf="@id/btn_share"
+                        app:layout_constraintBottom_toBottomOf="@id/btn_share"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -408,7 +435,7 @@
                     android:gravity="center"
                     android:text="Gửi"
                     android:textSize="14sp"
-                    app:backgroundTint="#505050"/>
+                    app:backgroundTint="@color/bg_input"/>
 
             </LinearLayout>
 

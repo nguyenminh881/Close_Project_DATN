@@ -257,7 +257,7 @@ Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
                                         stopAudio()
                                     }
                                     isplay = true
-                                    binding.play.text = "dừng"
+                                    binding.play.text = "Dừng"
                                     handler.post(updateWaveform)
                                 } catch (e: IOException) {
                                     Log.e("VoiceViewHolder", "loi", e)
@@ -281,7 +281,7 @@ Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
                 mediaPlayer.stop()
                 mediaPlayer.reset()
                 isplay = false
-                binding.play.text = "phát"
+                binding.play.text = "Phát"
                 handler.removeCallbacks(updateWaveform)
                 binding.wave.progress = 0f
             }
@@ -307,7 +307,7 @@ Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
                     Log.d("TAGY", "Progress set: $progress, and it's $byUser that user did this")
                     if (byUser && isplay) {
                         val seekToPosition = (mediaPlayer!!.duration * progress / 100.0).toInt()
-//                        postRowVoiceBinding.wave.progress = progress
+
                         Log.d("TAGY", "Seeking to position: $seekToPosition")
                         mediaPlayer?.seekTo(seekToPosition)
                     }

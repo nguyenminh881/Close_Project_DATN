@@ -75,7 +75,7 @@ class PostWidget() : AppWidgetProvider(), LifecycleOwner {
                     .load(post.imageURL)
                     .apply(
                         RequestOptions.bitmapTransform(
-                            RoundedCorners(100)
+                            RoundedCorners(16)
                         )
                     )
                     .into(postImageTarget)

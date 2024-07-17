@@ -251,7 +251,10 @@ class FriendRepository {
     fun getFriendAccepted(onSuccess: (MutableList<User>) -> Unit, onFailure: (Exception) -> Unit) {
         try {
             val currentUserId = auth.currentUser?.uid
-                ?: throw Exception("Vui lòng đăng nhập!")
+            if (currentUserId == null) {
+                Log.d("FriendRepository", "Người dùng chưa đăng nhập")
+                return
+            }
 
             Log.d("FriendRepository", "Đang lấy danh sách bạn bè cho người dùng $currentUserId")
 
