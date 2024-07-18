@@ -13,9 +13,8 @@ import java.util.concurrent.Executors
 class MyAppGlideModule : AppGlideModule() {
     override fun applyOptions(context: Context, builder: GlideBuilder) {
 
-        val executor = Executors.newFixedThreadPool(10)
-
-        builder.setDiskCache(InternalCacheDiskCacheFactory(context, 50 * 1024 * 1024)) // 50 MB disk cache
-        builder.setMemoryCache(LruResourceCache(10 * 1024 * 1024)) // 10 MB memory cache
+        Executors.newFixedThreadPool(6)
+        builder.setDiskCache(InternalCacheDiskCacheFactory(context, 50 * 1024 * 1024))
+        builder.setMemoryCache(LruResourceCache(10 * 1024 * 1024))
     }
 }

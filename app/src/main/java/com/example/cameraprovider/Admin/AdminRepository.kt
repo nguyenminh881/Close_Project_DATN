@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import java.net.URLDecoder
 import java.util.Calendar
 import java.util.Date
 
@@ -68,14 +69,17 @@ class AdminRepository {
                 if (postSnapshot.exists()) {
                     val post = postSnapshot.toObject(Post::class.java)
                     if (post != null) {
+                        val decodedImageUrl = URLDecoder.decode(post.imageURL, "UTF-8")
+                        val decodedVoiceUrl = URLDecoder.decode(post.voiceURL, "UTF-8")
                         when {
-                            post.imageURL == null && post.voiceURL != null -> {
-                                val voiceRef = storage.getReferenceFromUrl(post.voiceURL)
+                            post.imageURL == "" && post.voiceURL != "" -> {
+                                val voiceRef = storage.getReferenceFromUrl(decodedVoiceUrl)
+                                Log.d("XOAVOICE", "delete URL obtained: $voiceRef")
                                 voiceRef.delete().await()
                             }
 
-                            post.imageURL != null && post.voiceURL == null -> {
-                                val imageRef = storage.getReferenceFromUrl(post.imageURL)
+                            post.imageURL != "" && post.voiceURL == "" -> {
+                                val imageRef = storage.getReferenceFromUrl(decodedImageUrl)
                                 imageRef.delete().await()
                             }
                         }

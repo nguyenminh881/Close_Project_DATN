@@ -65,6 +65,7 @@
         android:layout_marginBottom="30dp"
         android:backgroundTint="@color/colorbtnctive"
         android:gravity="center"
+        android:enabled="false"
         android:text="Gửi mật khẩu"
         android:textColor="@color/black"
         android:textSize="16sp"

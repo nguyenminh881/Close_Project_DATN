@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import androidx.paging.LoadState
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -62,6 +63,26 @@ class PostPagingAdapter(
         }
     }
 
+
+    init {
+        addLoadStateListener { loadState ->
+            if (loadState.refresh is LoadState.NotLoading && loadState.append.endOfPaginationReached) {
+                snapshot().items.forEach { post ->
+                    prefetchImage(post.imageURL)
+                    prefetchImage(post.userAvatar)
+                }
+            }
+        }
+    }
+    private fun prefetchImage(imageUrl: String?) {
+        if (imageUrl != null) {
+            Glide.with(context)
+                .load(imageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .onlyRetrieveFromCache(true)
+                .preload()
+        }
+    }
     class ImageViewHolder(val binding: PostRowBinding) : RecyclerView.ViewHolder(binding.root) {
         private var currentLikesLiveData: LiveData<List<Pair<String, List<String>>>>? = null
 

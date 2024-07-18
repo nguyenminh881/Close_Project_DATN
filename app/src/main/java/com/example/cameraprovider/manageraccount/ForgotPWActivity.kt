@@ -31,5 +31,15 @@ class ForgotPWActivity : AppCompatActivity() {
         authViewModel.btntext.observe(this) {
             binding.forgotpassword.text = it
         }
+
+        authViewModel.emailforgot.observe(this) {
+            if (it != null && it.matches(Regex("^[A-Za-z0-9+_.-]{2,}@[A-Za-z0-9.-]{2,}\\.[A-Za-z0-9-]{2,}\$"))) {
+                binding.forgotpassword.isEnabled = true
+                binding.forgotpassword.backgroundTintList = this.getColorStateList(R.color.color_active)
+            }else{
+                binding.forgotpassword.isEnabled = false
+                binding.forgotpassword.backgroundTintList = this.getColorStateList(R.color.colorbtnctive)
+            }
+        }
     }
 }

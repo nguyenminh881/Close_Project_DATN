@@ -235,6 +235,7 @@ class MainActivity : AppCompatActivity() {
 
         //go pot
         viewBinding.xembai.setOnClickListener {
+            postVmodel.stopListeningForNewPosts()
             gotoposts()
         }
 
@@ -259,7 +260,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun gotoposts(){
-        postVmodel.stopListeningForNewPosts()
+
         val intent = Intent(this@MainActivity, PostList::class.java)
         val options = ActivityOptions.makeCustomAnimation(
             this@MainActivity,
@@ -286,6 +287,8 @@ class MainActivity : AppCompatActivity() {
             if (e1 != null && e2 != null) {
                 // Xác định hướng và tốc độ vuốt
                 if (e1.y - e2.y > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+
+                    postVmodel.stopListeningForNewPosts()
                     gotoposts()
                     return true
                 }

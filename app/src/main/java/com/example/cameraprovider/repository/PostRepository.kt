@@ -111,10 +111,10 @@ class PostRepository {
     fun getPosts(): Flow<PagingData<Post>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 20,
+                pageSize = 1,
                 enablePlaceholders = false,
-                prefetchDistance = 10,
-                initialLoadSize = 10,
+                prefetchDistance = 20,
+                initialLoadSize = 20,
                 maxSize = 100,
                 jumpThreshold = 10
             ),

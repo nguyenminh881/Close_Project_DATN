@@ -572,22 +572,29 @@ class CameraFragment : Fragment() {
 
 
 
-                cameraProvider.unbindAll()
-                val camera = cameraProvider.bindToLifecycle(
-                    viewLifecycleOwner,
-                    cameraSelectorToUse,
-                    preview,
-                    imageCapture
-                )
 
-                Log.d("CameraCheck", "HDR enabled: ${(ExtensionMode.HDR)}")
-                Log.d("CameraCheck", "Bokeh enabled: ${(ExtensionMode.BOKEH)}")
-                Log.d("CameraCheck", "Face Retouch enabled: ${(ExtensionMode.FACE_RETOUCH)}")
-                Log.d("CameraCheck", "Night enabled: ${(ExtensionMode.NIGHT)}")
+                try{   cameraProvider.unbindAll()
 
-                cameraControl = camera.cameraControl
-                cameraInfo = camera.cameraInfo
-                brightnessSlider()
+                    val camera = cameraProvider.bindToLifecycle(
+                        viewLifecycleOwner,
+                        cameraSelectorToUse,
+                        preview,
+                        imageCapture
+                    )
+
+                    Log.d("CameraCheck", "HDR enabled: ${(ExtensionMode.HDR)}")
+                    Log.d("CameraCheck", "Bokeh enabled: ${(ExtensionMode.BOKEH)}")
+                    Log.d("CameraCheck", "Face Retouch enabled: ${(ExtensionMode.FACE_RETOUCH)}")
+                    Log.d("CameraCheck", "Night enabled: ${(ExtensionMode.NIGHT)}")
+
+                    cameraControl = camera.cameraControl
+                    cameraInfo = camera.cameraInfo
+                    brightnessSlider()
+                }catch (e:Exception){
+                    Log.e("CameraCheckloi", "Camera không khả dụng ${e.message}")
+                    Toast.makeText(requireContext(), "Camera không khả dụng, Vui lòng thử đổi camera trước", Toast.LENGTH_SHORT).show()
+                }
+
             }, ContextCompat.getMainExecutor(requireContext())
         )
 

@@ -156,11 +156,6 @@ class PostList : AppCompatActivity() {
         }
 
 
-        postApdapter.addOnPagesUpdatedListener {
-            if (postApdapter.itemCount == 0) {
-                currentPostPosition = -1
-            }
-        }
 //lang nghe cuon
         binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -354,6 +349,9 @@ class PostList : AppCompatActivity() {
                 Snackbar.make(binding.root, "Gửi thành công!", Snackbar.LENGTH_SHORT).show()
             }
         }
+
+
+
         var isObservingAdapterChanges = true
 //xoa bai
         postViewModel.deletePost.observe(this) { isDeleted ->
@@ -361,16 +359,7 @@ class PostList : AppCompatActivity() {
                 postViewModel.invalidatePagingSource()
                 postApdapter.refresh()
                 Handler(Looper.getMainLooper()).postDelayed({
-                    Log.d(
-                        "PostListdelete",
-                        "new post at position: $currentPostPosition with new id: ${
-                            postApdapter.getPostUserId(
-                                currentPostPosition
-                            )
-                        }"
-                    )
                     isObservingAdapterChanges = false
-
                 }, 1000)
 
 
@@ -394,6 +383,13 @@ class PostList : AppCompatActivity() {
                     currentPostPosition = newPosition
 
                     if (currentPostPosition in 0 until postApdapter.itemCount) {
+
+                        Log.d(
+                            "PostListdelete",
+                            "new post at position: $currentPostPosition with new id: ${
+                                postApdapter.getPostUserId(currentPostPosition)
+                            }"
+                        )
                         val currentUserId = postApdapter.getPostUserId(currentPostPosition)
                         if (currentUserId != previousUserId) {
                             previousUserId = currentUserId
@@ -405,14 +401,6 @@ class PostList : AppCompatActivity() {
                                 }
                         }
                     }
-                    Log.d(
-                        "PostListdelete",
-                        "new post at position: $currentPostPosition with new id: ${
-                            postApdapter.getPostUserId(
-                                currentPostPosition
-                            )
-                        }"
-                    )
 
                 }
             }
