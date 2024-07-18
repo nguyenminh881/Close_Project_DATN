@@ -423,7 +423,6 @@ class PostList : AppCompatActivity() {
 
 
 
-
         binding.btnDelete.setOnClickListener {
 
             val post = postApdapter.getPost(currentPostPosition) ?: return@setOnClickListener

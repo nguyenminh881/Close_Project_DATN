@@ -151,7 +151,6 @@ class FriendRepository {
                 }
 
 
-                // Kiểm tra xem đã tồn tại yêu cầu kết bạn hay chưa
                 val existingFriendship = fireStore.collection("friendships")
                     .whereEqualTo("uid1", currentUserId)
                     .whereEqualTo("uid2", senderId)
@@ -161,11 +160,26 @@ class FriendRepository {
                     .documents
                     .firstOrNull()
                 if (existingFriendship != null) {
-                    // Đã tồn tại yêu cầu kết bạn, trả về lỗi hoặc thông báo
                     Result.failure(Exception("Đã là bạn bè rồi nhé"))
                 } else {
+
+                    val existingPendingFriendshipRef = fireStore.collection("friendships")
+                        .whereEqualTo("uid1", currentUserId)
+                        .whereEqualTo("uid2", senderId)
+                        .whereEqualTo("state", "pending")
+                        .get()
+                        .await()
+                        .documents
+                        .firstOrNull()?.reference
+
+                    if (existingPendingFriendshipRef != null) {
+                        fireStore.runTransaction { transaction ->
+                            transaction.update(existingPendingFriendshipRef, "timeStamp", Timestamp.now())
+                        }.await()
+                        return Result.failure(Exception("Đã gửi lời mời kết bạn!"))
+                    }
+
                     val getdoc = fireStore.collection("users").document(currentUserId).get().await()
-                    // Chưa có yêu cầu kết bạn, tạo mới
                     val newPostRef = fireStore.collection("friendships").document()
                     val id = newPostRef.id
                     val friendship = fireStore.runTransaction { transaction ->
