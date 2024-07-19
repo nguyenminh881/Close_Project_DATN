@@ -212,7 +212,7 @@ Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
                         val dialog = LikesBottomSheetDialog(post.postId, viewModel)
                         dialog.show(activity.supportFragmentManager, "LikesBottomSheetDialog")
                     }
-                    true // Trả về 'true' để báo hiệu rằng bạn đã xử lý sự kiện chạm
+                    true
                 }
                 currentLikesLiveData?.observe(lifecycleOwner) { likesData ->
                     if (likesData.isNotEmpty()) {
@@ -222,11 +222,6 @@ Log.d("checkiscurrentposst", "isCurrentUserForPost: ${isCurrentUserForPost}")
                         binding.nameUserLike.text = "Không có hoạt động nào ✨"
                     }
                 }
-
-
-
-
-
 
             } else {
                 binding.tvNameUserPost.text = post.userName

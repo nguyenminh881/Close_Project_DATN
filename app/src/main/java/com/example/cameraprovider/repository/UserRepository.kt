@@ -183,7 +183,22 @@ class UserRepository {
             Result.failure(exception)
         }
     }
+    suspend fun updateUserAvatarInPosts(userId: String, newAvatarUrl: String) {
+        try {
+            val postsRef = fireStore.collection("posts")
+            val querySnapshot = postsRef.whereEqualTo("userId", userId).get().await()
+            val batch = fireStore.batch()
 
+            for (document in querySnapshot.documents) {
+                val postRef = postsRef.document(document.id)
+                batch.update(postRef, "userAvatar", newAvatarUrl)
+            }
+
+            batch.commit().await()
+        } catch (e: Exception) {
+            Log.e("TAG", "Error updating user avatar in posts: ${e.message}", e)
+        }
+    }
     suspend fun updateAvatar(imageUri: Uri): Result<Boolean> {
         return try {
             val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
@@ -199,10 +214,27 @@ class UserRepository {
                 "avatarUser" to downloadUrl.toString()
             )
             fireStore.collection("users").document(userId).update(updates).await()
-
+            updateUserAvatarInPosts(userId, downloadUrl.toString())
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun updateUserNameInPosts(userId: String, newName: String) {
+        try {
+            val postsRef = fireStore.collection("posts")
+            val querySnapshot = postsRef.whereEqualTo("userId", userId).get().await()
+            val batch = fireStore.batch()
+
+            for (document in querySnapshot.documents) {
+                val postRef = postsRef.document(document.id)
+                batch.update(postRef, "userName", newName)
+            }
+
+            batch.commit().await()
+        } catch (e: Exception) {
+            Log.e("TAG", "Error updating user name in posts: ${e.message}", e)
         }
     }
 
@@ -213,6 +245,7 @@ class UserRepository {
             val userId = user.uid
             val docRef = fireStore.collection("users").document(userId)
             docRef.update("nameUser", newName).await()
+            updateUserNameInPosts(userId, newName)
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
