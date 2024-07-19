@@ -442,8 +442,8 @@ class MessageRepository() {
     suspend fun sendMessageToGemini(
         prompt: String,
         onComplete: (Result<Message>) -> Unit
-
     ) {
+
         try {
             val encodedMessage = Base64.encodeToString(prompt.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
             val userMessage = Message(

@@ -8,11 +8,14 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity() {
     private val CAMERA_PERMISSION_REQUEST_CODE = 1002
     private lateinit var viewBinding: ActivityMainBinding
     lateinit var gestureDetector: GestureDetector
+    private var backPressedOnce = false
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(
             UserRepository(),
@@ -230,9 +234,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
-
         //go pot
         viewBinding.xembai.setOnClickListener {
             postVmodel.stopListeningForNewPosts()
@@ -257,6 +258,45 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.newposttxt.visibility = View.GONE
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (backPressedOnce) {
+
+                    finishAffinity()
+                } else {
+
+                    backPressedOnce = true
+                    Toast.makeText(this@MainActivity, "Nhấn lần nữa để thoát", Toast.LENGTH_SHORT).show()
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        backPressedOnce = false
+                    }, 2000)
+                }
+            }
+        })
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     private fun gotoposts(){

@@ -325,7 +325,6 @@ class MessageAdapter(
 
             if (message.senderId == "Gemini") {
                 binding.avtRequest.setImageResource(R.drawable.ic_chatbot)
-
             } else {
                 Glide.with(binding.root).load(image).into(binding.avtRequest)
             }
@@ -335,22 +334,6 @@ class MessageAdapter(
                 binding.tvCreatedAt.visibility = View.VISIBLE
             } else {
                 binding.tvCreatedAt.visibility = View.GONE
-            }
-
-            lifecycle.lifecycleScope.launch {
-                lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    messageViewModel.isLoading.collect { isLoading ->
-                        if (isLoading) {
-                            binding.shimmerChat.visibility = View.VISIBLE
-                            binding.shimmerChat.startShimmer()
-                            binding.messageLayout.visibility = View.GONE
-                        } else {
-                            binding.shimmerChat.stopShimmer()
-                            binding.shimmerChat.visibility = View.GONE
-                            binding.messageLayout.visibility = View.VISIBLE
-                        }
-                    }
-                }
             }
 
             binding.root.setOnClickListener {

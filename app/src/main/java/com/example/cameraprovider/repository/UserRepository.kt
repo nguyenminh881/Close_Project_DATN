@@ -212,7 +212,7 @@ class UserRepository {
             val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
             val userId = user.uid
             val docRef = fireStore.collection("users").document(userId)
-            docRef.update("nameUser", newName).await() // Chờ Task hoàn thành
+            docRef.update("nameUser", newName).await()
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)

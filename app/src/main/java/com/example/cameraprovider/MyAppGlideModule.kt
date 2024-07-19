@@ -12,9 +12,8 @@ import java.util.concurrent.Executors
 @GlideModule
 class MyAppGlideModule : AppGlideModule() {
     override fun applyOptions(context: Context, builder: GlideBuilder) {
-
         Executors.newFixedThreadPool(6)
         builder.setDiskCache(InternalCacheDiskCacheFactory(context, 50 * 1024 * 1024))
-        builder.setMemoryCache(LruResourceCache(10 * 1024 * 1024))
+        builder.setMemoryCache(LruResourceCache(30 * 1024 * 1024))
     }
 }

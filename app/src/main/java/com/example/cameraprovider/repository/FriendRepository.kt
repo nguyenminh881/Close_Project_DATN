@@ -67,7 +67,7 @@ class FriendRepository {
 
         return dynamicLink.buildShortDynamicLink()
     }
-
+//create dynamic link
     suspend fun createdynamicLink(): String {
         val currentUser = auth.currentUser
         val currentUserId = currentUser?.uid
@@ -86,6 +86,7 @@ class FriendRepository {
         }
     }
 
+    //query param tu dynamiclink roi/ app link
     fun handleDynamicLink(intent: Intent, callback: (String?) -> Unit) {
         FirebaseDynamicLinks.getInstance()
             .getDynamicLink(intent)
@@ -113,6 +114,7 @@ class FriendRepository {
             }
     }
 
+    //lay tt nguoi gui link
     suspend fun getAvatarUsersendlink(userId: String?): Pair<String?, String?> {
         return try {
             val currentUser = auth.currentUser
@@ -137,17 +139,41 @@ class FriendRepository {
 
             if (senderId != null && currentUserId != null) {
 
-                val friendCount1 = fireStore.collection("friendships")
-                    .whereIn("uid1", listOf(currentUserId, senderId))
-                    .whereIn("uid2", listOf(currentUserId, senderId))
+                val friendCountQueryCurrentUser = fireStore.collection("friendships")
+                    .whereEqualTo("uid1", currentUserId)
                     .whereEqualTo("state", "Accepted")
                     .get()
                     .await()
-                    .documents
-                    .size
+                val friendCountCurrentUser = friendCountQueryCurrentUser.documents.size
 
-                if (friendCount1 >= 15) {
+                val friendCountQuerySender = fireStore.collection("friendships")
+                    .whereEqualTo("uid1", senderId)
+                    .whereEqualTo("state", "Accepted")
+                    .get()
+                    .await()
+                val friendCountSender = friendCountQuerySender.documents.size
+
+                val friendCountQueryCurrentUserInUid2 = fireStore.collection("friendships")
+                    .whereEqualTo("uid2", currentUserId)
+                    .whereEqualTo("state", "Accepted")
+                    .get()
+                    .await()
+                val friendCountCurrentUserInUid2 = friendCountQueryCurrentUserInUid2.documents.size
+
+
+                val friendCountQuerySenderInUid2 = fireStore.collection("friendships")
+                    .whereEqualTo("uid2", senderId)
+                    .whereEqualTo("state", "Accepted")
+                    .get()
+                    .await()
+                val friendCountSenderInUid2 = friendCountQuerySenderInUid2.documents.size
+
+                val totalFriendCountCurrentUser = friendCountCurrentUser + friendCountCurrentUserInUid2
+                val totalFriendCountSender = friendCountSender + friendCountSenderInUid2
+
+                if (totalFriendCountCurrentUser >= 15 || totalFriendCountSender >= 15) {
                     return Result.failure(Exception("Bạn hoặc người bạn muốn kết bạn đã đạt giới hạn 15 bạn bè"))
+                    Log.d("FriendRepository", "Bạn hoặc người bạn muốn kết bạn đã đạt giới hạn 15 bạn bè")
                 }
 
 

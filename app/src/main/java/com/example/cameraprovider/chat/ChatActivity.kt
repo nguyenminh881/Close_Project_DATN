@@ -68,20 +68,21 @@ class ChatActivity : AppCompatActivity() {
                 R.anim.slide_in_down, R.anim.slide_out_down
             )
             startActivity(intent,options.toBundle())
+            finish()
         }
 
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(
-                    this@ChatActivity,
-                    MainActivity::class.java
+                    this@ChatActivity, MainActivity::class.java
                 )
                 val options = ActivityOptions.makeCustomAnimation(
                     this@ChatActivity,
                     R.anim.slide_in_down, R.anim.slide_out_down
                 )
                 startActivity(intent, options.toBundle())
+                finish()
             }
         })
 
