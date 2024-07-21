@@ -46,10 +46,10 @@ class SignUp : AppCompatActivity() {
             }
         })
 
-
+        authViewModel.emailHelperText.observe(this) { email ->
         authViewModel.passwordHelperText.observe(this, { pw ->
             binding.apply {
-                if(pw == null){
+                if(pw == null && email == null){
                     btnSignup.isEnabled = true
                     btnSignup.backgroundTintList =
                         ActivityCompat.getColorStateList(baseContext, R.color.color_active)
@@ -59,7 +59,7 @@ class SignUp : AppCompatActivity() {
                         ActivityCompat.getColorStateList(baseContext, R.color.btndf)
                 }
             }
-        })
+        })}
 
         binding.btnBack.setOnClickListener {
             val intent = Intent(this, StartAppActivity::class.java)

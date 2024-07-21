@@ -39,7 +39,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.cameraprovider.chat.FriendListprivateBottomSheet
 import com.example.cameraprovider.R
 import com.example.cameraprovider.bottomdialogai.PromptDialogVoice
-
 import com.example.cameraprovider.databinding.FragmentRecordBinding
 import com.example.cameraprovider.repository.PostRepository
 import com.example.cameraprovider.viewmodel.PostViewModel
@@ -309,39 +308,41 @@ class RecordFragment : Fragment() {
 
         if (!allPermissionsGranted()) {
             capquyencam()
-        }
-        if (!isRecording) {
-            startRecording()
-            val scaleDownAnimator = ValueAnimator.ofFloat(0.92f, 1f).apply { // Giả sử icon ban đầu là 80dp
-                duration = 200
-                interpolator = DecelerateInterpolator()
-                addUpdateListener { valueAnimator ->
-                    val scale = valueAnimator.animatedValue as Float
-                    binding.btnrecord.scaleX = scale
-                    binding.btnrecord.scaleY = scale
+        }else{
+            if (!isRecording) {
+                startRecording()
+                val scaleDownAnimator = ValueAnimator.ofFloat(0.92f, 1f).apply { // Giả sử icon ban đầu là 80dp
+                    duration = 200
+                    interpolator = DecelerateInterpolator()
+                    addUpdateListener { valueAnimator ->
+                        val scale = valueAnimator.animatedValue as Float
+                        binding.btnrecord.scaleX = scale
+                        binding.btnrecord.scaleY = scale
+                    }
                 }
+
+                scaleDownAnimator.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        binding.btnrecord.setImageResource(R.drawable.ic_squre)
+                        binding.btnrecord.setBackgroundResource(R.drawable.whitering)
+                    }
+                })
+
+
+                scaleDownAnimator.start()
+
+                binding.play.text = "Đang ghi âm"
+                binding.play.isEnabled=false
+            } else {
+                stopRecording()
+                binding.btnrecord.scaleX = 1f
+                binding.btnrecord.scaleY = 1f
+                binding.btnrecord.setImageResource(R.drawable.ic_circle)
+                binding.btnrecord.setBackgroundResource(R.drawable.cornerradius)
+                binding.play.text = "Phát"
             }
-
-            scaleDownAnimator.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    binding.btnrecord.setImageResource(R.drawable.ic_squre)
-                    binding.btnrecord.setBackgroundResource(R.drawable.whitering)
-                }
-            })
-
-
-            scaleDownAnimator.start()
-
-            binding.play.text = "Đang ghi âm"
-            binding.play.isEnabled=false
-        } else {
-            stopRecording()
-            binding.btnrecord.scaleX = 1f
-            binding.btnrecord.scaleY = 1f
-            binding.btnrecord.setImageResource(R.drawable.ic_circle)
-            binding.btnrecord.setBackgroundResource(R.drawable.cornerradius)
-            binding.play.text = "Phát"
         }
+
     }
 
     //start nghe

@@ -5,10 +5,8 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.camera2.CameraDevice
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -282,8 +280,8 @@ class CameraFragment : Fragment() {
     }
 
     private fun capquyencam() {
-        val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
-        builder.setTitle("Bật quyền truy cập Máy ảnh")
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+        dialog.setTitle("Bật quyền truy cập Máy ảnh")
             .setMessage("Đến cài đặt ứng dụng cấp quyền để ứng dụng được hoạt động đúng đắn!")
             .setPositiveButton("ĐẾN CÀI ĐẶT") { dialog, _ ->
                 dialog.dismiss()
@@ -297,7 +295,6 @@ class CameraFragment : Fragment() {
                 dialog.dismiss()
             }
             .show()
-
 
     }
 

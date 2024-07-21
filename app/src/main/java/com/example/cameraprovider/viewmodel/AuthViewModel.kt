@@ -112,12 +112,11 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
     lateinit var imgUri: Uri
 
-
 //    private lateinit var imgURI:Uri
 
     //validate email
     private fun isBasicValidEmail(email: String): Boolean {
-        val basicEmailRegex = "^[A-Za-z0-9+_.-]{2,}@[A-Za-z0-9.-]{2,}\\.[A-Za-z0-9-]{2,}\$"
+        val basicEmailRegex = "^[A-Za-z0-9+_.-]{2,}@[A-Za-z0-9.-]{2,}\\.[A-Za-z]{2,}\$"
         return Pattern.compile(basicEmailRegex).matcher(email).matches()
     }
 
@@ -183,6 +182,10 @@ class AuthViewModel(private val userRepository: UserRepository, private val cont
 
             email.length in 1..3 -> {
                 _emailHelperText.value = "Chọn email chính chủ của bạn"
+            }
+
+            !isBasicValidEmail(email) -> {
+                _emailHelperText.value = "Email không hợp lệ"
             }
 
             else -> {

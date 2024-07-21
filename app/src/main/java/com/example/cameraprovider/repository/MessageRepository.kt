@@ -148,7 +148,6 @@ class MessageRepository() {
                 document.reference.update("status", MessageStatus.READ.name).await()
             }
 
-
             val messagesRefReverse = fireStore.collection("messages")
                 .whereEqualTo("senderId", currentUID)
                 .whereEqualTo("receiverId", senderId)

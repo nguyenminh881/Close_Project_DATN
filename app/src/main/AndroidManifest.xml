@@ -38,6 +38,8 @@
 
         <service
             android:name=".notification.NotificationService"
+            android:enabled="true"
+            android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <meta-data
